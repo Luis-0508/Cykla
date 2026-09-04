@@ -1,69 +1,68 @@
-# Datenschutzmodell
+# Privacy Model
 
-Stand: 29. Juli 2026
+Last updated: July 29, 2026
 
-Dieses Dokument beschreibt die technische Datenschutzabsicht des Cykla-MVP. Es ist
-keine Rechtsberatung und ersetzt keine Datenschutzerklärung für ein veröffentlichtes
-Produkt.
+This document describes the intended technical privacy model of the Cykla MVP. It
+does not constitute legal advice and does not replace the privacy policy required
+for a published product.
 
-## Lokale Verarbeitung
+## Local Processing
 
-Periodentage, Symptome, Stimmung, Schmerzen, Energie, Schlaf und Notizen werden in
-einer lokalen SQLite-Datenbank auf dem Gerät gespeichert. Die Prognose wird lokal
-berechnet. Das MVP besitzt kein Konto, kein Backend, keine Cloud-Synchronisierung,
-keine Werbung und kein externes Analytics-SDK.
+Period days, symptoms, mood, pain, energy, sleep, and notes are stored in a local
+SQLite database on the device. Predictions are calculated locally. The MVP has no
+account system, backend, cloud synchronization, advertising, or external analytics
+SDK.
 
-## Datentrennung
+## Data Separation
 
-Von der Person dokumentierte Daten werden persistent gespeichert. Erwarteter
-Periodenbeginn, Prognosezeitraum, Konfidenz, geschätzter Eisprung und möglicher
-fruchtbarer Zeitraum werden zur Laufzeit berechnet und weder als Nutzereintrag
-gespeichert noch exportiert.
+Data recorded by the user is stored persistently. The expected period start,
+prediction window, confidence level, estimated ovulation, and possible fertile
+window are calculated at runtime and are neither stored as user entries nor
+exported.
 
-## Betriebssystemfunktionen
+## Operating System Features
 
-- Lokale Erinnerungen werden vom Betriebssystem geplant. Ihr Text ist neutral und
-  enthält keine konkreten Gesundheitsdaten.
-- Bei aktivierter App-Sperre übernimmt das Betriebssystem die Authentifizierung. Cykla
-  speichert nur die Aktivierung im SecureStore und erhält keine biometrischen Daten.
-- Exporte werden lokal erzeugt. Erst der System-Teilen-Dialog kann sie an einen von der
-  Person gewählten Zielort übergeben.
+- Local reminders are scheduled by the operating system. Their wording is neutral
+  and does not contain specific health data.
+- When the app lock is enabled, the operating system handles authentication. Cykla
+  stores only the enabled state in SecureStore and does not receive biometric data.
+- Exports are generated locally. They can be transferred to a destination selected
+  by the user only through the system share dialog.
 
 ## Export
 
-JSON enthält dokumentierte Tagesdaten und grundlegende Einstellungen. CSV enthält
-eine flache Tabelle dokumentierter Tagesdaten. Tabellenformeln werden bei der
-CSV-Erzeugung entschärft. Exportdateien können sensible Gesundheitsdaten enthalten
-und sollten geschützt aufbewahrt werden.
+JSON exports contain recorded daily data and basic settings. CSV exports contain a
+flat table of recorded daily data. Potential spreadsheet formulas are neutralized
+when CSV files are generated. Export files may contain sensitive health data and
+should be stored securely.
 
-## Löschen
+## Deletion
 
-„Alle lokalen Daten löschen“ entfernt Tagesdaten, Symptome, Zyklusausschlüsse und
-Einstellungen aus der App-Datenbank. Zusätzlich werden von Cykla geplante
-Erinnerungen entfernt und die App-Sperre deaktiviert.
+“Delete all local data” removes daily data, symptoms, cycle exclusions, and settings
+from the app database. It also removes reminders scheduled by Cykla and disables the
+app lock.
 
-SQLite kann gelöschte Seiten technisch vorübergehend im Dateisystem enthalten, bis
-das Betriebssystem Speicherbereiche wiederverwendet. Vor einem produktiven Release
-sind Secure-Deletion-Anforderungen und verschlüsselte Datenträger-Backups gesondert
-zu prüfen.
+Deleted SQLite pages may technically remain in the file system temporarily until
+the operating system reuses their storage. Secure-deletion requirements and
+encrypted device backups must be evaluated separately before a production release.
 
-## Nicht erhobene Daten
+## Data Not Collected
 
-Das MVP erhebt oder überträgt insbesondere keine:
+In particular, the MVP does not collect or transmit:
 
-- E-Mail-Adresse oder Kontodaten
-- Werbe-ID
-- Kontakte oder Standortdaten
-- Gesundheitsdaten an Analyse- oder Werbedienste
-- biometrischen Merkmale
+- email addresses or account data
+- advertising IDs
+- contacts or location data
+- health data to analytics or advertising services
+- biometric characteristics
 
-## Sicherheitsgrenzen
+## Security Boundaries
 
-Die lokale SQLite-Datenbank ist in diesem MVP nicht zusätzlich feldweise
-verschlüsselt. Der Schutz hängt von der Gerätesicherheit, dem Betriebssystem und
-optionaler App-Sperre ab. Für eine Veröffentlichung sind mindestens Bedrohungsmodell,
-Datenschutz-Folgenabschätzung, Geräte-Backup-Konzept, Penetrationstest und Prüfung
-nach DSGVO und Medizinprodukterecht erforderlich.
+The local SQLite database in this MVP is not additionally encrypted field by field.
+Protection depends on device security, the operating system, and the optional app
+lock. Before publication, the project requires at least a threat model, a data
+protection impact assessment, a device-backup strategy, penetration testing, and a
+review for compliance with the GDPR and medical-device law.
 
-Sicherheitsprobleme sollten nicht öffentlich mit echten Gesundheitsdaten gemeldet
-werden. Verwende für reproduzierbare Beispiele ausschließlich künstliche Daten.
+Security issues should never be reported publicly using real health data. Use only
+synthetic data in reproducible examples.

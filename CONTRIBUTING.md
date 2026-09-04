@@ -1,16 +1,16 @@
-# Zu Cykla beitragen
+# Contributing to Cykla
 
-Danke für dein Interesse. Cykla verarbeitet besonders sensible Gesundheitsdaten;
-kleine, nachvollziehbare Änderungen und datensparsame Entscheidungen haben Vorrang.
+Thank you for your interest. Cykla processes particularly sensitive health data, so
+small, reviewable changes and data-minimizing decisions take priority.
 
-## Lokale Entwicklung
+## Local Development
 
 ```bash
 npm install
 npm start
 ```
 
-Vor einem Pull Request:
+Before opening a pull request, run:
 
 ```bash
 npm run typecheck
@@ -19,27 +19,27 @@ npm run format
 npm test
 ```
 
-## Grundsätze
+## Principles
 
-- Keine Gesundheitsdaten in Logs, Telemetrie, Fehlerberichte oder Test-Fixtures.
-- Keine Netzwerkübertragung ohne vorherige Architektur- und Datenschutzprüfung.
-- Dokumentierte und berechnete Daten strikt getrennt halten.
-- Prognoselogik ausschließlich als reine Funktion in `src/domain/` ändern.
-- Jede Änderung der Prognose braucht Tests und eine verständliche Erklärung im UI.
-- Sichtbare Texte neutral formulieren; Schätzungen nie als Gewissheit darstellen.
-- Keine Marken, Texte, Screenshots, Illustrationen oder Layouts bestehender Apps
-  kopieren.
-- Touch-Ziele, Screenreader-Texte, Kontrast und dynamische Schriftgrößen mitprüfen.
+- Never include health data in logs, telemetry, error reports, or test fixtures.
+- Do not add network transmission without a prior architecture and privacy review.
+- Keep recorded and calculated data strictly separate.
+- Change prediction logic only as pure functions in `src/domain/`.
+- Every prediction change requires tests and a clear explanation in the UI.
+- Use neutral wording in visible text; never present estimates as certainty.
+- Do not copy brands, text, screenshots, illustrations, or layouts from existing
+  apps.
+- Verify touch targets, screen-reader labels, contrast, and dynamic font sizes.
 
-## Commit- und PR-Inhalt
+## Commit and Pull Request Content
 
-Beschreibe:
+Describe:
 
-1. das gelöste Problem,
-2. die Datenschutzwirkung,
-3. die Änderung dokumentierter oder berechneter Daten,
-4. ausgeführte Tests,
-5. bei UI-Änderungen die geprüften Bildschirmgrößen und Farbschemata.
+1. the problem being solved,
+2. the privacy impact,
+3. any change to recorded or calculated data,
+4. the tests you ran, and
+5. for UI changes, the screen sizes and color schemes you verified.
 
-Nutze in Screenshots und Tests ausschließlich künstliche Angaben. Medizinische
-Aussagen benötigen vor Veröffentlichung eine fachkundige Prüfung.
+Use only synthetic data in screenshots and tests. Medical statements require expert
+review before publication.

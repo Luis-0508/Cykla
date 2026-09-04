@@ -1,40 +1,40 @@
 # Roadmap
 
-## 0.1 – lokales MVP
+## 0.1 – Local MVP
 
-- Onboarding und Zielauswahl
-- Tagestracking und Monatskalender
-- transparente Periodenprognose
-- Zyklusstatistik und manuelle Ausschlüsse
-- Erinnerungen, App-Sperre, Export, Löschen und Dark Mode
+- onboarding and goal selection
+- daily tracking and monthly calendar
+- transparent period prediction
+- cycle statistics and manual exclusions
+- reminders, app lock, exports, deletion, and dark mode
 
-## 0.2 – Härtung
+## 0.2 – Hardening
 
-- verschlüsselte lokale Datenbank und Backup-Strategie
-- automatisierte Komponenten- und E2E-Tests
-- vollständige Screenreader- und Dynamic-Type-Prüfung
-- medizinische, rechtliche und Datenschutzprüfung
-- sichere Migrationen und Wiederherstellungstests
-- englische Übersetzung
+- encrypted local database and backup strategy
+- automated component and end-to-end tests
+- comprehensive screen-reader and Dynamic Type review
+- medical, legal, and privacy review
+- safe migrations and recovery tests
+- English translation
 
-## 0.3 – erweitertes Tracking
+## 0.3 – Extended Tracking
 
-- Basaltemperatur, Ovulations- und Schwangerschaftstests
-- konfigurierbare Symptomkategorien
-- Suche in Notizen
-- regelbasierte Symptomvergleiche mit erklärbaren Ergebnissen
-- optionaler, ausdrücklich aktivierbarer Entwicklungsmodus mit künstlichen Daten
+- basal body temperature, ovulation tests, and pregnancy tests
+- configurable symptom categories
+- note search
+- rule-based symptom comparisons with explainable results
+- optional development mode with synthetic data that must be enabled explicitly
 
-## Später, nur nach eigener Datenschutzentscheidung
+## Later, Subject to a Separate Privacy Decision
 
-- verschlüsselte Ende-zu-Ende-Synchronisierung
-- Apple Health und Health Connect mit granularen Berechtigungen
-- Kinderwunsch- und Schwangerschaftsmodule
-- medizinisch geprüfte Wissensinhalte und exportierbare Gesprächsübersicht
+- end-to-end encrypted synchronization
+- Apple Health and Health Connect with granular permissions
+- conception and pregnancy modules
+- medically reviewed educational content and an exportable consultation summary
 
-## Nicht geplant
+## Not Planned
 
-- Werbung oder Verkauf sensibler Daten
-- Paywall für Export, Löschen oder Datenschutz
-- KI-Diagnosen oder ein vermeintlicher „KI-Arzt“
-- eine Prognose als sichere Verhütungsmethode
+- advertising or the sale of sensitive data
+- paywalls for exports, deletion, or privacy features
+- AI diagnoses or a purported “AI doctor”
+- presenting predictions as a reliable method of contraception
