@@ -1,0 +1,23 @@
+{
+  "name": "Cykla",
+  "appTitle": "Cykla – Zyklusbegleiter",
+  "slug": "cykla",
+  "scheme": "cykla",
+  "bundleId": "org.cykla.app",
+  "databaseName": "cykla.db",
+  "supportEmail": "support@example.invalid",
+  "colors": {
+    "plum": "#5A284F",
+    "plumDeep": "#35172F",
+    "lavender": "#A991BC",
+    "lavenderSoft": "#E9DFEC",
+    "apricot": "#F3A97E",
+    "apricotSoft": "#FCE4D5",
+    "fertile": "#2A9D8F",
+    "fertileSoft": "#D8F0EB",
+    "period": "#9D3F56",
+    "periodSoft": "#F4DCE2",
+    "offWhite": "#F8F4EF",
+    "aubergine": "#1E1420"
+  }
+}
