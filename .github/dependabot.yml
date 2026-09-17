@@ -9,14 +9,86 @@ updates:
     groups:
       expo-sdk:
         patterns:
-          ['expo', 'expo-*', '@expo/*', 'react', 'react-dom', 'react-native', 'react-native-*']
-        update-types: [minor, patch]
+          - expo
+          - expo-*
+          - '@expo/*'
+          - react
+          - react-dom
+          - react-native
+          - react-native-*
+          - '@react-native/*'
+          - '@react-native-community/*'
+          - '@types/react'
+          - '@types/react-dom'
+          - babel-preset-expo
+          - eslint-config-expo
+        update-types:
+          - patch
       development:
         dependency-type: development
-        update-types: [minor, patch]
+        update-types:
+          - minor
+          - patch
       application:
         dependency-type: production
-        update-types: [minor, patch]
+        update-types:
+          - minor
+          - patch
+    # Group update-types only groups PRs; it does not block standalone major PRs.
+    # SDK 54 packages stay on their current major/minor release lines. CI Doctor
+    # remains the compatibility gate: Dependabot cannot infer Expo SDK support.
+    # Independent npm dependencies retain minor/patch updates; majors are manual.
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
+      - dependency-name: expo
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: expo-*
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: '@expo/*'
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: react-native-*
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: '@react-native/*'
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: '@react-native-community/*'
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: '@types/react'
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: '@types/react-dom'
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: babel-preset-expo
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: eslint-config-expo
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      # SDK 54 pins these packages to exact versions (bundledNativeModules.json).
+      # No update-types means ignore all versions, including patch updates.
+      # Revisit these pins together during a deliberate SDK compatibility update.
+      - dependency-name: react
+      - dependency-name: react-dom
+      - dependency-name: react-native
+      - dependency-name: react-native-worklets
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -24,4 +96,5 @@ updates:
       day: monday
     groups:
       actions:
-        patterns: ['*']
+        patterns:
+          - '*'
