@@ -36,9 +36,12 @@ flat table of recorded daily data. Potential spreadsheet formulas are neutralize
 when CSV files are generated. Export files may contain sensitive health data and
 should be stored securely.
 
-Mobile exports are created in a dedicated cache directory, removed when the Expo
-share promise settles, and cleaned again on the next start after an interruption.
-Cancellation and write/share errors also trigger cleanup. This is best effort, not
+Mobile exports are created in a dedicated cache directory. Preparation failures
+remove partial files immediately. After sharing starts, Android and unknown native
+platforms retain files until the next cold app start, even on rejection or
+cancellation: target apps may still need the URI. iOS removes files after native
+share completion. Startup cleanup runs before screens mount, never on normal
+foreground transitions, and retries on later launches if deletion fails. This is best effort, not
 secure erasure: force termination can leave a cache file until the next start or
 OS cleanup. Sharing completion semantics depend on the OS/target app, especially
 on Android; recipient copies and browser downloads are outside Cykla’s control.

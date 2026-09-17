@@ -48,9 +48,10 @@ Use only invented data on actual iOS and Android devices:
    shade, interrupt authentication, cancel/fail/succeed, and change lock settings.
    Verify unsaved forms survive temporary hiding and no sensitive view flashes.
 2. Export JSON/CSV to multiple share targets, cancel, induce an error, and terminate
-   during sharing. Verify cache cleanup on completion and next launch. Expo's
-   native share completion timing is target-dependent; especially on Android,
-   verify recipient access before relying on immediate cleanup.
+   during sharing. On Android verify recipient access after the share promise
+   settles and cleanup at the next cold start. On iOS verify cleanup after native
+   completion. Foregrounding must not remove files; no timeout is treated as
+   proof of recipient completion.
 3. Upgrade a synthetic v1 database and reinstall cleanly on Expo SQLite and web
    WASM; the Node SQLite tests verify SQL semantics but not platform integration.
 4. Test web downloads and SQLite with the existing cross-origin headers; export
@@ -62,7 +63,10 @@ SecureStore read failures now fail closed. The OS handles authentication; the ap
 never implements PIN/password cryptography. Device-passcode-only availability and
 Face ID behavior must be tested in a development build, not assumed from Expo Go.
 
-Exports use cache storage, `finally` cleanup, and startup recovery. Recipient copies,
+Exports use cache storage. Preparation failures clean up immediately; after sharing
+starts, Android (and unknown native platforms) retain files until the next cold
+start, including rejection/cancellation. iOS cleans up after its native completion
+callback. Startup cleanup retries on later launches if deletion fails. Recipient copies,
 browser downloads, old document-directory exports and forensic erasure are outside
 this cleanup's guarantee. The database remains unencrypted; backup strategy,
 threat modeling and production privacy review are still open.
@@ -72,7 +76,10 @@ threat modeling and production privacy review are still open.
 GitHub CLI was not authenticated during local setup. No repository visibility,
 rules, reviewers or security settings were changed. See [GITHUB_SETUP.md](GITHUB_SETUP.md)
 for precise manual steps. Local checks do not prove a hosted Actions/CodeQL run;
-verify the first PR before requiring status checks.
+verify the first PR before requiring status checks. CodeQL is deliberately skipped
+for this personally owned private repository. The public-only job condition enables
+analysis on subsequent workflow events after publication. Only after a successful
+actual scan should its check become required.
 
 Workflow actions use verified release commit SHAs. Dependabot keeps those pins
 updatable. The labeler follows the official [changed-files configuration](https://github.com/actions/labeler)

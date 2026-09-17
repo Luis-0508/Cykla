@@ -27,13 +27,21 @@ async function saveAndShare(name: string, content: string, mimeType: string): Pr
   const directory = FileSystem.cacheDirectory + 'cykla-exports/';
   const folder = directory + Date.now() + '-' + Math.random().toString(36).slice(2) + '/';
   const uri = folder + name;
+  let shareStarted = false;
   try {
     await FileSystem.makeDirectoryAsync(folder, { intermediates: true });
     await FileSystem.writeAsStringAsync(uri, content, { encoding: FileSystem.EncodingType.UTF8 });
+    shareStarted = true;
     await Sharing.shareAsync(uri, { mimeType, dialogTitle: de.settings.shareExport });
     return name;
   } finally {
-    await FileSystem.deleteAsync(folder, { idempotent: true });
+    // Android's activity result does not mean the recipient has finished reading.
+    // Retain handed-off files even on rejection/cancellation: Expo cannot reliably
+    // distinguish these outcomes. Unknown native platforms defer cleanup too.
+    // iOS uses UIActivityViewController's completion callback.
+    if (!shareStarted || Platform.OS === 'ios') {
+      await FileSystem.deleteAsync(folder, { idempotent: true });
+    }
   }
 }
 
@@ -53,7 +61,9 @@ export async function exportCsv(entries: DailyEntry[]): Promise<string> {
   );
 }
 
-// Run once before screens mount, never while a share is in progress. Covers crashes.
+// Cold-start cleanup of prior-session exports, before screens create new ones.
+// Never invoke on foreground/AppState changes: recipients may still need the URI.
+// Failed deletion is retried by the caller on a later launch; the OS may evict cache.
 export async function cleanupTemporaryExports(): Promise<void> {
   if (Platform.OS === 'web' || !FileSystem.cacheDirectory) return;
   await FileSystem.deleteAsync(FileSystem.cacheDirectory + 'cykla-exports/', { idempotent: true });

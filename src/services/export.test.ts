@@ -53,6 +53,47 @@ describe('temporary export lifecycle', () => {
       expect(mocks.remove).toHaveBeenCalledOnce();
     },
   );
+  it.each(['resolved', 'rejected'] as const)(
+    'retains Android exports after a %s share until cold-start cleanup',
+    async (outcome) => {
+      mocks.platform.OS = 'android';
+      if (outcome === 'rejected') mocks.share.mockRejectedValue(new Error('share interrupted'));
+      // Resolved Expo promises cover both selection and cancellation.
+      if (outcome === 'rejected') await expect(exportCsv([])).rejects.toThrow('share interrupted');
+      else await exportCsv([]);
+      expect(mocks.share).toHaveBeenCalledWith(
+        expect.stringMatching(/^cache\/cykla-exports\/.+\/cykla-export-.+\.csv$/),
+        expect.any(Object),
+      );
+      expect(mocks.remove).not.toHaveBeenCalled();
+      await cleanupTemporaryExports();
+      expect(mocks.remove).toHaveBeenCalledExactlyOnceWith('cache/cykla-exports/', {
+        idempotent: true,
+      });
+    },
+  );
+  it.each(['mkdir', 'write'] as const)(
+    'removes Android partial files before handoff on %s failure',
+    async (method) => {
+      mocks.platform.OS = 'android';
+      mocks[method].mockRejectedValue(new Error('preparation failed'));
+      await expect(exportCsv([])).rejects.toThrow('preparation failed');
+      expect(mocks.share).not.toHaveBeenCalled();
+      expect(mocks.remove).toHaveBeenCalledOnce();
+    },
+  );
+  it('defers cleanup on an unknown native platform', async () => {
+    mocks.platform.OS = 'unknown';
+    await exportCsv([]);
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
+  it('can retry a failed startup cleanup', async () => {
+    mocks.platform.OS = 'android';
+    mocks.remove.mockRejectedValueOnce(new Error('cache busy'));
+    await expect(cleanupTemporaryExports()).rejects.toThrow('cache busy');
+    await cleanupTemporaryExports();
+    expect(mocks.remove).toHaveBeenNthCalledWith(2, 'cache/cykla-exports/', { idempotent: true });
+  });
   it('does not write if sharing is unavailable', async () => {
     mocks.available.mockResolvedValue(false);
     await expect(exportCsv([])).rejects.toThrow('unavailable');

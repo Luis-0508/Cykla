@@ -11,6 +11,8 @@ permissions:
   contents: read
 jobs:
   analyze:
+    # Skip private repositories; automatically analyze after publication.
+    if: ${{ github.event.repository.private == false }}
     name: Analyze JavaScript and TypeScript
     runs-on: ubuntu-latest
     timeout-minutes: 20

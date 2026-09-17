@@ -24,8 +24,11 @@ Topics: `expo`, `react-native`, `typescript`, `period-tracker`, `cycle-tracker`,
   if available for the repository, and verify the reporting button. Otherwise
   publish a monitored private reporting contact in SECURITY.md before publication.
 - Use the checked-in **advanced CodeQL setup**, not a duplicate default setup.
-  Private-repository scanning may require a GitHub Code Security entitlement;
-  if unavailable, do not make its check required until scanning is available.
+  Cykla is a personally owned private repository without Code Security. The job
+  condition `github.event.repository.private == false` skips analysis cleanly
+  while private; no CodeQL initialization or upload is attempted. When public,
+  subsequent PR/push/scheduled/manual runs analyze automatically without editing
+  the workflow. A skipped check is not evidence of a security scan.
 - Create labels: `ui`, `database`, `domain`, `prediction`, `privacy`, `security`,
   `documentation`, `dependencies`, `tests`, `ci`. The labeler uses the base branch's
   configuration; it becomes active after these files reach `master`. It never
@@ -39,7 +42,8 @@ Create an active branch ruleset targeting **master**:
   approval or approval by someone other than the last pusher.
 - Require the status check **Quality** (workflow **CI**, job `quality`). Select
   GitHub Actions as its source. Run the workflow once so GitHub can list it.
-- After a successful CodeQL run and entitlement verification, also require
+- While private, do not require CodeQL. After publication and a successful actual
+  CodeQL analysis (not a skipped run), also require
   **Analyze JavaScript and TypeScript** (workflow **CodeQL**, job `analyze`).
 - Require branches to be up to date before merging if desired; this runs checks
   against the latest base and is practical for a solo repository. Avoid a merge

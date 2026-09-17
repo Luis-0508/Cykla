@@ -125,8 +125,9 @@ time-zone changes cannot shift a period day to a different calendar date.
 
 The MVP does not transmit health data. It contains no advertising or external
 analytics SDK. JSON and CSV exports are created locally and then shared through the
-system share dialog. Mobile files use temporary cache storage and are removed
-after sharing; startup retries cleanup after interruptions. The biometric app lock stores only its enabled state in
+system share dialog. Mobile files use temporary cache storage. Android retains
+shared files until the next cold start so recipients can still read them; iOS cleans
+up after sharing completes. Startup retries cleanup after interruptions. The biometric app lock stores only its enabled state in
 SecureStore; authentication is handled by the operating system.
 
 SQLite data is stored locally in the MVP but is not additionally encrypted field by
