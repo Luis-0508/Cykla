@@ -82,13 +82,24 @@ updates:
         update-types:
           - version-update:semver-minor
           - version-update:semver-major
-      # SDK 54 pins these packages to exact versions (bundledNativeModules.json).
-      # No update-types means ignore all versions, including patch updates.
-      # Revisit these pins together during a deliberate SDK compatibility update.
+      # Allow patch/security fixes; CI (including Expo Doctor) checks compatibility.
+      # Minor and major upgrades still require coordinated SDK review.
       - dependency-name: react
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
       - dependency-name: react-dom
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
       - dependency-name: react-native
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
       - dependency-name: react-native-worklets
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
   - package-ecosystem: github-actions
     directory: /
     schedule:
