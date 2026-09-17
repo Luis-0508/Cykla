@@ -12,3 +12,10 @@ coverage/
 
 expo-env.d.ts
 # @end expo-cli
+# Local secrets and SQLite sidecars
+.env
+.env.*
+*.sqlite
+*.sqlite-*
+*.db-wal
+*.db-shm

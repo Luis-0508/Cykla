@@ -39,6 +39,7 @@ const config: ExpoConfig = {
         },
       },
     ],
+    'expo-font',
     'expo-sqlite',
     'expo-secure-store',
     [

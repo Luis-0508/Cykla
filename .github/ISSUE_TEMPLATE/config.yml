@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security reporting instructions
+    url: https://github.com/Luis-0508/Cykla/blob/master/SECURITY.md
+    about: Do not disclose vulnerabilities or health data in public issues.
