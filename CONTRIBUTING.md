@@ -6,7 +6,7 @@ small, reviewable changes and data-minimizing decisions take priority.
 ## Local Development
 
 ```bash
-npm install
+npm ci
 npm start
 ```
 
@@ -17,11 +17,24 @@ npm run typecheck
 npm run lint
 npm run format
 npm test
+npm run test:coverage
+npm run doctor
+npm run build:smoke
 ```
+
+Work on a feature branch, commit focused changes, and open a PR to `master`.
+Review the diff and passing Actions before a squash merge; no external reviewer
+is required for solo development. Do not commit local exports, databases, secrets
+or `.env` files. See [GitHub setup](docs/GITHUB_SETUP.md).
+
+Use Node 24.12+ within Node 24; CI uses `.node-version`. Keep Expo/native packages
+compatible with SDK 54 and run Doctor after updates. Add migrations rather than
+editing released schema steps. Add user-visible copy to the existing German
+catalog with meaningful keys and parameterized messages; do not add an i18n library.
 
 ## Principles
 
-- Never include health data in logs, telemetry, error reports, or test fixtures.
+- Never include real health data in logs, telemetry, error reports, or test fixtures.
 - Do not add network transmission without a prior architecture and privacy review.
 - Keep recorded and calculated data strictly separate.
 - Change prediction logic only as pure functions in `src/domain/`.

@@ -26,20 +26,20 @@ in a local SQLite database.
 
 Requirements:
 
-- Node.js 20.19 or newer
+- Node.js 24.12 or newer within Node 24 (see `.node-version`; SQLite tests use `node:sqlite`)
 - npm
 - Expo Go or an Android/iOS simulator
 
 ```bash
-npm install
+npm ci
 npm start
 ```
 
 You can then launch the app by scanning the QR code with Expo Go, or by pressing
 `a` or `i` in the terminal.
 
-The project deliberately uses Expo SDK 54 because, during the current SDK transition,
-the App Store version of Expo Go loads SDK 54 projects on physical iPhones.
+The project currently targets Expo SDK 54. Use a compatible Expo Go version or a
+development build; the current store version of Expo Go may target a newer SDK.
 
 Additional commands:
 
@@ -73,7 +73,7 @@ src/
   database/                  migrations and SQLite repository
   domain/                    pure date, cycle, statistics, and prediction logic
   hooks/                     TanStack Query bridge between the UI and SQLite
-  i18n/de.ts                 centralized German text structure
+  i18n/                      German text catalog with sections per area
   services/                  exports, local reminders, and app lock
   store/                     transient UI state managed with Zustand
   theme/                     custom light/dark design system
@@ -89,6 +89,10 @@ SQLite data; there are no network requests.
 Recorded data is stored in `daily_entries` and `symptom_entries`. Manual cycle
 exclusions are stored separately in `cycle_exclusions`. Settings are stored as
 simple key-value pairs in `app_settings`.
+
+Versioned, transactional migrations use SQLite `user_version`, preserve existing
+v1 data, and reject unsupported newer schemas. Stored settings and relevant entry
+values are validated at read boundaries with Zod. See [database notes](docs/DATABASE.md).
 
 Calculated data is **not** stored:
 
@@ -121,13 +125,16 @@ time-zone changes cannot shift a period day to a different calendar date.
 
 The MVP does not transmit health data. It contains no advertising or external
 analytics SDK. JSON and CSV exports are created locally and then shared through the
-system share dialog. The biometric app lock stores only its enabled state in
+system share dialog. Mobile files use temporary cache storage. Android retains
+shared files until the next cold start so recipients can still read them; iOS cleans
+up after sharing completes. Startup retries cleanup after interruptions. The biometric app lock stores only its enabled state in
 SecureStore; authentication is handled by the operating system.
 
 SQLite data is stored locally in the MVP but is not additionally encrypted field by
 field. A production-ready release should add encrypted backups, a threat model, a
 data protection impact assessment, and legal review. See
-[PRIVACY.md](./PRIVACY.md) for details.
+[PRIVACY.md](./PRIVACY.md) for details and [SECURITY.md](./SECURITY.md) for private
+vulnerability reporting with synthetic data only.
 
 ## Development Data
 
@@ -137,18 +144,35 @@ data is intentionally not included at this time.
 
 ## Quality
 
-The domain tests cover regular and irregular cycles, limited or missing data,
-historical changes, outliers, manual exclusions, month and year boundaries, leap
-years, and date-safe time-zone handling.
-
-Before a release:
+CI runs on pull requests to and pushes on `master`. Local and CI checks use the
+same scripts:
 
 ```bash
+npm ci
 npm run typecheck
 npm run lint
 npm run format
 npm test
+npm run test:coverage
+npm run doctor
+npm run build:smoke
 ```
+
+Tests cover domain/date/prediction edge cases, real SQLite migrations and repository
+operations, stored-data validation, export serialization/cleanup, app-lock lifecycle
+and local reminders. Coverage reports are in `coverage/` (HTML and LCOV), also
+uploaded by CI; no minimum percentage or external service is required. Coverage
+currently measures domain, database and services, not React Native UI.
+
+The smoke test exports Web, iOS and Android bundles; it is not a signed native build
+or device test. See [hardening notes](docs/HARDENING.md) for remaining dependency
+risks and device checks. Use feature branches and PRs; see [CONTRIBUTING.md](CONTRIBUTING.md)
+and [GitHub setup](docs/GITHUB_SETUP.md) for solo-maintainer rules and required checks.
+
+German text extraction is incremental: onboarding, settings, lock, shared states,
+navigation and notifications use the catalog. Remaining daily-editor/calendar/home
+and prediction copy can move in subsequent changes. English translation is not
+implemented.
 
 ## Intentionally Not Implemented Yet
 
@@ -158,7 +182,7 @@ npm test
 - community features, advertising, subscriptions, and paywalls
 - Apple Health, Health Connect, basal body temperature, and ovulation tests
 - medical article library and medical report
-- English user interface (the text structure is prepared for additional languages)
+- English user interface (German text centralization is ongoing)
 - encrypted SQLite database and encrypted automatic backups
 
 See [ROADMAP.md](./ROADMAP.md) for planned next steps.
@@ -166,4 +190,5 @@ See [ROADMAP.md](./ROADMAP.md) for planned next steps.
 ## Contributing and License
 
 Contributions are welcome; see [CONTRIBUTING.md](./CONTRIBUTING.md). Cykla is licensed
-under the GNU Affero General Public License v3.0; see [LICENSE](./LICENSE).
+under **AGPL-3.0-only** (GNU Affero General Public License version 3 only); see
+[LICENSE](./LICENSE) for the complete official text.

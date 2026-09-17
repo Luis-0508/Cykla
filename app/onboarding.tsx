@@ -24,7 +24,7 @@ const schema = z.object({
     } catch {
       return false;
     }
-  }, 'Bitte wähle ein gültiges Datum, das nicht in der Zukunft liegt.'),
+  }, de.onboardingDetails.invalidDate),
   typicalCycleLength: z.number().int().min(20).max(60),
   typicalPeriodLength: z.number().int().min(1).max(10),
 });
@@ -34,18 +34,18 @@ type OnboardingForm = z.infer<typeof schema>;
 const goalOptions: { value: Goal; title: string; body: string }[] = [
   {
     value: 'track',
-    title: 'Zyklus beobachten',
-    body: 'Periode, Wohlbefinden und Veränderungen dokumentieren.',
+    title: de.onboardingDetails.trackTitle,
+    body: de.onboardingDetails.trackBody,
   },
   {
     value: 'conceive',
-    title: 'Mögliche fruchtbare Tage verstehen',
-    body: 'Vorsichtige Schätzungen sehen – nicht zur Verhütung geeignet.',
+    title: de.onboardingDetails.conceiveTitle,
+    body: de.onboardingDetails.conceiveBody,
   },
   {
     value: 'unsure',
-    title: 'Noch nicht sicher',
-    body: 'Mit den Grundlagen starten und später entscheiden.',
+    title: de.onboardingDetails.unsureTitle,
+    body: de.onboardingDetails.unsureBody,
   },
 ];
 
@@ -71,7 +71,7 @@ function Stepper({
       <View style={styles.stepper}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${label} verringern`}
+          accessibilityLabel={de.onboardingDetails.decrease(label)}
           onPress={() => onChange(Math.max(minimum, value - 1))}
           style={[styles.stepperButton, { borderColor: theme.colors.border }]}
         >
@@ -83,7 +83,7 @@ function Stepper({
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${label} erhöhen`}
+          accessibilityLabel={de.onboardingDetails.increase(label)}
           onPress={() => onChange(Math.min(maximum, value + 1))}
           style={[styles.stepperButton, { borderColor: theme.colors.border }]}
         >
@@ -152,19 +152,22 @@ export default function OnboardingScreen() {
           <Typography variant="display">{de.onboarding.welcomeTitle}</Typography>
           <Typography muted>{de.onboarding.welcomeBody}</Typography>
           <Card tone="accent">
-            <Typography variant="label">Privat von Anfang an</Typography>
+            <Typography variant="label">{de.onboardingDetails.privateTitle}</Typography>
             <Typography muted style={styles.cardCopy}>
               {de.onboarding.privacy}
             </Typography>
           </Card>
-          <Button label="Ohne Konto fortfahren" onPress={() => void goForward()} />
+          <Button
+            label={de.onboardingDetails.continueWithoutAccount}
+            onPress={() => void goForward()}
+          />
         </View>
       ) : null}
 
       {step === 1 ? (
         <View style={styles.step}>
-          <Typography variant="title">Was ist dir gerade wichtig?</Typography>
-          <Typography muted>Du kannst diese Auswahl später ändern.</Typography>
+          <Typography variant="title">{de.onboardingDetails.goalTitle}</Typography>
+          <Typography muted>{de.onboardingDetails.goalBody}</Typography>
           <Controller
             control={control}
             name="goal"
@@ -211,18 +214,16 @@ export default function OnboardingScreen() {
 
       {step === 2 ? (
         <View style={styles.step}>
-          <Typography variant="title">Wann begann deine letzte Periode?</Typography>
-          <Typography muted>
-            Wähle ein ungefähres Datum. Du kannst es im Kalender jederzeit bearbeiten.
-          </Typography>
+          <Typography variant="title">{de.onboardingDetails.periodTitle}</Typography>
+          <Typography muted>{de.onboardingDetails.periodBody}</Typography>
           <Controller
             control={control}
             name="lastPeriodDate"
             render={({ field: { value, onChange, onBlur } }) => (
               <>
                 <TextInput
-                  accessibilityLabel="Beginn der letzten Periode"
-                  placeholder="JJJJ-MM-TT"
+                  accessibilityLabel={de.onboardingDetails.periodLabel}
+                  placeholder={de.onboardingDetails.datePlaceholder}
                   placeholderTextColor={theme.colors.textMuted}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -241,7 +242,7 @@ export default function OnboardingScreen() {
                     },
                   ]}
                 />
-                {value && !errors.lastPeriodDate ? (
+                {schema.shape.lastPeriodDate.safeParse(value).success ? (
                   <Typography variant="label">{formatGermanDate(value)}</Typography>
                 ) : null}
               </>
@@ -260,7 +261,7 @@ export default function OnboardingScreen() {
                 selected={selectedDate === date}
                 label={
                   date === todayDate()
-                    ? 'Heute'
+                    ? de.onboardingDetails.today
                     : formatGermanDate(date, { day: 'numeric', month: 'short' })
                 }
                 onPress={() => setValue('lastPeriodDate', date, { shouldValidate: true })}
@@ -272,21 +273,18 @@ export default function OnboardingScreen() {
 
       {step === 3 ? (
         <View style={styles.step}>
-          <Typography variant="title">Was ist für dich typisch?</Typography>
-          <Typography muted>
-            Diese Werte dienen nur als erste Annahme. Mit dokumentierten Zyklen wird die Schätzung
-            persönlicher.
-          </Typography>
+          <Typography variant="title">{de.onboardingDetails.typicalTitle}</Typography>
+          <Typography muted>{de.onboardingDetails.typicalBody}</Typography>
           <Controller
             control={control}
             name="typicalCycleLength"
             render={({ field: { value, onChange } }) => (
               <Stepper
-                label="Zykluslänge"
+                label={de.onboardingDetails.cycleLength}
                 value={value}
                 minimum={20}
                 maximum={60}
-                suffix="Tage"
+                suffix={de.onboardingDetails.days}
                 onChange={onChange}
               />
             )}
@@ -296,11 +294,11 @@ export default function OnboardingScreen() {
             name="typicalPeriodLength"
             render={({ field: { value, onChange } }) => (
               <Stepper
-                label="Blutungsdauer"
+                label={de.onboardingDetails.periodLength}
                 value={value}
                 minimum={1}
                 maximum={10}
-                suffix="Tage"
+                suffix={de.onboardingDetails.days}
                 onChange={onChange}
               />
             )}
@@ -311,25 +309,27 @@ export default function OnboardingScreen() {
       {step === 4 ? (
         <View style={styles.step}>
           <CyklaMark size={64} />
-          <Typography variant="title">Bereit für deinen ersten Überblick</Typography>
+          <Typography variant="title">{de.onboardingDetails.ready}</Typography>
           <Card tone="primary">
-            <Typography variant="heading">Deine Daten bleiben bei dir</Typography>
+            <Typography variant="heading">{de.onboardingDetails.privacyTitle}</Typography>
             <Typography muted style={styles.cardCopy}>
-              Kein Konto, keine Werbung, kein externes Analytics-SDK. Export und vollständiges
-              Löschen findest du jederzeit unter „Ich“.
+              {de.onboardingDetails.privacyBody}
             </Typography>
           </Card>
           <Card>
-            <Typography variant="label">Bitte im Blick behalten</Typography>
+            <Typography variant="label">{de.onboardingDetails.cautionTitle}</Typography>
             <Typography muted style={styles.cardCopy}>
-              Prognosen können abweichen. Cykla ist keine Verhütungsmethode und ersetzt keine
-              medizinische Beratung.
+              {de.onboardingDetails.cautionBody}
             </Typography>
           </Card>
-          <Button label="Cykla öffnen" loading={complete.isPending} onPress={() => void finish()} />
+          <Button
+            label={de.onboardingDetails.open}
+            loading={complete.isPending}
+            onPress={() => void finish()}
+          />
           {complete.error ? (
             <Typography style={{ color: theme.colors.danger }}>
-              Deine Angaben konnten nicht gespeichert werden. Bitte versuche es erneut.
+              {de.onboardingDetails.saveError}
             </Typography>
           ) : null}
         </View>
@@ -337,13 +337,19 @@ export default function OnboardingScreen() {
 
       {step > 0 && step < 4 ? (
         <View style={styles.footer}>
-          <Button label="Zurück" variant="ghost" onPress={() => setStep(step - 1)} />
+          <Button
+            label={de.onboardingDetails.back}
+            variant="ghost"
+            onPress={() => setStep(step - 1)}
+          />
           <View style={styles.footerMain}>
-            <Button label="Weiter" onPress={() => void goForward()} />
+            <Button label={de.onboardingDetails.continue} onPress={() => void goForward()} />
           </View>
         </View>
       ) : null}
-      {step === 4 ? <Button label="Zurück" variant="ghost" onPress={() => setStep(3)} /> : null}
+      {step === 4 ? (
+        <Button label={de.onboardingDetails.back} variant="ghost" onPress={() => setStep(3)} />
+      ) : null}
     </AppScreen>
   );
 }

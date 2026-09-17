@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest an improvement consistent with Cykla's privacy principles.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Do not include personal health information.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution and alternatives
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Privacy and offline use
+      description: Would this change local storage, exports, or data transmission?

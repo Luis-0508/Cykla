@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { de } from '@/i18n/de';
+import { useEffect, useRef, useState } from 'react';
 import { AppState, Platform, StyleSheet, View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
@@ -8,6 +9,8 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BRAND } from '@/config/branding';
 import { initializeDatabase } from '@/database/schema';
+import { createLockController } from '@/services/lockLifecycle';
+import { cleanupTemporaryExports } from '@/services/export';
 import { authenticateApp, isAppLockEnabled } from '@/services/appLock';
 import { useSettings } from '@/hooks/useCyklaData';
 import { useUiStore } from '@/store/uiStore';
@@ -48,45 +51,59 @@ function LockGate({ children }: { children: React.ReactNode }) {
   const setLocked = useUiStore((state) => state.setLocked);
   const [checking, setChecking] = useState(true);
 
-  const unlock = async () => {
-    if (await authenticateApp()) setLocked(false);
-  };
-
+  const controller = useRef<ReturnType<typeof createLockController> | null>(null);
+  const unlock = () => controller.current?.unlock();
   useEffect(() => {
-    let active = true;
-    isAppLockEnabled()
-      .then((enabled) => {
-        if (active) setLocked(enabled);
-      })
-      .finally(() => {
-        if (active) setChecking(false);
-      });
-    const subscription = AppState.addEventListener('change', (nextState) => {
-      if (nextState === 'background') {
-        void isAppLockEnabled().then((enabled) => {
-          if (enabled) setLocked(true);
-        });
-      }
+    if (Platform.OS === 'web') {
+      setLocked(false);
+      setChecking(false);
+      return;
+    }
+    let mounted = true;
+    const lifecycle = createLockController(
+      {
+        readEnabled: isAppLockEnabled,
+        authenticate: authenticateApp,
+        onChange: setLocked,
+      },
+      AppState.currentState ?? 'unknown',
+    );
+    controller.current = lifecycle;
+    void lifecycle.start().finally(() => {
+      if (mounted) setChecking(false);
     });
+    const subscription = AppState.addEventListener('change', (next) => lifecycle.change(next));
     return () => {
-      active = false;
+      mounted = false;
+      lifecycle.dispose();
+      controller.current = null;
       subscription.remove();
     };
   }, [setLocked]);
 
   if (checking) return <View style={{ flex: 1, backgroundColor: theme.colors.background }} />;
-  if (!locked) return children;
 
   return (
-    <View style={[styles.lockScreen, { backgroundColor: theme.colors.background }]}>
-      <CyklaMark size={72} />
-      <Typography variant="title">Cykla ist gesperrt</Typography>
-      <Typography muted style={styles.lockCopy}>
-        Entsperre die App, um deine lokalen Einträge zu sehen.
-      </Typography>
-      <View style={styles.lockButton}>
-        <Button label="Entsperren" icon="lock-open-outline" onPress={() => void unlock()} />
+    <View style={{ flex: 1 }}>
+      <View
+        style={{ flex: 1, display: locked ? 'none' : 'flex' }}
+        accessibilityElementsHidden={locked}
+        importantForAccessibility={locked ? 'no-hide-descendants' : 'auto'}
+      >
+        {children}
       </View>
+      {locked ? (
+        <View style={[styles.lockScreen, { backgroundColor: theme.colors.background }]}>
+          <CyklaMark size={72} />
+          <Typography variant="title">{de.lock.title}</Typography>
+          <Typography muted style={styles.lockCopy}>
+            {de.lock.body}
+          </Typography>
+          <View style={styles.lockButton}>
+            <Button label={de.lock.unlock} icon="lock-open-outline" onPress={() => void unlock()} />
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -117,7 +134,14 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <SQLiteProvider databaseName={BRAND.databaseName} onInit={initializeDatabase}>
+        <SQLiteProvider
+          databaseName={BRAND.databaseName}
+          onInit={async (db) => {
+            // Cache cleanup is best effort; retry on the next launch if the OS refuses it.
+            await cleanupTemporaryExports().catch(() => undefined);
+            await initializeDatabase(db);
+          }}
+        >
           <ThemeBootstrap />
           <LockGate>
             <RootNavigator />

@@ -1,0 +1,48 @@
+ui:
+  - changed-files:
+      - any-glob-to-any-file: ['app/**', 'src/components/**', 'src/theme/**', 'src/i18n/**']
+database:
+  - changed-files:
+      - any-glob-to-any-file: ['src/database/**']
+domain:
+  - changed-files:
+      - any-glob-to-any-file: ['src/domain/**']
+prediction:
+  - changed-files:
+      - any-glob-to-any-file:
+          ['src/domain/prediction*', 'src/hooks/usePrediction.ts', 'app/prediction.tsx']
+privacy:
+  - changed-files:
+      - any-glob-to-any-file:
+          [
+            'PRIVACY.md',
+            'src/services/export*',
+            'src/services/appLock*',
+            'src/services/lockLifecycle*',
+            'app/_layout.tsx',
+            'app/(tabs)/settings.tsx',
+          ]
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          [
+            'SECURITY.md',
+            '.github/workflows/codeql.yml',
+            '.github/dependabot.yml',
+            'src/services/appLock*',
+            'src/services/lockLifecycle*',
+            'src/services/export*',
+            'src/database/validation.ts',
+          ]
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: ['**/*.md', 'LICENSE']
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file: ['package.json', 'package-lock.json', '.github/dependabot.yml']
+tests:
+  - changed-files:
+      - any-glob-to-any-file: ['**/*.test.*', '**/testing/**', 'vitest.config.*']
+ci:
+  - changed-files:
+      - any-glob-to-any-file: ['.github/**']

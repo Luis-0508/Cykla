@@ -1,4 +1,14 @@
+import { settings } from './settings';
+import { lock } from './lock';
+import { notifications } from './notifications';
+import { states } from './states';
+import { onboardingDetails } from './onboardingDetails';
 export const de = {
+  settings,
+  lock,
+  notifications,
+  states,
+  onboardingDetails,
   app: {
     tagline: 'Dein Zyklus. Deine Daten.',
     medicalDisclaimer: 'Cykla dokumentiert und schätzt – die App stellt keine Diagnose.',
