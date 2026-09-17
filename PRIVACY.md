@@ -1,6 +1,6 @@
 # Privacy Model
 
-Last updated: July 29, 2026
+Last updated: September 17, 2026
 
 This document describes the intended technical privacy model of the Cykla MVP. It
 does not constitute legal advice and does not replace the privacy policy required
@@ -36,6 +36,15 @@ flat table of recorded daily data. Potential spreadsheet formulas are neutralize
 when CSV files are generated. Export files may contain sensitive health data and
 should be stored securely.
 
+Mobile exports are created in a dedicated cache directory, removed when the Expo
+share promise settles, and cleaned again on the next start after an interruption.
+Cancellation and write/share errors also trigger cleanup. This is best effort, not
+secure erasure: force termination can leave a cache file until the next start or
+OS cleanup. Sharing completion semantics depend on the OS/target app, especially
+on Android; recipient copies and browser downloads are outside Cykla’s control.
+Exports created by older versions in the documents directory are not automatically
+deleted. Review and remove those old files manually if no longer needed.
+
 ## Deletion
 
 “Delete all local data” removes daily data, symptoms, cycle exclusions, and settings
@@ -45,6 +54,12 @@ app lock.
 Deleted SQLite pages may technically remain in the file system temporarily until
 the operating system reuses their storage. Secure-deletion requirements and
 encrypted device backups must be evaluated separately before a production release.
+
+The UI is hidden as soon as a native app becomes inactive or backgrounded.
+Authentication errors keep it locked. This JavaScript lifecycle protection reduces
+exposure but cannot guarantee that every OS app-switcher snapshot is blank; it does
+not prevent screenshots or encrypt the database. Device verification remains
+required.
 
 ## Data Not Collected
 
@@ -64,5 +79,5 @@ lock. Before publication, the project requires at least a threat model, a data
 protection impact assessment, a device-backup strategy, penetration testing, and a
 review for compliance with the GDPR and medical-device law.
 
-Security issues should never be reported publicly using real health data. Use only
-synthetic data in reproducible examples.
+Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). Use
+only synthetic data in reproducible examples, including private reports.

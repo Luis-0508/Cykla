@@ -5,7 +5,6 @@
   "scheme": "cykla",
   "bundleId": "org.cykla.app",
   "databaseName": "cykla.db",
-  "supportEmail": "support@example.invalid",
   "colors": {
     "plum": "#5A284F",
     "plumDeep": "#35172F",
