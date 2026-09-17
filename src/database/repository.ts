@@ -1,52 +1,19 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { addDays } from '@/domain/dateOnly';
-import type {
-  AppSettings,
-  DailyEntry,
-  FlowIntensity,
-  Goal,
-  Mood,
-  SymptomEntry,
-} from '@/domain/models';
+import type { AppSettings, DailyEntry, Goal, SymptomEntry } from '@/domain/models';
 
-type DailyRow = {
-  date: string;
-  flow: FlowIntensity;
-  mood: Mood | null;
-  pain: number | null;
-  energy: number | null;
-  sleep_hours: number | null;
-  sleep_quality: number | null;
-  notes: string;
-  updated_at: string;
-};
+import {
+  dailyRowSchema,
+  dateSchema,
+  parseSettings,
+  SETTINGS_KEYS,
+  symptomRowSchema,
+} from './validation';
 
-type SymptomRow = {
-  id: string;
-  date: string;
-  code: string;
-  intensity: number;
-};
-
-const DEFAULT_SETTINGS: AppSettings = {
-  onboardingCompleted: false,
-  goal: 'track',
-  typicalCycleLength: 28,
-  typicalPeriodLength: 5,
-  theme: 'system',
-  dailyReminderEnabled: false,
-};
-
-const SETTINGS_KEYS = {
-  onboardingCompleted: 'onboarding_completed',
-  goal: 'goal',
-  typicalCycleLength: 'typical_cycle_length',
-  typicalPeriodLength: 'typical_period_length',
-  theme: 'theme',
-  dailyReminderEnabled: 'daily_reminder_enabled',
-} as const;
-
-function toEntry(row: DailyRow, symptoms: SymptomEntry[]): DailyEntry {
+function toEntry(value: unknown, symptoms: SymptomEntry[]): DailyEntry | null {
+  const parsed = dailyRowSchema.safeParse(value);
+  if (!parsed.success) return null;
+  const row = parsed.data;
   return {
     date: row.date,
     flow: row.flow,
@@ -60,6 +27,12 @@ function toEntry(row: DailyRow, symptoms: SymptomEntry[]): DailyEntry {
     updatedAt: row.updated_at,
   };
 }
+function parseSymptoms(rows: unknown[]): SymptomEntry[] {
+  return rows.flatMap((row) => {
+    const parsed = symptomRowSchema.safeParse(row);
+    return parsed.success ? [parsed.data] : [];
+  });
+}
 
 function createId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -70,19 +43,7 @@ export async function getSettings(db: SQLiteDatabase): Promise<AppSettings> {
     'SELECT key, value FROM app_settings',
   );
   const values = Object.fromEntries(rows.map((row) => [row.key, row.value]));
-  return {
-    onboardingCompleted: values[SETTINGS_KEYS.onboardingCompleted] === 'true',
-    goal: (values[SETTINGS_KEYS.goal] as Goal | undefined) ?? DEFAULT_SETTINGS.goal,
-    typicalCycleLength: Number(
-      values[SETTINGS_KEYS.typicalCycleLength] ?? DEFAULT_SETTINGS.typicalCycleLength,
-    ),
-    typicalPeriodLength: Number(
-      values[SETTINGS_KEYS.typicalPeriodLength] ?? DEFAULT_SETTINGS.typicalPeriodLength,
-    ),
-    theme:
-      (values[SETTINGS_KEYS.theme] as AppSettings['theme'] | undefined) ?? DEFAULT_SETTINGS.theme,
-    dailyReminderEnabled: values[SETTINGS_KEYS.dailyReminderEnabled] === 'true',
-  };
+  return parseSettings(values);
 }
 
 export async function setSetting(
@@ -131,27 +92,32 @@ export async function completeOnboarding(
 }
 
 export async function getAllEntries(db: SQLiteDatabase): Promise<DailyEntry[]> {
-  const rows = await db.getAllAsync<DailyRow>('SELECT * FROM daily_entries ORDER BY date ASC');
-  const symptomRows = await db.getAllAsync<SymptomRow>(
+  const rows = await db.getAllAsync<unknown>('SELECT * FROM daily_entries ORDER BY date ASC');
+  const symptomRows = await db.getAllAsync<unknown>(
     'SELECT * FROM symptom_entries ORDER BY date ASC, code ASC',
   );
   const symptomsByDate = new Map<string, SymptomEntry[]>();
-  symptomRows.forEach((row) => {
+  parseSymptoms(symptomRows).forEach((row) => {
     const list = symptomsByDate.get(row.date) ?? [];
     list.push(row);
     symptomsByDate.set(row.date, list);
   });
-  return rows.map((row) => toEntry(row, symptomsByDate.get(row.date) ?? []));
+  return rows.flatMap((row) => {
+    const parsed = dailyRowSchema.safeParse(row);
+    if (!parsed.success) return [];
+    const entry = toEntry(parsed.data, symptomsByDate.get(parsed.data.date) ?? []);
+    return entry ? [entry] : [];
+  });
 }
 
 export async function getEntry(db: SQLiteDatabase, date: string): Promise<DailyEntry | null> {
-  const row = await db.getFirstAsync<DailyRow>('SELECT * FROM daily_entries WHERE date = ?', date);
+  const row = await db.getFirstAsync<unknown>('SELECT * FROM daily_entries WHERE date = ?', date);
   if (!row) return null;
-  const symptoms = await db.getAllAsync<SymptomRow>(
+  const symptoms = await db.getAllAsync<unknown>(
     'SELECT * FROM symptom_entries WHERE date = ? ORDER BY code ASC',
     date,
   );
-  return toEntry(row, symptoms);
+  return toEntry(row, parseSymptoms(symptoms));
 }
 
 export type SaveDailyEntryInput = Omit<DailyEntry, 'updatedAt' | 'symptoms'> & {
@@ -207,7 +173,7 @@ export async function getExcludedCycleStarts(db: SQLiteDatabase): Promise<string
   const rows = await db.getAllAsync<{ start_date: string }>(
     'SELECT start_date FROM cycle_exclusions ORDER BY start_date ASC',
   );
-  return rows.map((row) => row.start_date);
+  return rows.map((row) => row.start_date).filter((date) => dateSchema.safeParse(date).success);
 }
 
 export async function toggleCycleExclusion(

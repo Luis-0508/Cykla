@@ -106,3 +106,41 @@ describe('date-only calendar math', () => {
     expect(todayDate(localMidnight)).toBe('2026-07-29');
   });
 });
+
+describe('prediction edge cases', () => {
+  it('deduplicates and sorts input without mutation', () => {
+    const days = ['2026-02-01', '2026-01-02', '2026-01-01', '2026-01-01'];
+    const original = [...days];
+    expect(derivePeriodStarts(days)).toEqual(['2026-01-01', '2026-02-01']);
+    expect(days).toEqual(original);
+  });
+  it('uses configured fallback when every complete cycle is excluded', () => {
+    const prediction = calculatePrediction({
+      periodDays: ['2026-01-01', '2026-01-29'],
+      excludedCycleStarts: ['2026-01-01'],
+      fallbackCycleLength: 31,
+      fallbackPeriodLength: 3,
+    });
+    expect(prediction).toMatchObject({
+      completeCycleCount: 0,
+      confidence: 'low',
+      expectedStart: '2026-03-01',
+      expectedPeriodEnd: '2026-03-03',
+    });
+  });
+  it('ignores implausibly short and long cycle lengths', () => {
+    expect(
+      calculatePrediction({ periodDays: ['2026-01-01', '2026-01-10', '2026-06-01'] }),
+    ).toMatchObject({ completeCycleCount: 0, averageCycleLength: 28, confidence: 'low' });
+  });
+  it('uses fallback for one period and keeps the expected date inside the window', () => {
+    const prediction = calculatePrediction({
+      periodDays: ['2028-02-01'],
+      fallbackCycleLength: 28,
+    })!;
+    expect(prediction.expectedStart).toBe('2028-02-29');
+    expect(prediction.windowStart < prediction.expectedStart).toBe(true);
+    expect(prediction.windowEnd > prediction.expectedStart).toBe(true);
+    expect(differenceInDays(prediction.expectedStart, prediction.estimatedOvulation)).toBe(14);
+  });
+});
