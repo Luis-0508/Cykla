@@ -12,14 +12,6 @@ updates:
           - expo
           - expo-*
           - '@expo/*'
-          - react
-          - react-dom
-          - react-native
-          - react-native-*
-          - '@react-native/*'
-          - '@react-native-community/*'
-          - '@types/react'
-          - '@types/react-dom'
           - babel-preset-expo
           - eslint-config-expo
         update-types:
@@ -29,19 +21,34 @@ updates:
         update-types:
           - minor
           - patch
+        exclude-patterns:
+          - '@types/react'
+          - '@types/react-dom'
+          - babel-preset-expo
+          - eslint-config-expo
       application:
         dependency-type: production
         update-types:
           - minor
           - patch
-    # Group update-types only groups PRs; it does not block standalone major PRs.
-    # SDK 54 packages stay on their current major/minor release lines. CI Doctor
-    # remains the compatibility gate: Dependabot cannot infer Expo SDK support.
-    # Independent npm dependencies retain minor/patch updates; majors are manual.
+        exclude-patterns:
+          - expo
+          - expo-*
+          - '@expo/*'
+          - react
+          - react-dom
+          - react-native
+          - react-native-*
+          - '@react-native/*'
+          - '@react-native-community/*'
+
+    # Major upgrades remain manual. Expo/React Native versions are additionally
+    # constrained because Expo SDK 54 expects specific compatible versions.
     ignore:
       - dependency-name: '*'
         update-types:
           - version-update:semver-major
+
       - dependency-name: expo
         update-types:
           - version-update:semver-minor
@@ -54,6 +61,22 @@ updates:
         update-types:
           - version-update:semver-minor
           - version-update:semver-major
+      - dependency-name: babel-preset-expo
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: eslint-config-expo
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+
+      # These are pinned by Expo SDK compatibility and must be upgraded only as
+      # part of a coordinated Expo SDK upgrade, not by standalone Dependabot PRs.
+      - dependency-name: react
+      - dependency-name: react-dom
+      - dependency-name: react-native
+      - dependency-name: react-native-worklets
+
       - dependency-name: react-native-*
         update-types:
           - version-update:semver-minor
@@ -74,32 +97,7 @@ updates:
         update-types:
           - version-update:semver-minor
           - version-update:semver-major
-      - dependency-name: babel-preset-expo
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: eslint-config-expo
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      # Allow patch/security fixes; CI (including Expo Doctor) checks compatibility.
-      # Minor and major upgrades still require coordinated SDK review.
-      - dependency-name: react
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: react-dom
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: react-native
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: react-native-worklets
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
