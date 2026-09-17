@@ -1,46 +1,10 @@
+import { de } from '@/i18n/de';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import type { AppSettings, DailyEntry } from '@/domain/models';
 
-function protectSpreadsheetCell(value: string): string {
-  return /^[=+\-@]/.test(value) ? `'${value}` : value;
-}
-
-function csvCell(value: unknown): string {
-  const normalized = protectSpreadsheetCell(value == null ? '' : String(value));
-  return `"${normalized.replaceAll('"', '""')}"`;
-}
-
-function entriesToCsv(entries: DailyEntry[]): string {
-  const header = [
-    'Datum',
-    'Blutung',
-    'Stimmung',
-    'Schmerz_0_bis_10',
-    'Energie_1_bis_5',
-    'Schlaf_Stunden',
-    'Schlafqualitaet_1_bis_5',
-    'Symptome',
-    'Notizen',
-  ];
-  const rows = entries.map((entry) =>
-    [
-      entry.date,
-      entry.flow,
-      entry.mood,
-      entry.pain,
-      entry.energy,
-      entry.sleepHours,
-      entry.sleepQuality,
-      entry.symptoms.map((symptom) => symptom.code).join('|'),
-      entry.notes,
-    ]
-      .map(csvCell)
-      .join(','),
-  );
-  return [header.map(csvCell).join(','), ...rows].join('\n');
-}
+import { entriesToCsv, entriesToJson } from './exportSerialization';
 
 async function saveAndShare(name: string, content: string, mimeType: string): Promise<string> {
   if (Platform.OS === 'web') {
@@ -49,36 +13,34 @@ async function saveAndShare(name: string, content: string, mimeType: string): Pr
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = name;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    try {
+      anchor.click();
+    } finally {
+      URL.revokeObjectURL(url);
+    }
     return name;
   }
-  const uri = `${FileSystem.documentDirectory}${name}`;
-  await FileSystem.writeAsStringAsync(uri, content, {
-    encoding: FileSystem.EncodingType.UTF8,
-  });
-  if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(uri, { mimeType, dialogTitle: 'Cykla-Export teilen' });
+  if (!FileSystem.cacheDirectory || !(await Sharing.isAvailableAsync())) {
+    throw new Error('Sharing is unavailable');
   }
-  return uri;
+  // Dedicated per-export directory avoids collisions between simultaneous shares.
+  const directory = FileSystem.cacheDirectory + 'cykla-exports/';
+  const folder = directory + Date.now() + '-' + Math.random().toString(36).slice(2) + '/';
+  const uri = folder + name;
+  try {
+    await FileSystem.makeDirectoryAsync(folder, { intermediates: true });
+    await FileSystem.writeAsStringAsync(uri, content, { encoding: FileSystem.EncodingType.UTF8 });
+    await Sharing.shareAsync(uri, { mimeType, dialogTitle: de.settings.shareExport });
+    return name;
+  } finally {
+    await FileSystem.deleteAsync(folder, { idempotent: true });
+  }
 }
 
 export async function exportJson(entries: DailyEntry[], settings: AppSettings): Promise<string> {
-  const payload = {
-    format: 'cykla-export',
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    notice: 'Enthält dokumentierte Daten. Prognosen werden nicht exportiert oder gespeichert.',
-    settings: {
-      goal: settings.goal,
-      typicalCycleLength: settings.typicalCycleLength,
-      typicalPeriodLength: settings.typicalPeriodLength,
-    },
-    entries,
-  };
   return saveAndShare(
     `cykla-export-${new Date().toISOString().slice(0, 10)}.json`,
-    JSON.stringify(payload, null, 2),
+    entriesToJson(entries, settings),
     'application/json',
   );
 }
@@ -89,4 +51,10 @@ export async function exportCsv(entries: DailyEntry[]): Promise<string> {
     entriesToCsv(entries),
     'text/csv',
   );
+}
+
+// Run once before screens mount, never while a share is in progress. Covers crashes.
+export async function cleanupTemporaryExports(): Promise<void> {
+  if (Platform.OS === 'web' || !FileSystem.cacheDirectory) return;
+  await FileSystem.deleteAsync(FileSystem.cacheDirectory + 'cykla-exports/', { idempotent: true });
 }

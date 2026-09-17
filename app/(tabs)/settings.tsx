@@ -1,3 +1,4 @@
+import { de } from '@/i18n/de';
 import { useEffect, useState } from 'react';
 import { Alert, Platform, StyleSheet, Switch, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -22,9 +23,9 @@ import { type ThemeMode, useUiStore } from '@/store/uiStore';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 
 const goalOptions = [
-  ['track', 'Zyklus beobachten'],
-  ['conceive', 'Fruchtbare Zeit verstehen'],
-  ['unsure', 'Noch nicht sicher'],
+  ['track', de.settings.track],
+  ['conceive', de.settings.conceive],
+  ['unsure', de.settings.unsure],
 ] as const;
 
 export default function SettingsScreen() {
@@ -49,20 +50,25 @@ export default function SettingsScreen() {
   };
 
   const changeLock = async (enabled: boolean) => {
-    if (enabled && !(await canUseAppLock())) {
-      Alert.alert(
-        'App-Sperre nicht verfügbar',
-        Platform.OS === 'web'
-          ? 'Die App-Sperre ist nur auf einem unterstützten Mobilgerät verfügbar.'
-          : 'Richte zuerst Face ID, Touch ID oder eine Gerätesperre ein.',
-      );
-      return;
+    setBusy('lock');
+    try {
+      if (enabled && !(await canUseAppLock())) {
+        Alert.alert(
+          de.settings.lockUnavailable,
+          Platform.OS === 'web' ? de.settings.lockMobileOnly : de.settings.lockSetup,
+        );
+        return;
+      }
+      if (enabled && !(await authenticateApp())) {
+        return;
+      }
+      await setAppLockEnabled(enabled);
+      setLockEnabledState(enabled);
+    } catch {
+      Alert.alert(de.settings.lock, de.settings.lockError);
+    } finally {
+      setBusy(null);
     }
-    if (enabled && !(await authenticateApp())) {
-      return;
-    }
-    await setAppLockEnabled(enabled);
-    setLockEnabledState(enabled);
   };
 
   const changeReminder = async (enabled: boolean) => {
@@ -73,8 +79,8 @@ export default function SettingsScreen() {
       await updateSetting.mutateAsync({ key: 'dailyReminderEnabled', value: enabled });
     } catch (error) {
       Alert.alert(
-        'Erinnerung nicht aktiviert',
-        error instanceof Error ? error.message : 'Bitte prüfe die Systemeinstellungen.',
+        de.settings.reminderFailed,
+        error instanceof Error ? error.message : de.settings.checkSystem,
       );
     } finally {
       setBusy(null);
@@ -88,46 +94,43 @@ export default function SettingsScreen() {
       if (format === 'json') await exportJson(entriesQuery.data ?? [], settings);
       else await exportCsv(entriesQuery.data ?? []);
     } catch {
-      Alert.alert('Export fehlgeschlagen', 'Die Exportdatei konnte nicht erstellt werden.');
+      Alert.alert(de.settings.exportFailed, de.settings.exportError);
     } finally {
       setBusy(null);
     }
   };
 
   const confirmReset = () => {
-    Alert.alert(
-      'Alle lokalen Daten löschen?',
-      'Perioden, Symptome, Notizen, Einstellungen und Erinnerungen werden dauerhaft entfernt. Diese Aktion kann nicht rückgängig gemacht werden.',
-      [
-        { text: 'Abbrechen', style: 'cancel' },
-        {
-          text: 'Alles löschen',
-          style: 'destructive',
-          onPress: () => {
-            void disableDailyReminder()
-              .then(() => setAppLockEnabled(false))
-              .then(() => resetData.mutateAsync())
-              .then(() => router.replace('/onboarding'));
-          },
+    Alert.alert(de.settings.deleteTitle, de.settings.deleteWarning, [
+      { text: de.settings.cancel, style: 'cancel' },
+      {
+        text: de.settings.deleteConfirm,
+        style: 'destructive',
+        onPress: () => {
+          void disableDailyReminder()
+            .then(() => setAppLockEnabled(false))
+            .then(() => resetData.mutateAsync())
+            .then(() => router.replace('/onboarding'))
+            .catch(() => Alert.alert(de.settings.deleteAll, de.settings.deleteError));
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
     <AppScreen contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Typography variant="title">Ich & Datenschutz</Typography>
-          <Typography muted>Deine Einstellungen gelten nur auf diesem Gerät.</Typography>
+          <Typography variant="title">{de.settings.title}</Typography>
+          <Typography muted>{de.settings.deviceOnly}</Typography>
         </View>
         <View style={[styles.localBadge, { backgroundColor: theme.colors.primarySoft }]}>
           <Ionicons name="phone-portrait-outline" size={18} color={theme.colors.primary} />
-          <Typography variant="caption">Lokal</Typography>
+          <Typography variant="caption">{de.settings.local}</Typography>
         </View>
       </View>
 
-      <SectionHeader title="Dein Ziel" />
+      <SectionHeader title={de.settings.goal} />
       <Card>
         <View style={styles.chips}>
           {goalOptions.map(([value, label]) => (
@@ -142,13 +145,13 @@ export default function SettingsScreen() {
         </View>
       </Card>
 
-      <SectionHeader title="Darstellung" />
+      <SectionHeader title={de.settings.appearance} />
       <Card>
         <View style={styles.chips}>
           {[
-            ['system', 'System'],
-            ['light', 'Hell'],
-            ['dark', 'Dunkel'],
+            ['system', de.settings.system],
+            ['light', de.settings.light],
+            ['dark', de.settings.dark],
           ].map(([mode, label]) => (
             <ChoiceChip
               key={mode}
@@ -161,20 +164,20 @@ export default function SettingsScreen() {
         </View>
       </Card>
 
-      <SectionHeader title="Erinnerungen & Schutz" />
+      <SectionHeader title={de.settings.protection} />
       <Card style={styles.settingCard}>
         <View style={styles.settingRow}>
           <View style={styles.settingIcon}>
             <Ionicons name="notifications-outline" size={23} color={theme.colors.primary} />
           </View>
           <View style={styles.settingText}>
-            <Typography variant="label">Täglicher Check-in um 20:00 Uhr</Typography>
+            <Typography variant="label">{de.settings.reminder}</Typography>
             <Typography variant="caption" muted>
-              Neutraler Text ohne Gesundheitsdetails
+              {de.settings.neutralReminder}
             </Typography>
           </View>
           <Switch
-            accessibilityLabel="Tägliche Erinnerung"
+            accessibilityLabel={de.settings.reminderLabel}
             value={settings?.dailyReminderEnabled ?? false}
             disabled={busy === 'reminder'}
             onValueChange={(value) => void changeReminder(value)}
@@ -190,14 +193,15 @@ export default function SettingsScreen() {
             <Ionicons name="lock-closed-outline" size={23} color={theme.colors.primary} />
           </View>
           <View style={styles.settingText}>
-            <Typography variant="label">App-Sperre</Typography>
+            <Typography variant="label">{de.settings.lock}</Typography>
             <Typography variant="caption" muted>
-              Mit der Gerätesicherheit entsperren
+              {de.settings.deviceSecurity}
             </Typography>
           </View>
           <Switch
-            accessibilityLabel="App-Sperre"
+            accessibilityLabel={de.settings.lock}
             value={lockEnabled}
+            disabled={busy === 'lock'}
             onValueChange={(value) => void changeLock(value)}
             trackColor={{
               false: theme.colors.border,
@@ -208,24 +212,26 @@ export default function SettingsScreen() {
       </Card>
 
       <SectionHeader
-        title="Deine Daten"
-        subtitle={`${entriesQuery.data?.length ?? 0} dokumentierte Tage auf diesem Gerät`}
+        title={de.settings.data}
+        subtitle={de.settings.documentedDays(entriesQuery.data?.length ?? 0)}
       />
       <View style={styles.exportGrid}>
         <View style={styles.exportButton}>
           <Button
-            label="JSON exportieren"
+            label={de.settings.json}
             variant="secondary"
             icon="document-text-outline"
+            disabled={busy !== null}
             loading={busy === 'json'}
             onPress={() => void runExport('json')}
           />
         </View>
         <View style={styles.exportButton}>
           <Button
-            label="CSV exportieren"
+            label={de.settings.csv}
             variant="secondary"
             icon="grid-outline"
+            disabled={busy !== null}
             loading={busy === 'csv'}
             onPress={() => void runExport('csv')}
           />
@@ -234,17 +240,13 @@ export default function SettingsScreen() {
       <Card tone="primary" style={styles.privacyCard}>
         <View style={styles.privacyHead}>
           <Ionicons name="shield-checkmark-outline" size={27} color={theme.colors.primary} />
-          <Typography variant="heading">Privat im MVP</Typography>
+          <Typography variant="heading">{de.settings.privacyTitle}</Typography>
         </View>
-        <Typography muted>
-          Cykla nutzt kein Konto, kein Werbe-SDK und kein externes Analytics-SDK. Gesundheitsdaten
-          werden nicht übertragen. Exportdateien enthalten sensible Angaben; bewahre sie geschützt
-          auf.
-        </Typography>
+        <Typography muted>{de.settings.privacyBody}</Typography>
       </Card>
 
       <Button
-        label="Alle lokalen Daten löschen"
+        label={de.settings.deleteAll}
         variant="danger"
         loading={resetData.isPending}
         onPress={confirmReset}
@@ -253,10 +255,10 @@ export default function SettingsScreen() {
       <View style={styles.about}>
         <Typography variant="label">{BRAND.appTitle}</Typography>
         <Typography variant="caption" muted>
-          Version 0.1.0 · Open Source · AGPL-3.0
+          {de.settings.version}
         </Typography>
         <Typography variant="caption" muted style={styles.aboutText}>
-          Cykla ist keine medizinische Anwendung zur Diagnose und keine sichere Verhütungsmethode.
+          {de.settings.medical}
         </Typography>
       </View>
     </AppScreen>

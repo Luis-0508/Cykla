@@ -1,3 +1,4 @@
+import { de } from '@/i18n/de';
 import { Platform } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
@@ -9,7 +10,7 @@ export async function isAppLockEnabled(): Promise<boolean> {
   try {
     return (await SecureStore.getItemAsync(LOCK_KEY)) === 'true';
   } catch {
-    return false;
+    return true; // Fail closed if device storage is temporarily unavailable.
   }
 }
 
@@ -25,8 +26,8 @@ export async function canUseAppLock(): Promise<boolean> {
 export async function authenticateApp(): Promise<boolean> {
   if (Platform.OS === 'web') return true;
   const result = await LocalAuthentication.authenticateAsync({
-    promptMessage: 'Cykla entsperren',
-    cancelLabel: 'Abbrechen',
+    promptMessage: de.lock.prompt,
+    cancelLabel: de.lock.cancel,
     disableDeviceFallback: false,
   });
   return result.success;

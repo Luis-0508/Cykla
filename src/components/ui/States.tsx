@@ -1,8 +1,9 @@
+import { de } from '@/i18n/de';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { spacing, useCyklaTheme } from '@/theme/theme';
 import { Typography } from '@/components/ui/Typography';
 
-export function LoadingState({ label = 'Wird geladen …' }: { label?: string }) {
+export function LoadingState({ label = de.states.loading }: { label?: string }) {
   const theme = useCyklaTheme();
   return (
     <View style={styles.state}>
@@ -12,10 +13,10 @@ export function LoadingState({ label = 'Wird geladen …' }: { label?: string })
   );
 }
 
-export function ErrorState({ message = 'Etwas ist schiefgegangen.' }: { message?: string }) {
+export function ErrorState({ message = de.states.error }: { message?: string }) {
   return (
     <View style={styles.state}>
-      <Typography variant="heading">Das hat nicht geklappt</Typography>
+      <Typography variant="heading">{de.states.errorTitle}</Typography>
       <Typography muted>{message}</Typography>
     </View>
   );
