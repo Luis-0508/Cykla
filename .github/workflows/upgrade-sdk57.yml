@@ -28,9 +28,7 @@ jobs:
       - name: Upgrade Expo and align SDK-managed dependencies
         run: |
           npm install expo@^57.0.23 --save --legacy-peer-deps
-          npx expo install --fix --npm
-          npm ci
-          npx expo-doctor
+          npm_config_legacy_peer_deps=true npx expo install --fix --npm
       - name: Commit generated dependency manifest and lockfile
         run: |
           git config user.name 'github-actions[bot]'
@@ -42,6 +40,10 @@ jobs:
             git commit -m 'build: upgrade Expo SDK and aligned dependencies to 57'
             git push origin HEAD:chore/expo-sdk-57-20260925
           fi
+      - name: Verify clean install and Expo dependencies
+        run: |
+          npm ci
+          npx expo-doctor
       - name: Verify TypeScript, lint and tests
         run: |
           npm run typecheck
