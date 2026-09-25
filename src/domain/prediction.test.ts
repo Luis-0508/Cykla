@@ -74,6 +74,25 @@ describe('calculatePrediction', () => {
     expect(prediction?.completeCycleCount).toBe(3);
   });
 
+  it('keeps one undocumented day inside an episode', () => {
+    expect(derivePeriodStarts(['2026-01-01', '2026-01-03', '2026-01-29'])).toEqual([
+      '2026-01-01',
+      '2026-01-29',
+    ]);
+  });
+  it('does not show day-level fertile marks for inconsistent short cycles', () => {
+    const prediction = calculatePrediction({
+      periodDays: ['2026-01-01', '2026-01-16', '2026-02-01', '2026-02-19'],
+    });
+    expect(prediction?.fertileWindowStart).toBeNull();
+    expect(prediction?.fertileWindowEnd).toBeNull();
+  });
+  it('keeps the estimate for sufficiently documented stable cycles', () => {
+    const prediction = calculatePrediction({
+      periodDays: ['2026-01-01', '2026-01-29', '2026-02-26', '2026-03-26'],
+    });
+    expect(prediction?.fertileWindowStart).not.toBeNull();
+  });
   it('derives one start from contiguous documented period days', () => {
     expect(
       derivePeriodStarts(['2026-01-02', '2026-01-03', '2026-01-04', '2026-01-30', '2026-01-31']),
@@ -141,6 +160,7 @@ describe('prediction edge cases', () => {
     expect(prediction.expectedStart).toBe('2028-02-29');
     expect(prediction.windowStart < prediction.expectedStart).toBe(true);
     expect(prediction.windowEnd > prediction.expectedStart).toBe(true);
-    expect(differenceInDays(prediction.expectedStart, prediction.estimatedOvulation)).toBe(14);
+    expect(prediction.estimatedOvulation).toBeNull();
+    expect(prediction.fertileWindowStart).toBeNull();
   });
 });

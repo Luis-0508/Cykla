@@ -11,7 +11,13 @@ export type CycleStats = {
 
 export function calculateCycleStats(cycles: Cycle[], entries: DailyEntry[]): CycleStats {
   const lengths = cycles
-    .filter((cycle) => !cycle.excluded && cycle.lengthDays !== null)
+    .filter(
+      (cycle) =>
+        !cycle.excluded &&
+        cycle.lengthDays !== null &&
+        cycle.lengthDays >= 15 &&
+        cycle.lengthDays <= 90,
+    )
     .map((cycle) => cycle.lengthDays!);
   return {
     usableCycles: lengths.length,

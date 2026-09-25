@@ -9,7 +9,9 @@ export function usePrediction() {
 
   const derived = useMemo(() => {
     const entries = entriesQuery.data ?? [];
-    const periodDays = entries.filter((entry) => entry.flow !== 'none').map((entry) => entry.date);
+    const periodDays = entries
+      .filter((entry) => entry.flow !== 'none' && entry.flow !== 'spotting')
+      .map((entry) => entry.date);
     const starts = derivePeriodStarts(periodDays);
     const excludedStarts = exclusionsQuery.data ?? [];
     const settings = settingsQuery.data;

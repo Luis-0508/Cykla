@@ -35,9 +35,9 @@ export type Prediction = {
   windowStart: string;
   windowEnd: string;
   expectedPeriodEnd: string;
-  fertileWindowStart: string;
-  fertileWindowEnd: string;
-  estimatedOvulation: string;
+  fertileWindowStart: string | null;
+  fertileWindowEnd: string | null;
+  estimatedOvulation: string | null;
   averageCycleLength: number;
   variationDays: number;
   confidence: Confidence;

@@ -11,7 +11,7 @@ type PredictionInput = {
 export function derivePeriodStarts(periodDays: string[]): string[] {
   const unique = [...new Set(periodDays)].sort(compareDates);
   return unique.filter(
-    (date, index) => index === 0 || differenceInDays(date, unique[index - 1]!) > 1,
+    (date, index) => index === 0 || differenceInDays(date, unique[index - 1]!) > 2,
   );
 }
 
@@ -73,10 +73,13 @@ export function calculatePrediction(input: PredictionInput): Prediction | null {
   const average = lengths.length ? weightedSum / totalWeight : fallbackCycleLength;
   const variation = standardDeviation(lengths, average);
   const roundedAverage = Math.round(average);
+  // A small sample cannot justify a narrow, day-accurate window.
   const spread =
-    lengths.length < 3
-      ? Math.max(3, Math.ceil(variation))
-      : Math.max(1, Math.ceil(variation * 1.25));
+    lengths.length === 0
+      ? 7
+      : lengths.length < 3
+        ? Math.max(5, Math.ceil(variation))
+        : Math.max(3, Math.ceil(variation * 1.5));
   const latestStart = starts.at(-1)!;
   const expectedStart = addDays(latestStart, roundedAverage);
 
@@ -91,14 +94,26 @@ export function calculatePrediction(input: PredictionInput): Prediction | null {
         : `Bisher liegen ${lengths.length} vollständige Zyklen vor. Deshalb ist der Zeitraum bewusst weiter gefasst.`
       : `Die Schätzung nutzt ${lengths.length} vollständige Zyklen. Neuere Zyklen zählen etwas stärker; auffällige Abweichungen etwas schwächer.`;
 
-  const estimatedOvulation = addDays(expectedStart, -14);
+  // Calendar-only fertility dates are unreliable with short, long, irregular
+  // or insufficient history. Hiding an estimate never means a day is infertile.
+  const irregularHistory = cycles.some(
+    (cycle) =>
+      !cycle.excluded &&
+      cycle.lengthDays !== null &&
+      (cycle.lengthDays < 24 || cycle.lengthDays > 38),
+  );
+  const showFertilityEstimate =
+    confidence !== 'low' && lengths.length >= 3 && !irregularHistory;
+  const estimatedOvulation = showFertilityEstimate
+    ? addDays(expectedStart, -14)
+    : null;
   return {
     expectedStart,
     windowStart: addDays(expectedStart, -spread),
     windowEnd: addDays(expectedStart, spread),
     expectedPeriodEnd: addDays(expectedStart, Math.max(1, fallbackPeriodLength) - 1),
-    fertileWindowStart: addDays(estimatedOvulation, -5),
-    fertileWindowEnd: addDays(estimatedOvulation, 1),
+    fertileWindowStart: estimatedOvulation ? addDays(estimatedOvulation, -5) : null,
+    fertileWindowEnd: estimatedOvulation ? addDays(estimatedOvulation, 1) : null,
     estimatedOvulation,
     averageCycleLength: roundedAverage,
     variationDays: Math.round(variation * 10) / 10,
