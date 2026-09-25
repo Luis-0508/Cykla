@@ -64,7 +64,7 @@ export default function CalendarScreen() {
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: theme.colors.period }]} />
-          <Typography variant="caption">Dokumentierte Periode</Typography>
+          <Typography variant="caption">Dokumentierte Blutung</Typography>
         </View>
         <View style={styles.legendItem}>
           <View
@@ -81,7 +81,7 @@ export default function CalendarScreen() {
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.tinyDot, { backgroundColor: theme.colors.accent }]} />
-          <Typography variant="caption">Symptom dokumentiert</Typography>
+          <Typography variant="caption">Eintrag ohne Blutung</Typography>
         </View>
       </View>
 
@@ -125,8 +125,8 @@ export default function CalendarScreen() {
         <Card tone="fertile">
           <Typography variant="label">Hinweis zur Schätzung</Typography>
           <Typography muted style={styles.note}>
-            Der mögliche fruchtbare Zeitraum ist eine rechnerische Annahme und keine sichere
-            Verhütungsmethode.
+            Fruchtbarkeit lässt sich aus Kalenderdaten nicht sicher bestimmen. Auch außerhalb
+            markierter Tage ist eine Schwangerschaft möglich; Cykla ist keine Verhütungsmethode.
           </Typography>
         </Card>
       ) : null}

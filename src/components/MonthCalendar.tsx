@@ -29,17 +29,20 @@ export function MonthCalendar({
   onSelect,
 }: MonthCalendarProps) {
   const theme = useCyklaTheme();
+  const recorded = new Set(entries.map((entry) => entry.date));
   const actual = new Set(
     entries.filter((entry) => entry.flow !== 'none').map((entry) => entry.date),
   );
-  const symptomDays = new Set(
-    entries.filter((entry) => entry.symptoms.length > 0).map((entry) => entry.date),
+  const otherEntryDays = new Set(
+    entries.filter((entry) => entry.flow === 'none').map((entry) => entry.date),
   );
   const predicted = new Set(
     prediction ? eachDay(prediction.windowStart, prediction.windowEnd) : [],
   );
   const fertile = new Set(
-    prediction ? eachDay(prediction.fertileWindowStart, prediction.fertileWindowEnd) : [],
+    prediction?.fertileWindowStart && prediction.fertileWindowEnd
+      ? eachDay(prediction.fertileWindowStart, prediction.fertileWindowEnd)
+      : [],
   );
   const currentMonth = startOfMonth(month).slice(0, 7);
 
@@ -57,15 +60,15 @@ export function MonthCalendar({
           const dateValue = parseDateOnly(date);
           const inMonth = date.slice(0, 7) === currentMonth;
           const isActual = actual.has(date);
-          const isPredicted = !isActual && predicted.has(date);
-          const isFertile = !isActual && fertile.has(date);
+          const isPredicted = !recorded.has(date) && predicted.has(date);
+          const isFertile = !recorded.has(date) && fertile.has(date);
           const isSelected = selectedDate === date;
           const accessibilityParts = [
             formatGermanDate(date),
             isActual ? 'dokumentierter Periodentag' : '',
             isPredicted ? 'möglicher Prognosezeitraum' : '',
             isFertile ? 'möglicher fruchtbarer Zeitraum' : '',
-            symptomDays.has(date) ? 'Symptome dokumentiert' : '',
+            otherEntryDays.has(date) ? 'Eintrag vorhanden' : '',
           ].filter(Boolean);
           return (
             <Pressable
@@ -80,8 +83,8 @@ export function MonthCalendar({
                   styles.dayCircle,
                   isActual && { backgroundColor: theme.colors.period },
                   isPredicted && {
-                    borderColor: theme.colors.period,
-                    borderWidth: 2,
+                    borderColor: theme.colors.primary,
+                    borderWidth: 1,
                     borderStyle: 'dashed',
                   },
                   isFertile &&
@@ -111,7 +114,7 @@ export function MonthCalendar({
                 style={[
                   styles.dot,
                   {
-                    backgroundColor: symptomDays.has(date) ? theme.colors.accent : 'transparent',
+                    backgroundColor: otherEntryDays.has(date) ? theme.colors.accent : 'transparent',
                   },
                 ]}
               />

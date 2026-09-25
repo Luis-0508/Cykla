@@ -37,7 +37,11 @@ export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
               accessibilityState={{ selected }}
               accessibilityLabel={formatGermanDate(date)}
               accessibilityHint={
-                entry?.flow !== 'none' ? 'Dokumentierter Periodentag' : 'Tag auswählen'
+                entry
+                  ? entry.flow !== 'none'
+                    ? 'Dokumentierte Blutung'
+                    : 'Eintrag vorhanden'
+                  : 'Tag auswählen'
               }
               style={[
                 styles.day,
@@ -67,7 +71,7 @@ export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
                   styles.eventDot,
                   {
                     backgroundColor:
-                      entry?.flow !== 'none'
+                      entry && entry.flow !== 'none'
                         ? selected
                           ? theme.colors.surfaceRaised
                           : theme.colors.period

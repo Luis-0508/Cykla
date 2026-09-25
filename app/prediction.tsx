@@ -52,8 +52,8 @@ export default function PredictionScreen() {
           <Card style={styles.section}>
             <Typography variant="heading">1. Dokumentierte Starts</Typography>
             <Typography muted>
-              Wir betrachten nur Tage, die du selbst als Blutung gespeichert hast. Zusammenhängende
-              Periodentage bilden einen Periodenbeginn.
+              Wir verwenden dokumentierte leichte bis starke Blutungen. Isolierte Schmierblutungen
+              gelten nicht als Periodenbeginn; eine einzelne Lücke trennt eine Blutung nicht.
             </Typography>
             <View style={styles.metricRow}>
               <Typography variant="display">{prediction.completeCycleCount}</Typography>
@@ -87,20 +87,26 @@ export default function PredictionScreen() {
 
           <Card tone="fertile" style={styles.section}>
             <Typography variant="heading">Möglicher fruchtbarer Zeitraum</Typography>
-            <Typography>
-              {formatGermanDate(prediction.fertileWindowStart, {
-                day: 'numeric',
-                month: 'short',
-              })}{' '}
-              bis{' '}
-              {formatGermanDate(prediction.fertileWindowEnd, {
-                day: 'numeric',
-                month: 'short',
-              })}
-            </Typography>
+            {prediction.fertileWindowStart && prediction.fertileWindowEnd ? (
+              <Typography>
+                {formatGermanDate(prediction.fertileWindowStart, {
+                  day: 'numeric',
+                  month: 'short',
+                })}{' '}
+                bis{' '}
+                {formatGermanDate(prediction.fertileWindowEnd, {
+                  day: 'numeric',
+                  month: 'short',
+                })}
+              </Typography>
+            ) : (
+              <Typography>
+                Aus diesen Zyklusdaten lässt sich kein sinnvoller Tageszeitraum ableiten.
+              </Typography>
+            )}
             <Typography muted>
-              Diese grobe Annahme zählt 14 Tage vom erwarteten Periodenbeginn zurück und markiert
-              fünf Tage davor bis einen Tag danach. Sie eignet sich nicht zur Verhütung.
+              Kalenderdaten können den tatsächlichen Eisprung nicht bestimmen. Auch bei fehlender
+              Schätzung sind fruchtbare Tage möglich. Cykla eignet sich nicht zur Verhütung.
             </Typography>
           </Card>
         </>
@@ -126,7 +132,7 @@ export default function PredictionScreen() {
       </Card>
 
       <Typography variant="caption" muted style={styles.version}>
-        Modellversion 1.0 · {cycles.length} erkannte Zyklen · Berechnung ausschließlich lokal
+        Modellversion 1.1 · {cycles.length} erkannte Zyklen · Berechnung ausschließlich lokal
       </Typography>
     </AppScreen>
   );

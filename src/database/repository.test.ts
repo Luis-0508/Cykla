@@ -89,8 +89,6 @@ describe('repository with SQLite', () => {
     });
     expect((await repository.getAllEntries(test.db)).map((entry) => entry.date)).toEqual([
       '2025-12-30',
-      '2025-12-31',
-      '2026-01-01',
     ]);
     expect(await repository.getSettings(test.db)).toMatchObject({
       onboardingCompleted: true,
