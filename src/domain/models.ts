@@ -45,6 +45,13 @@ export type Prediction = {
   explanation: string;
 };
 
+export type BackupData = {
+  version: 1 | 2;
+  entries: DailyEntry[];
+  settings: Pick<AppSettings, 'goal' | 'typicalCycleLength' | 'typicalPeriodLength'>;
+  excludedCycleStarts: string[];
+};
+
 export type AppSettings = {
   onboardingCompleted: boolean;
   goal: Goal;

@@ -43,10 +43,11 @@ export function entriesToJson(
   entries: DailyEntry[],
   settings: AppSettings,
   now = new Date(),
+  excludedCycleStarts: string[] = [],
 ): string {
   const payload = {
     format: 'cykla-export',
-    version: 1,
+    version: 2,
     exportedAt: now.toISOString(),
     notice: 'Enthält dokumentierte Daten. Prognosen werden nicht exportiert oder gespeichert.',
     settings: {
@@ -55,6 +56,7 @@ export function entriesToJson(
       typicalPeriodLength: settings.typicalPeriodLength,
     },
     entries,
+    excludedCycleStarts,
   };
   return JSON.stringify(payload, null, 2);
 }

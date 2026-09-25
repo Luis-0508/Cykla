@@ -15,17 +15,18 @@ const entry: DailyEntry = {
   symptoms: [{ id: 'synthetic', date: '2026-01-01', code: 'cramps', intensity: 2 }],
 };
 describe('export serialization', () => {
-  it('serializes versioned JSON with recorded data and only basic settings', () => {
+  it('serializes versioned JSON with recorded data, exclusions and basic settings', () => {
     const data = JSON.parse(
       entriesToJson([entry], parseSettings({}), new Date('2026-01-02T00:00:00Z')),
     );
     expect(data).toEqual({
       format: 'cykla-export',
-      version: 1,
+      version: 2,
       exportedAt: '2026-01-02T00:00:00.000Z',
       notice: expect.any(String),
       settings: { goal: 'track', typicalCycleLength: 28, typicalPeriodLength: 5 },
       entries: [entry],
+      excludedCycleStarts: [],
     });
     expect(JSON.parse(entriesToJson([], parseSettings({}))).entries).toEqual([]);
   });
