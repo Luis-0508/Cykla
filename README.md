@@ -38,8 +38,8 @@ npm start
 You can then launch the app by scanning the QR code with Expo Go, or by pressing
 `a` or `i` in the terminal.
 
-The project currently targets Expo SDK 54. Use a compatible Expo Go version or a
-development build; the current store version of Expo Go may target a newer SDK.
+The project targets Expo SDK 57. Use Expo Go for SDK 57 or a compatible
+development build. Preserve the existing Expo Go app and its local data when testing upgrades.
 
 Additional commands:
 
