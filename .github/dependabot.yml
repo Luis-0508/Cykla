@@ -43,7 +43,7 @@ updates:
           - '@react-native-community/*'
 
     # Major upgrades remain manual. Expo/React Native versions are additionally
-    # constrained because Expo SDK 54 expects specific compatible versions.
+    # constrained because Expo SDK 57 expects specific compatible versions.
     ignore:
       - dependency-name: '*'
         update-types:
