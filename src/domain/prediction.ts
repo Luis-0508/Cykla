@@ -102,8 +102,13 @@ export function calculatePrediction(input: PredictionInput): Prediction | null {
       cycle.lengthDays !== null &&
       (cycle.lengthDays < 24 || cycle.lengthDays > 38),
   );
+  const candidateFertileStart = addDays(expectedStart, -19);
+  const lastRecordedBleed = [...new Set(input.periodDays)].sort(compareDates).at(-1)!;
+  // Do not highlight estimates adjacent to current bleeding. Missing highlights
+  // never imply that a day is infertile or safe.
+  const tooCloseToBleeding = differenceInDays(candidateFertileStart, lastRecordedBleed) <= 2;
   const showFertilityEstimate =
-    confidence !== 'low' && lengths.length >= 3 && !irregularHistory;
+    confidence !== 'low' && lengths.length >= 3 && !irregularHistory && !tooCloseToBleeding;
   const estimatedOvulation = showFertilityEstimate
     ? addDays(expectedStart, -14)
     : null;

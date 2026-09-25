@@ -303,6 +303,10 @@ export default function OnboardingScreen() {
               />
             )}
           />
+          <Typography muted>
+            Die typische Dauer ist nur ein Richtwert. Cykla speichert nur den bestätigten ersten
+            Blutungstag. Weitere Blutungstage trägst du selbst ein.
+          </Typography>
         </View>
       ) : null}
 

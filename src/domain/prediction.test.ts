@@ -87,6 +87,16 @@ describe('calculatePrediction', () => {
     expect(prediction?.fertileWindowStart).toBeNull();
     expect(prediction?.fertileWindowEnd).toBeNull();
   });
+  it('avoids a fertility highlight right after prolonged recorded bleeding', () => {
+    const recentBleeding = Array.from({ length: 8 }, (_, index) =>
+      addDays('2026-03-26', index),
+    );
+    const prediction = calculatePrediction({
+      periodDays: ['2026-01-01', '2026-01-29', '2026-02-26', ...recentBleeding],
+    });
+    expect(prediction?.completeCycleCount).toBe(3);
+    expect(prediction?.fertileWindowStart).toBeNull();
+  });
   it('keeps the estimate for sufficiently documented stable cycles', () => {
     const prediction = calculatePrediction({
       periodDays: ['2026-01-01', '2026-01-29', '2026-02-26', '2026-03-26'],

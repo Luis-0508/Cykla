@@ -119,7 +119,8 @@ export.
 7. Sample variation determines the width of the visible prediction window.
 8. Fewer than three complete cycles always produce low confidence; “high” confidence
    is only assigned after six stable cycles. Calendar-only fertility dates are omitted
-   for insufficient or inconsistent history. Missing highlights never imply infertile days.
+   for insufficient or inconsistent history. Missing highlights never imply infertile days. If a calculated fertile window would
+   start immediately after a long documented bleed, the day-level display is suppressed.
 
 All calculations use local calendar dates in `YYYY-MM-DD` format so that travel or
 time-zone changes cannot shift a period day to a different calendar date.
