@@ -45,10 +45,14 @@ async function saveAndShare(name: string, content: string, mimeType: string): Pr
   }
 }
 
-export async function exportJson(entries: DailyEntry[], settings: AppSettings): Promise<string> {
+export async function exportJson(
+  entries: DailyEntry[],
+  settings: AppSettings,
+  excludedCycleStarts: string[] = [],
+): Promise<string> {
   return saveAndShare(
     `cykla-export-${new Date().toISOString().slice(0, 10)}.json`,
-    entriesToJson(entries, settings),
+    entriesToJson(entries, settings, new Date(), excludedCycleStarts),
     'application/json',
   );
 }

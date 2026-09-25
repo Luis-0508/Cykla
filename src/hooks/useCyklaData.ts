@@ -9,11 +9,13 @@ import {
   getExcludedCycleStarts,
   getSettings,
   saveDailyEntry,
+  restoreBackup,
   setSetting,
   toggleCycleExclusion,
   type OnboardingInput,
   type SaveDailyEntryInput,
 } from '@/database/repository';
+import type { BackupData } from '@/domain/models';
 
 export function useSettings() {
   const db = useSQLiteContext();
@@ -122,6 +124,17 @@ export function useResetData() {
     mutationFn: () => deleteAllLocalData(db),
     onSuccess: async () => {
       queryClient.clear();
+    },
+  });
+}
+
+export function useRestoreBackup() {
+  const db = useSQLiteContext();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (backup: BackupData) => restoreBackup(db, backup),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
     },
   });
 }

@@ -3,6 +3,7 @@ import { createTestDatabase } from './testing/sqlite';
 import { initializeDatabase } from './schema';
 import * as repository from './repository';
 import { parseSettings } from './validation';
+import type { BackupData } from '@/domain/models';
 
 const input: repository.SaveDailyEntryInput = {
   date: '2026-01-01',
@@ -100,6 +101,53 @@ describe('repository with SQLite', () => {
     await repository.setSetting(test.db, 'theme', 'light');
     expect((await repository.getSettings(test.db)).theme).toBe('light');
   });
+  it('restores a validated backup including symptoms and excluded cycles', async () => {
+    await repository.saveDailyEntry(test.db, input);
+    const backup: BackupData = {
+      version: 2,
+      entries: [{ ...(await repository.getEntry(test.db, input.date))!, date: '2026-02-01' }],
+      settings: { goal: 'conceive', typicalCycleLength: 30, typicalPeriodLength: 4 },
+      excludedCycleStarts: ['2026-02-01'],
+    };
+    backup.entries[0]!.symptoms = backup.entries[0]!.symptoms.map((symptom) => ({
+      ...symptom,
+      date: '2026-02-01',
+    }));
+    await repository.restoreBackup(test.db, backup);
+    expect((await repository.getAllEntries(test.db)).map((entry) => entry.date)).toEqual([
+      '2026-02-01',
+    ]);
+    expect((await repository.getEntry(test.db, '2026-02-01'))?.symptoms).toHaveLength(2);
+    expect(await repository.getExcludedCycleStarts(test.db)).toEqual(['2026-02-01']);
+    expect(await repository.getSettings(test.db)).toMatchObject({
+      goal: 'conceive',
+      typicalCycleLength: 30,
+      typicalPeriodLength: 4,
+      dailyReminderEnabled: false,
+    });
+  });
+  it('rolls back the entire replacement if a backup insert fails', async () => {
+    await repository.saveDailyEntry(test.db, input);
+    await repository.toggleCycleExclusion(test.db, input.date, true);
+    await repository.setSetting(test.db, 'goal', 'track');
+    const entry = (await repository.getEntry(test.db, input.date))!;
+    const backup: BackupData = {
+      version: 2,
+      entries: [{ ...entry, date: '2026-03-02', symptoms: [] }],
+      settings: { goal: 'conceive', typicalCycleLength: 31, typicalPeriodLength: 4 },
+      excludedCycleStarts: [],
+    };
+    await test.db.execAsync(
+      "CREATE TRIGGER reject_restored_entry BEFORE INSERT ON daily_entries WHEN NEW.date = '2026-03-02' BEGIN SELECT RAISE(ABORT, 'synthetic restore failure'); END",
+    );
+    await expect(repository.restoreBackup(test.db, backup)).rejects.toThrow();
+    expect((await repository.getAllEntries(test.db)).map((item) => item.date)).toEqual([
+      input.date,
+    ]);
+    expect(await repository.getExcludedCycleStarts(test.db)).toEqual([input.date]);
+    expect((await repository.getSettings(test.db)).goal).toBe('track');
+  });
+
   it('contains damaged dates/enums/scales without overwriting stored values', async () => {
     await repository.saveDailyEntry(test.db, input);
     await test.db.execAsync(

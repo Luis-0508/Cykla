@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import type { AppSettings, DailyEntry, Goal, SymptomEntry } from '@/domain/models';
+import type { AppSettings, BackupData, DailyEntry, Goal, SymptomEntry } from '@/domain/models';
 
 import {
   dailyRowSchema,
@@ -195,5 +195,56 @@ export async function deleteAllLocalData(db: SQLiteDatabase): Promise<void> {
     await db.runAsync('DELETE FROM daily_entries');
     await db.runAsync('DELETE FROM cycle_exclusions');
     await db.runAsync('DELETE FROM app_settings');
+  });
+}
+
+/**
+ * Restore a previously validated backup atomically. If any write fails, SQLite
+ * rolls back both the deletion and all partial imports, preserving old data.
+ * Device-local reminder and biometric preferences are deliberately not restored.
+ */
+export async function restoreBackup(db: SQLiteDatabase, backup: BackupData): Promise<void> {
+  await db.withTransactionAsync(async () => {
+    await db.runAsync('DELETE FROM symptom_entries');
+    await db.runAsync('DELETE FROM daily_entries');
+    await db.runAsync('DELETE FROM cycle_exclusions');
+    await db.runAsync('DELETE FROM app_settings');
+
+    await setSetting(db, 'onboardingCompleted', true);
+    await setSetting(db, 'goal', backup.settings.goal);
+    await setSetting(db, 'typicalCycleLength', backup.settings.typicalCycleLength);
+    await setSetting(db, 'typicalPeriodLength', backup.settings.typicalPeriodLength);
+
+    for (const entry of backup.entries) {
+      await db.runAsync(
+        `INSERT INTO daily_entries
+           (date, flow, mood, pain, energy, sleep_hours, sleep_quality, notes, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        entry.date,
+        entry.flow,
+        entry.mood,
+        entry.pain,
+        entry.energy,
+        entry.sleepHours,
+        entry.sleepQuality,
+        entry.notes,
+        entry.updatedAt,
+      );
+      for (const symptom of entry.symptoms) {
+        await db.runAsync(
+          'INSERT INTO symptom_entries (id, date, code, intensity) VALUES (?, ?, ?, ?)',
+          symptom.id,
+          symptom.date,
+          symptom.code,
+          symptom.intensity,
+        );
+      }
+    }
+    for (const start of backup.excludedCycleStarts) {
+      await db.runAsync(
+        "INSERT INTO cycle_exclusions (start_date, reason) VALUES (?, 'manual')",
+        start,
+      );
+    }
   });
 }
