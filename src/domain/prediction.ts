@@ -109,9 +109,7 @@ export function calculatePrediction(input: PredictionInput): Prediction | null {
   const tooCloseToBleeding = differenceInDays(candidateFertileStart, lastRecordedBleed) <= 2;
   const showFertilityEstimate =
     confidence !== 'low' && lengths.length >= 3 && !irregularHistory && !tooCloseToBleeding;
-  const estimatedOvulation = showFertilityEstimate
-    ? addDays(expectedStart, -14)
-    : null;
+  const estimatedOvulation = showFertilityEstimate ? addDays(expectedStart, -14) : null;
   return {
     expectedStart,
     windowStart: addDays(expectedStart, -spread),

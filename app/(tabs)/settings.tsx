@@ -136,7 +136,10 @@ export default function SettingsScreen() {
               void restoreData
                 .mutateAsync(backup)
                 .then(() =>
-                  Alert.alert('Import abgeschlossen', 'Deine Cykla-Daten wurden wiederhergestellt.'),
+                  Alert.alert(
+                    'Import abgeschlossen',
+                    'Deine Cykla-Daten wurden wiederhergestellt.',
+                  ),
                 )
                 .catch((error: unknown) =>
                   Alert.alert(

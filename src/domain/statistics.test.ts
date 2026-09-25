@@ -26,12 +26,7 @@ describe('cycle statistics', () => {
     });
   });
   it('uses the same 15–90 day cycle lengths as predictions', () => {
-    const cycles = deriveCycles([
-      '2026-01-01',
-      '2026-01-11',
-      '2026-02-08',
-      '2026-06-01',
-    ]);
+    const cycles = deriveCycles(['2026-01-01', '2026-01-11', '2026-02-08', '2026-06-01']);
     const result = calculateCycleStats(cycles, []);
     expect(result.usableCycles).toBe(1);
     expect(result.averageLength).toBe(28);

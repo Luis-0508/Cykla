@@ -65,5 +65,10 @@ export function parseBackup(content: string): BackupData {
   if (new Set(excludedCycleStarts).size !== excludedCycleStarts.length) {
     throw new Error('Die Sicherung enthält doppelte Zyklusausschlüsse.');
   }
-  return { version: file.version, entries: file.entries, settings: file.settings, excludedCycleStarts };
+  return {
+    version: file.version,
+    entries: file.entries,
+    settings: file.settings,
+    excludedCycleStarts,
+  };
 }

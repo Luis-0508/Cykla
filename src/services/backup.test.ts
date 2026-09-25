@@ -16,7 +16,8 @@ const entry: DailyEntry = {
   symptoms: [{ id: 'synthetic-id', date: '2026-01-01', code: 'cramps', intensity: 1 }],
   updatedAt: '2026-01-02T01:00:00Z',
 };
-const json = () => entriesToJson([entry], parseSettings({}), new Date('2026-01-03'), ['2026-01-01']);
+const json = () =>
+  entriesToJson([entry], parseSettings({}), new Date('2026-01-03'), ['2026-01-01']);
 
 describe('backup validation', () => {
   it('reads a complete v2 export including manual exclusions', () => {
