@@ -19,7 +19,8 @@ in a local SQLite database.
 - local daily reminder with neutral wording
 - optional app lock using device security
 - light, dark, and system appearance modes
-- JSON and CSV exports, plus complete local data deletion
+- versioned JSON exports (including manual cycle exclusions), CSV exports, mobile JSON restore
+  with explicit replacement confirmation, plus complete local data deletion
 - no advertising, external analytics SDK, account, or cloud service
 
 ## Installation
@@ -108,7 +109,8 @@ export.
 
 ## Prediction Model
 
-1. Consecutive recorded bleeding days form periods.
+1. Recorded light, medium and heavy bleeding days form periods; spotting does not
+   create a new period. A one-day documentation gap does not split an episode.
 2. The difference between two period start dates produces a complete cycle length.
 3. More recent cycles receive a weight of `0.85 ^ age`.
 4. Clear outliers remain in the data but receive an additional lower weight.
@@ -116,14 +118,17 @@ export.
 6. The weighted mean determines the calculated start date.
 7. Sample variation determines the width of the visible prediction window.
 8. Fewer than three complete cycles always produce low confidence; “high” confidence
-   is only assigned after six stable cycles.
+   is only assigned after six stable cycles. Calendar-only fertility dates are omitted
+   for insufficient or inconsistent history. Missing highlights never imply infertile days.
 
 All calculations use local calendar dates in `YYYY-MM-DD` format so that travel or
 time-zone changes cannot shift a period day to a different calendar date.
 
 ## Privacy and Security
 
-The MVP does not transmit health data. It contains no advertising or external
+The MVP does not transmit health data. JSON restore validates the selected file before
+replacing existing entries and uses a single SQLite transaction to avoid partial restores.
+Legacy v1 JSON exports can be imported but did not include manual cycle exclusions. It contains no advertising or external
 analytics SDK. JSON and CSV exports are created locally and then shared through the
 system share dialog. Mobile files use temporary cache storage. Android retains
 shared files until the next cold start so recipients can still read them; iOS cleans

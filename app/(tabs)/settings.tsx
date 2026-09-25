@@ -10,7 +10,14 @@ import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Typography } from '@/components/ui/Typography';
 import { BRAND } from '@/config/branding';
-import { useEntries, useResetData, useSettings, useUpdateSetting } from '@/hooks/useCyklaData';
+import {
+  useEntries,
+  useExcludedCycles,
+  useResetData,
+  useRestoreBackup,
+  useSettings,
+  useUpdateSetting,
+} from '@/hooks/useCyklaData';
 import {
   authenticateApp,
   canUseAppLock,
@@ -18,6 +25,7 @@ import {
   setAppLockEnabled,
 } from '@/services/appLock';
 import { exportCsv, exportJson } from '@/services/export';
+import { chooseBackup } from '@/services/import';
 import { disableDailyReminder, enableDailyReminder } from '@/services/notifications';
 import { type ThemeMode, useUiStore } from '@/store/uiStore';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
@@ -32,6 +40,8 @@ export default function SettingsScreen() {
   const theme = useCyklaTheme();
   const settingsQuery = useSettings();
   const entriesQuery = useEntries();
+  const exclusionsQuery = useExcludedCycles();
+  const restoreData = useRestoreBackup();
   const updateSetting = useUpdateSetting();
   const resetData = useResetData();
   const themeMode = useUiStore((state) => state.themeMode);
@@ -88,13 +98,64 @@ export default function SettingsScreen() {
   };
 
   const runExport = async (format: 'json' | 'csv') => {
-    if (!settings) return;
+    if (!settings || !entriesQuery.data) return;
+    if (format === 'json' && !exclusionsQuery.data) {
+      Alert.alert(de.settings.exportFailed, de.settings.exportError);
+      return;
+    }
     setBusy(format);
     try {
-      if (format === 'json') await exportJson(entriesQuery.data ?? [], settings);
-      else await exportCsv(entriesQuery.data ?? []);
+      if (format === 'json') {
+        await exportJson(entriesQuery.data, settings, exclusionsQuery.data ?? []);
+      } else {
+        await exportCsv(entriesQuery.data);
+      }
     } catch {
       Alert.alert(de.settings.exportFailed, de.settings.exportError);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const runImport = async () => {
+    if (Platform.OS === 'web') return;
+    setBusy('import');
+    try {
+      const backup = await chooseBackup();
+      if (!backup) return;
+      Alert.alert(
+        'Cykla-Sicherung einspielen?',
+        `Die Datei enthält ${backup.entries.length} dokumentierte Tage. Alle bisherigen Cykla-Einträge und Zyklusausschlüsse auf diesem Gerät werden ersetzt. ${backup.version === 1 ? 'Diese ältere Sicherung enthält keine Zyklusausschlüsse. ' : ''}Speichere zuerst einen aktuellen JSON-Export an einem sicheren Ort.`,
+        [
+          { text: de.settings.cancel, style: 'cancel' },
+          {
+            text: 'Daten ersetzen',
+            style: 'destructive',
+            onPress: () => {
+              setBusy('restore');
+              void restoreData
+                .mutateAsync(backup)
+                .then(() =>
+                  Alert.alert('Import abgeschlossen', 'Deine Cykla-Daten wurden wiederhergestellt.'),
+                )
+                .catch((error: unknown) =>
+                  Alert.alert(
+                    'Import fehlgeschlagen',
+                    error instanceof Error
+                      ? error.message
+                      : 'Die bisherigen Daten wurden nicht ersetzt.',
+                  ),
+                )
+                .finally(() => setBusy(null));
+            },
+          },
+        ],
+      );
+    } catch (error) {
+      Alert.alert(
+        'Import fehlgeschlagen',
+        error instanceof Error ? error.message : 'Die Datei konnte nicht eingelesen werden.',
+      );
     } finally {
       setBusy(null);
     }
@@ -237,6 +298,22 @@ export default function SettingsScreen() {
           />
         </View>
       </View>
+      <Card style={styles.privacyCard}>
+        <Typography variant="heading">Sicherung wiederherstellen</Typography>
+        <Typography muted>
+          JSON-Import ersetzt nach deiner Bestätigung die bisherigen Einträge auf diesem Gerät.
+          Sichere deine aktuellen Daten vorher. Biometrische Sperre und Erinnerungen werden nicht
+          aus der Sicherung übernommen.
+        </Typography>
+        <Button
+          label="JSON-Sicherung importieren"
+          variant="secondary"
+          icon="download-outline"
+          disabled={Platform.OS === 'web' || busy !== null}
+          loading={busy === 'import' || busy === 'restore'}
+          onPress={() => void runImport()}
+        />
+      </Card>
       <Card tone="primary" style={styles.privacyCard}>
         <View style={styles.privacyHead}>
           <Ionicons name="shield-checkmark-outline" size={27} color={theme.colors.primary} />

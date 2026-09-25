@@ -10,7 +10,7 @@
 
 ## 0.2 – Hardening
 
-- encrypted local database and backup strategy
+- encrypted local database and encrypted automatic backup strategy
 - automated component and end-to-end tests
 - comprehensive screen-reader and Dynamic Type review
 - medical, legal, and privacy review
