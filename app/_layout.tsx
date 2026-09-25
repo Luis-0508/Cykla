@@ -49,14 +49,13 @@ function LockGate({ children }: { children: React.ReactNode }) {
   const theme = useCyklaTheme();
   const locked = useUiStore((state) => state.locked);
   const setLocked = useUiStore((state) => state.setLocked);
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(Platform.OS !== 'web');
 
   const controller = useRef<ReturnType<typeof createLockController> | null>(null);
   const unlock = () => controller.current?.unlock();
   useEffect(() => {
     if (Platform.OS === 'web') {
       setLocked(false);
-      setChecking(false);
       return;
     }
     let mounted = true;
