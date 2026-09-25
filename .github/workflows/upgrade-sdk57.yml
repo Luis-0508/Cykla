@@ -1,4 +1,5 @@
 name: One-time Expo SDK 57 upgrade
+# Retry after adding Expo SDK 57 config plugins to dynamic app.config.ts.
 on:
   push:
     branches:
