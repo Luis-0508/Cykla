@@ -205,6 +205,7 @@ export async function deleteAllLocalData(db: SQLiteDatabase): Promise<void> {
  */
 export async function restoreBackup(db: SQLiteDatabase, backup: BackupData): Promise<void> {
   await db.withTransactionAsync(async () => {
+    const deviceSettings = await getSettings(db);
     await db.runAsync('DELETE FROM symptom_entries');
     await db.runAsync('DELETE FROM daily_entries');
     await db.runAsync('DELETE FROM cycle_exclusions');
@@ -214,6 +215,9 @@ export async function restoreBackup(db: SQLiteDatabase, backup: BackupData): Pro
     await setSetting(db, 'goal', backup.settings.goal);
     await setSetting(db, 'typicalCycleLength', backup.settings.typicalCycleLength);
     await setSetting(db, 'typicalPeriodLength', backup.settings.typicalPeriodLength);
+    // Device preferences remain aligned with the existing OS reminder and UI state.
+    await setSetting(db, 'theme', deviceSettings.theme);
+    await setSetting(db, 'dailyReminderEnabled', deviceSettings.dailyReminderEnabled);
 
     for (const entry of backup.entries) {
       await db.runAsync(

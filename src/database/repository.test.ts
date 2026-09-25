@@ -103,6 +103,8 @@ describe('repository with SQLite', () => {
   });
   it('restores a validated backup including symptoms and excluded cycles', async () => {
     await repository.saveDailyEntry(test.db, input);
+    await repository.setSetting(test.db, 'theme', 'dark');
+    await repository.setSetting(test.db, 'dailyReminderEnabled', true);
     const backup: BackupData = {
       version: 2,
       entries: [{ ...(await repository.getEntry(test.db, input.date))!, date: '2026-02-01' }],
@@ -123,7 +125,8 @@ describe('repository with SQLite', () => {
       goal: 'conceive',
       typicalCycleLength: 30,
       typicalPeriodLength: 4,
-      dailyReminderEnabled: false,
+      dailyReminderEnabled: true,
+      theme: 'dark',
     });
   });
   it('rolls back the entire replacement if a backup insert fails', async () => {

@@ -129,6 +129,7 @@ time-zone changes cannot shift a period day to a different calendar date.
 
 The MVP does not transmit health data. JSON restore validates the selected file before
 replacing existing entries and uses a single SQLite transaction to avoid partial restores.
+Device-local appearance and reminder settings remain unchanged.
 Legacy v1 JSON exports can be imported but did not include manual cycle exclusions. It contains no advertising or external
 analytics SDK. JSON and CSV exports are created locally and then shared through the
 system share dialog. Mobile files use temporary cache storage. Android retains
