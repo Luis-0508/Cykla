@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import { BRAND } from '@/config/branding';
-import { de } from '@/i18n/de';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useCyklaTheme } from '@/theme/theme';
 
 const icons = {
@@ -14,6 +14,7 @@ const icons = {
 
 export default function TabLayout() {
   const theme = useCyklaTheme();
+  const { t } = useI18n();
   return (
     <Tabs
       screenOptions={({ route }) => ({
@@ -41,15 +42,15 @@ export default function TabLayout() {
         },
       })}
     >
-      <Tabs.Screen name="index" options={{ title: de.nav.today }} />
-      <Tabs.Screen name="calendar" options={{ title: de.nav.calendar }} />
-      <Tabs.Screen name="log" options={{ title: de.nav.log }} />
-      <Tabs.Screen name="insights" options={{ title: de.nav.insights }} />
+      <Tabs.Screen name="index" options={{ title: t.nav.today }} />
+      <Tabs.Screen name="calendar" options={{ title: t.nav.calendar }} />
+      <Tabs.Screen name="log" options={{ title: t.nav.log }} />
+      <Tabs.Screen name="insights" options={{ title: t.nav.insights }} />
       <Tabs.Screen
         name="settings"
         options={{
-          title: de.nav.settings,
-          tabBarAccessibilityLabel: `${BRAND.name} Einstellungen`,
+          title: t.nav.settings,
+          tabBarAccessibilityLabel: t.nav.settingsLabel(BRAND.name),
         }}
       />
     </Tabs>

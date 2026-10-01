@@ -4,7 +4,7 @@ import {
   addMonths,
   differenceInDays,
   eachDay,
-  formatGermanDate,
+  formatCalendarDate,
   monthGrid,
   parseDateOnly,
   startOfMonth,
@@ -39,6 +39,11 @@ describe('calendar boundaries', () => {
     expect(grid).toHaveLength(42);
     expect(grid[0]).toBe('2026-01-26');
     expect(grid.at(-1)).toBe('2026-03-08');
-    expect(formatGermanDate('2026-02-01')).toContain('Februar');
+  });
+  it('formats calendar dates for the requested locale without time-zone drift', () => {
+    expect(formatCalendarDate('2026-02-01', 'de-DE')).toBe('1. Februar 2026');
+    expect(formatCalendarDate('2026-02-01', 'en-US')).toBe('February 1, 2026');
+    expect(formatCalendarDate('2026-02-01', 'en-GB')).toBe('1 February 2026');
+    expect(formatCalendarDate('2026-12-31', 'en-US', { weekday: 'long' })).toBe('Thursday');
   });
 });

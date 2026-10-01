@@ -1,11 +1,12 @@
 import { StyleSheet, View } from 'react-native';
 import type { Confidence } from '@/domain/models';
-import { de } from '@/i18n/de';
+import { useI18n } from '@/i18n/I18nProvider';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 import { Typography } from '@/components/ui/Typography';
 
 export function ConfidenceBadge({ confidence }: { confidence: Confidence }) {
   const theme = useCyklaTheme();
+  const { t } = useI18n();
   const color =
     confidence === 'high'
       ? theme.colors.fertile
@@ -14,11 +15,11 @@ export function ConfidenceBadge({ confidence }: { confidence: Confidence }) {
         : theme.colors.textMuted;
   return (
     <View
-      accessibilityLabel={de.confidence[confidence]}
+      accessibilityLabel={t.confidence[confidence]}
       style={[styles.badge, { borderColor: color }]}
     >
       <View style={[styles.dot, { backgroundColor: color }]} />
-      <Typography variant="caption">{de.confidence[confidence]}</Typography>
+      <Typography variant="caption">{t.confidence[confidence]}</Typography>
     </View>
   );
 }

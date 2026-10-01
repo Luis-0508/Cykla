@@ -29,8 +29,11 @@ or `.env` files. See [GitHub setup](docs/GITHUB_SETUP.md).
 
 Use Node 24.12+ within Node 24; CI uses `.node-version`. Keep Expo/native packages
 compatible with Expo SDK 57 and run Doctor after updates. Add migrations rather than
-editing released schema steps. Add user-visible copy to the existing German
-catalog with meaningful keys and parameterized messages; do not add an i18n library.
+editing released schema steps. Add user-visible copy to every catalog in
+`src/i18n/locales/` with meaningful keys and parameterized messages (use functions
+for counts so each language can apply its own plural rules). `de.ts` defines the
+shape; other languages are type-checked against it. No i18n library is needed; to
+add a language, follow the note in `src/i18n/i18n.ts`.
 
 ## Principles
 

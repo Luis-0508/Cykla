@@ -1,4 +1,3 @@
-import { de } from '@/i18n/de';
 import { useEffect, useState } from 'react';
 import { Alert, Platform, StyleSheet, Switch, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -9,8 +8,9 @@ import { Card } from '@/components/ui/Card';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Typography } from '@/components/ui/Typography';
-import { BRAND } from '@/config/branding';
 import { useEntries, useResetData, useSettings, useUpdateSetting } from '@/hooks/useCyklaData';
+import { LANGUAGES, SUPPORTED_LANGUAGES, type LanguagePreference } from '@/i18n/i18n';
+import { useI18n } from '@/i18n/I18nProvider';
 import {
   authenticateApp,
   canUseAppLock,
@@ -22,14 +22,24 @@ import { disableDailyReminder, enableDailyReminder } from '@/services/notificati
 import { type ThemeMode, useUiStore } from '@/store/uiStore';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 
-const goalOptions = [
-  ['track', de.settings.track],
-  ['conceive', de.settings.conceive],
-  ['unsure', de.settings.unsure],
-] as const;
+const APP_VERSION = '0.1.0';
 
 export default function SettingsScreen() {
   const theme = useCyklaTheme();
+  const { t, preference: languagePreference } = useI18n();
+  const goalOptions = [
+    ['track', t.settings.track],
+    ['conceive', t.settings.conceive],
+    ['unsure', t.settings.unsure],
+  ] as const;
+  // Language names stay in their own language so they are recognisable in any UI language.
+  const languageOptions: [LanguagePreference, string][] = [
+    ['system', t.settings.languageAutomatic],
+    ...SUPPORTED_LANGUAGES.map((language): [LanguagePreference, string] => [
+      language,
+      LANGUAGES[language].nativeName,
+    ]),
+  ];
   const settingsQuery = useSettings();
   const entriesQuery = useEntries();
   const updateSetting = useUpdateSetting();
@@ -49,23 +59,28 @@ export default function SettingsScreen() {
     updateSetting.mutate({ key: 'theme', value: mode });
   };
 
+  // A manual choice is stored and overrides the device language until set back to automatic.
+  const changeLanguage = (language: LanguagePreference) => {
+    updateSetting.mutate({ key: 'language', value: language });
+  };
+
   const changeLock = async (enabled: boolean) => {
     setBusy('lock');
     try {
       if (enabled && !(await canUseAppLock())) {
         Alert.alert(
-          de.settings.lockUnavailable,
-          Platform.OS === 'web' ? de.settings.lockMobileOnly : de.settings.lockSetup,
+          t.settings.lockUnavailable,
+          Platform.OS === 'web' ? t.settings.lockMobileOnly : t.settings.lockSetup,
         );
         return;
       }
-      if (enabled && !(await authenticateApp())) {
+      if (enabled && !(await authenticateApp(t.lock))) {
         return;
       }
       await setAppLockEnabled(enabled);
       setLockEnabledState(enabled);
     } catch {
-      Alert.alert(de.settings.lock, de.settings.lockError);
+      Alert.alert(t.settings.lock, t.settings.lockError);
     } finally {
       setBusy(null);
     }
@@ -74,13 +89,13 @@ export default function SettingsScreen() {
   const changeReminder = async (enabled: boolean) => {
     setBusy('reminder');
     try {
-      if (enabled) await enableDailyReminder();
+      if (enabled) await enableDailyReminder(t.notifications);
       else await disableDailyReminder();
       await updateSetting.mutateAsync({ key: 'dailyReminderEnabled', value: enabled });
     } catch (error) {
       Alert.alert(
-        de.settings.reminderFailed,
-        error instanceof Error ? error.message : de.settings.checkSystem,
+        t.settings.reminderFailed,
+        error instanceof Error ? error.message : t.settings.checkSystem,
       );
     } finally {
       setBusy(null);
@@ -91,27 +106,28 @@ export default function SettingsScreen() {
     if (!settings) return;
     setBusy(format);
     try {
-      if (format === 'json') await exportJson(entriesQuery.data ?? [], settings);
-      else await exportCsv(entriesQuery.data ?? []);
+      if (format === 'json')
+        await exportJson(entriesQuery.data ?? [], settings, t.settings.shareExport);
+      else await exportCsv(entriesQuery.data ?? [], t.settings.shareExport);
     } catch {
-      Alert.alert(de.settings.exportFailed, de.settings.exportError);
+      Alert.alert(t.settings.exportFailed, t.settings.exportError);
     } finally {
       setBusy(null);
     }
   };
 
   const confirmReset = () => {
-    Alert.alert(de.settings.deleteTitle, de.settings.deleteWarning, [
-      { text: de.settings.cancel, style: 'cancel' },
+    Alert.alert(t.settings.deleteTitle, t.settings.deleteWarning, [
+      { text: t.common.cancel, style: 'cancel' },
       {
-        text: de.settings.deleteConfirm,
+        text: t.settings.deleteConfirm,
         style: 'destructive',
         onPress: () => {
           void disableDailyReminder()
             .then(() => setAppLockEnabled(false))
             .then(() => resetData.mutateAsync())
             .then(() => router.replace('/onboarding'))
-            .catch(() => Alert.alert(de.settings.deleteAll, de.settings.deleteError));
+            .catch(() => Alert.alert(t.settings.deleteAll, t.settings.deleteError));
         },
       },
     ]);
@@ -121,16 +137,16 @@ export default function SettingsScreen() {
     <AppScreen contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Typography variant="title">{de.settings.title}</Typography>
-          <Typography muted>{de.settings.deviceOnly}</Typography>
+          <Typography variant="title">{t.settings.title}</Typography>
+          <Typography muted>{t.settings.deviceOnly}</Typography>
         </View>
         <View style={[styles.localBadge, { backgroundColor: theme.colors.primarySoft }]}>
           <Ionicons name="phone-portrait-outline" size={18} color={theme.colors.primary} />
-          <Typography variant="caption">{de.settings.local}</Typography>
+          <Typography variant="caption">{t.settings.local}</Typography>
         </View>
       </View>
 
-      <SectionHeader title={de.settings.goal} />
+      <SectionHeader title={t.settings.goal} />
       <Card>
         <View style={styles.chips}>
           {goalOptions.map(([value, label]) => (
@@ -145,13 +161,13 @@ export default function SettingsScreen() {
         </View>
       </Card>
 
-      <SectionHeader title={de.settings.appearance} />
+      <SectionHeader title={t.settings.appearance} />
       <Card>
         <View style={styles.chips}>
           {[
-            ['system', de.settings.system],
-            ['light', de.settings.light],
-            ['dark', de.settings.dark],
+            ['system', t.settings.system],
+            ['light', t.settings.light],
+            ['dark', t.settings.dark],
           ].map(([mode, label]) => (
             <ChoiceChip
               key={mode}
@@ -164,20 +180,35 @@ export default function SettingsScreen() {
         </View>
       </Card>
 
-      <SectionHeader title={de.settings.protection} />
+      <SectionHeader title={t.settings.language} subtitle={t.settings.languageSubtitle} />
+      <Card>
+        <View style={styles.chips}>
+          {languageOptions.map(([language, label]) => (
+            <ChoiceChip
+              key={language}
+              label={label}
+              compact
+              selected={languagePreference === language}
+              onPress={() => changeLanguage(language)}
+            />
+          ))}
+        </View>
+      </Card>
+
+      <SectionHeader title={t.settings.protection} />
       <Card style={styles.settingCard}>
         <View style={styles.settingRow}>
           <View style={styles.settingIcon}>
             <Ionicons name="notifications-outline" size={23} color={theme.colors.primary} />
           </View>
           <View style={styles.settingText}>
-            <Typography variant="label">{de.settings.reminder}</Typography>
+            <Typography variant="label">{t.settings.reminder}</Typography>
             <Typography variant="caption" muted>
-              {de.settings.neutralReminder}
+              {t.settings.neutralReminder}
             </Typography>
           </View>
           <Switch
-            accessibilityLabel={de.settings.reminderLabel}
+            accessibilityLabel={t.settings.reminderLabel}
             value={settings?.dailyReminderEnabled ?? false}
             disabled={busy === 'reminder'}
             onValueChange={(value) => void changeReminder(value)}
@@ -193,13 +224,13 @@ export default function SettingsScreen() {
             <Ionicons name="lock-closed-outline" size={23} color={theme.colors.primary} />
           </View>
           <View style={styles.settingText}>
-            <Typography variant="label">{de.settings.lock}</Typography>
+            <Typography variant="label">{t.settings.lock}</Typography>
             <Typography variant="caption" muted>
-              {de.settings.deviceSecurity}
+              {t.settings.deviceSecurity}
             </Typography>
           </View>
           <Switch
-            accessibilityLabel={de.settings.lock}
+            accessibilityLabel={t.settings.lock}
             value={lockEnabled}
             disabled={busy === 'lock'}
             onValueChange={(value) => void changeLock(value)}
@@ -212,13 +243,13 @@ export default function SettingsScreen() {
       </Card>
 
       <SectionHeader
-        title={de.settings.data}
-        subtitle={de.settings.documentedDays(entriesQuery.data?.length ?? 0)}
+        title={t.settings.data}
+        subtitle={t.settings.documentedDays(entriesQuery.data?.length ?? 0)}
       />
       <View style={styles.exportGrid}>
         <View style={styles.exportButton}>
           <Button
-            label={de.settings.json}
+            label={t.settings.json}
             variant="secondary"
             icon="document-text-outline"
             disabled={busy !== null}
@@ -228,7 +259,7 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.exportButton}>
           <Button
-            label={de.settings.csv}
+            label={t.settings.csv}
             variant="secondary"
             icon="grid-outline"
             disabled={busy !== null}
@@ -240,25 +271,25 @@ export default function SettingsScreen() {
       <Card tone="primary" style={styles.privacyCard}>
         <View style={styles.privacyHead}>
           <Ionicons name="shield-checkmark-outline" size={27} color={theme.colors.primary} />
-          <Typography variant="heading">{de.settings.privacyTitle}</Typography>
+          <Typography variant="heading">{t.settings.privacyTitle}</Typography>
         </View>
-        <Typography muted>{de.settings.privacyBody}</Typography>
+        <Typography muted>{t.settings.privacyBody}</Typography>
       </Card>
 
       <Button
-        label={de.settings.deleteAll}
+        label={t.settings.deleteAll}
         variant="danger"
         loading={resetData.isPending}
         onPress={confirmReset}
       />
 
       <View style={styles.about}>
-        <Typography variant="label">{BRAND.appTitle}</Typography>
+        <Typography variant="label">{t.brand.appTitle}</Typography>
         <Typography variant="caption" muted>
-          {de.settings.version}
+          {t.settings.version(APP_VERSION)}
         </Typography>
         <Typography variant="caption" muted style={styles.aboutText}>
-          {de.settings.medical}
+          {t.settings.medical}
         </Typography>
       </View>
     </AppScreen>

@@ -1,4 +1,4 @@
-import { de } from '@/i18n/de';
+import type { Messages } from '@/i18n/i18n';
 import { Platform } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
@@ -23,11 +23,11 @@ export async function canUseAppLock(): Promise<boolean> {
   return hardware && enrolled;
 }
 
-export async function authenticateApp(): Promise<boolean> {
+export async function authenticateApp(text: Messages['lock']): Promise<boolean> {
   if (Platform.OS === 'web') return true;
   const result = await LocalAuthentication.authenticateAsync({
-    promptMessage: de.lock.prompt,
-    cancelLabel: de.lock.cancel,
+    promptMessage: text.prompt,
+    cancelLabel: text.cancel,
     disableDeviceFallback: false,
   });
   return result.success;

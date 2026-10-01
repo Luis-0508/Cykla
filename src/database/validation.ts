@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { parseDateOnly } from '@/domain/dateOnly';
 import type { AppSettings } from '@/domain/models';
+import { LANGUAGE_PREFERENCES } from '@/i18n/i18n';
 
 export const dateSchema = z.string().refine((value) => {
   try {
@@ -19,6 +20,7 @@ export const SETTINGS_KEYS = {
   typicalCycleLength: 'typical_cycle_length',
   typicalPeriodLength: 'typical_period_length',
   theme: 'theme',
+  language: 'language',
   dailyReminderEnabled: 'daily_reminder_enabled',
 } as const;
 const settingsSchema = z.object({
@@ -27,6 +29,7 @@ const settingsSchema = z.object({
   typical_cycle_length: storedInteger(20, 60).catch(28),
   typical_period_length: storedInteger(1, 10).catch(5),
   theme: z.enum(['system', 'light', 'dark']).catch('system'),
+  language: z.enum(LANGUAGE_PREFERENCES).catch('system'),
   daily_reminder_enabled: storedBoolean.catch(false),
 });
 export function parseSettings(values: Record<string, unknown>): AppSettings {
@@ -37,6 +40,7 @@ export function parseSettings(values: Record<string, unknown>): AppSettings {
     typicalCycleLength: parsed.typical_cycle_length,
     typicalPeriodLength: parsed.typical_period_length,
     theme: parsed.theme,
+    language: parsed.language,
     dailyReminderEnabled: parsed.daily_reminder_enabled,
   };
 }

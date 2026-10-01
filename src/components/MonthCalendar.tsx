@@ -1,13 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import {
-  eachDay,
-  formatGermanDate,
-  monthGrid,
-  parseDateOnly,
-  startOfMonth,
-  todayDate,
-} from '@/domain/dateOnly';
+import { eachDay, monthGrid, parseDateOnly, startOfMonth, todayDate } from '@/domain/dateOnly';
 import type { DailyEntry, Prediction } from '@/domain/models';
+import { useI18n } from '@/i18n/I18nProvider';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 import { Typography } from '@/components/ui/Typography';
 
@@ -19,8 +13,6 @@ type MonthCalendarProps = {
   onSelect: (date: string) => void;
 };
 
-const weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-
 export function MonthCalendar({
   month,
   entries,
@@ -29,6 +21,7 @@ export function MonthCalendar({
   onSelect,
 }: MonthCalendarProps) {
   const theme = useCyklaTheme();
+  const { t, formatDate } = useI18n();
   const actual = new Set(
     entries.filter((entry) => entry.flow !== 'none').map((entry) => entry.date),
   );
@@ -46,7 +39,7 @@ export function MonthCalendar({
   return (
     <View>
       <View style={styles.weekRow}>
-        {weekdays.map((weekday) => (
+        {t.calendar.weekdays.map((weekday) => (
           <Typography key={weekday} variant="caption" muted style={styles.weekday}>
             {weekday}
           </Typography>
@@ -61,11 +54,11 @@ export function MonthCalendar({
           const isFertile = !isActual && fertile.has(date);
           const isSelected = selectedDate === date;
           const accessibilityParts = [
-            formatGermanDate(date),
-            isActual ? 'dokumentierter Periodentag' : '',
-            isPredicted ? 'möglicher Prognosezeitraum' : '',
-            isFertile ? 'möglicher fruchtbarer Zeitraum' : '',
-            symptomDays.has(date) ? 'Symptome dokumentiert' : '',
+            formatDate(date),
+            isActual ? t.calendar.a11yPeriod : '',
+            isPredicted ? t.calendar.a11yPrediction : '',
+            isFertile ? t.calendar.a11yFertile : '',
+            symptomDays.has(date) ? t.calendar.a11ySymptoms : '',
           ].filter(Boolean);
           return (
             <Pressable

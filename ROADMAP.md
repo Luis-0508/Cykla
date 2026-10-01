@@ -7,6 +7,7 @@
 - transparent period prediction
 - cycle statistics and manual exclusions
 - reminders, app lock, exports, deletion, and dark mode
+- German and English interface
 
 ## 0.2 – Hardening
 
@@ -15,7 +16,6 @@
 - comprehensive screen-reader and Dynamic Type review
 - medical, legal, and privacy review
 - safe migrations and recovery tests
-- English translation
 
 ## 0.3 – Extended Tracking
 

@@ -11,9 +11,10 @@ import { Card } from '@/components/ui/Card';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { LoadingState } from '@/components/ui/States';
 import { Typography } from '@/components/ui/Typography';
-import { formatGermanDate, parseDateOnly } from '@/domain/dateOnly';
+import { parseDateOnly } from '@/domain/dateOnly';
 import type { FlowIntensity, Mood } from '@/domain/models';
 import { useDeleteEntry, useEntry, useSaveEntry } from '@/hooks/useCyklaData';
+import { useI18n } from '@/i18n/I18nProvider';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 
 const formSchema = z.object({
@@ -29,32 +30,27 @@ const formSchema = z.object({
 
 type EntryForm = z.infer<typeof formSchema>;
 
-const flowOptions: { value: FlowIntensity; label: string }[] = [
-  { value: 'none', label: 'Keine' },
-  { value: 'spotting', label: 'Schmierblutung' },
-  { value: 'light', label: 'Leicht' },
-  { value: 'medium', label: 'Mittel' },
-  { value: 'heavy', label: 'Stark' },
-];
+// Stored codes stay stable; labels come from the active language catalog.
+const flowOptions: FlowIntensity[] = ['none', 'spotting', 'light', 'medium', 'heavy'];
 
-const moods: { value: Mood; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { value: 'calm', label: 'Ruhig', icon: 'leaf-outline' },
-  { value: 'happy', label: 'Zufrieden', icon: 'happy-outline' },
-  { value: 'sensitive', label: 'Sensibel', icon: 'heart-outline' },
-  { value: 'irritable', label: 'Gereizt', icon: 'flash-outline' },
-  { value: 'sad', label: 'Traurig', icon: 'rainy-outline' },
-  { value: 'stressed', label: 'Gestresst', icon: 'speedometer-outline' },
+const moods: { value: Mood; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { value: 'calm', icon: 'leaf-outline' },
+  { value: 'happy', icon: 'happy-outline' },
+  { value: 'sensitive', icon: 'heart-outline' },
+  { value: 'irritable', icon: 'flash-outline' },
+  { value: 'sad', icon: 'rainy-outline' },
+  { value: 'stressed', icon: 'speedometer-outline' },
 ];
 
 const symptoms = [
-  ['cramps', 'Krämpfe'],
-  ['headache', 'Kopfschmerz'],
-  ['bloating', 'Blähungen'],
-  ['breast_tenderness', 'Brustempfindlichkeit'],
-  ['nausea', 'Übelkeit'],
-  ['back_pain', 'Rückenschmerz'],
-  ['acne', 'Hautveränderung'],
-  ['cravings', 'Heißhunger'],
+  'cramps',
+  'headache',
+  'bloating',
+  'breast_tenderness',
+  'nausea',
+  'back_pain',
+  'acne',
+  'cravings',
 ] as const;
 
 function Scale({
@@ -69,12 +65,13 @@ function Scale({
   accessibilityLabel: string;
 }) {
   const theme = useCyklaTheme();
+  const { t } = useI18n();
   return (
     <View style={styles.scale}>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ selected: value === null }}
-        accessibilityLabel={`${accessibilityLabel} nicht eingetragen`}
+        accessibilityLabel={t.dayEditor.scaleNotRecorded(accessibilityLabel)}
         onPress={() => onChange(null)}
         style={[
           styles.scaleButton,
@@ -91,7 +88,7 @@ function Scale({
           key={option}
           accessibilityRole="button"
           accessibilityState={{ selected: value === option }}
-          accessibilityLabel={`${accessibilityLabel} ${option}`}
+          accessibilityLabel={t.dayEditor.scaleValue(accessibilityLabel, option)}
           onPress={() => onChange(option)}
           style={[
             styles.scaleButton,
@@ -121,6 +118,7 @@ export default function DayEditorScreen() {
     }
   })();
   const theme = useCyklaTheme();
+  const { t, formatDate, formatNumber, decimalSeparator } = useI18n();
   const entryQuery = useEntry(validDate ?? '');
   const saveEntry = useSaveEntry();
   const deleteEntry = useDeleteEntry();
@@ -163,12 +161,12 @@ export default function DayEditorScreen() {
   if (!validDate) {
     return (
       <AppScreen>
-        <Typography variant="title">Ungültiges Datum</Typography>
-        <Button label="Schließen" onPress={() => router.back()} />
+        <Typography variant="title">{t.dayEditor.invalidDate}</Typography>
+        <Button label={t.common.close} onPress={() => router.back()} />
       </AppScreen>
     );
   }
-  if (entryQuery.isLoading) return <LoadingState label="Eintrag wird geladen …" />;
+  if (entryQuery.isLoading) return <LoadingState label={t.dayEditor.loading} />;
 
   const onSubmit = handleSubmit(async (values) => {
     await saveEntry.mutateAsync({
@@ -180,20 +178,16 @@ export default function DayEditorScreen() {
   });
 
   const confirmDelete = () => {
-    Alert.alert(
-      'Eintrag löschen?',
-      'Alle dokumentierten Angaben dieses Tages werden dauerhaft vom Gerät entfernt.',
-      [
-        { text: 'Abbrechen', style: 'cancel' },
-        {
-          text: 'Löschen',
-          style: 'destructive',
-          onPress: () => {
-            void deleteEntry.mutateAsync(validDate).then(() => router.back());
-          },
+    Alert.alert(t.dayEditor.deleteTitle, t.dayEditor.deleteBody, [
+      { text: t.common.cancel, style: 'cancel' },
+      {
+        text: t.common.delete,
+        style: 'destructive',
+        onPress: () => {
+          void deleteEntry.mutateAsync(validDate).then(() => router.back());
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
@@ -201,7 +195,7 @@ export default function DayEditorScreen() {
       <View style={styles.header}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Tageseditor schließen"
+          accessibilityLabel={t.dayEditor.close}
           onPress={() => router.back()}
           style={[styles.close, { borderColor: theme.colors.border }]}
         >
@@ -209,21 +203,21 @@ export default function DayEditorScreen() {
         </Pressable>
         <View style={styles.headerText}>
           <Typography variant="caption" muted>
-            TAGESEINTRAG
+            {t.dayEditor.eyebrow}
           </Typography>
-          <Typography variant="heading">{formatGermanDate(validDate)}</Typography>
+          <Typography variant="heading">{formatDate(validDate)}</Typography>
         </View>
       </View>
 
       <Card tone="primary">
-        <Typography variant="label">Dokumentiert, nicht berechnet</Typography>
+        <Typography variant="label">{t.dayEditor.recordedTitle}</Typography>
         <Typography muted style={styles.cardCopy}>
-          Alles auf dieser Seite stammt aus deiner Auswahl und bleibt auf diesem Gerät.
+          {t.dayEditor.recordedBody}
         </Typography>
       </Card>
 
       <Card style={styles.section}>
-        <Typography variant="heading">Blutung</Typography>
+        <Typography variant="heading">{t.category.bleeding}</Typography>
         <Controller
           control={control}
           name="flow"
@@ -231,11 +225,11 @@ export default function DayEditorScreen() {
             <View style={styles.chips}>
               {flowOptions.map((option) => (
                 <ChoiceChip
-                  key={option.value}
+                  key={option}
                   compact
-                  label={option.label}
-                  selected={value === option.value}
-                  onPress={() => onChange(option.value)}
+                  label={t.flowOption[option]}
+                  selected={value === option}
+                  onPress={() => onChange(option)}
                 />
               ))}
             </View>
@@ -245,8 +239,8 @@ export default function DayEditorScreen() {
 
       <Card style={styles.section}>
         <View>
-          <Typography variant="heading">Schmerzen</Typography>
-          <Typography muted>0 bedeutet keine Schmerzen, 10 sehr starke Schmerzen.</Typography>
+          <Typography variant="heading">{t.category.painPlural}</Typography>
+          <Typography muted>{t.dayEditor.painScale}</Typography>
         </View>
         <Controller
           control={control}
@@ -256,14 +250,14 @@ export default function DayEditorScreen() {
               value={value}
               values={[0, 2, 4, 6, 8, 10]}
               onChange={onChange}
-              accessibilityLabel="Schmerzintensität"
+              accessibilityLabel={t.dayEditor.painLabel}
             />
           )}
         />
       </Card>
 
       <Card style={styles.section}>
-        <Typography variant="heading">Stimmung</Typography>
+        <Typography variant="heading">{t.category.mood}</Typography>
         <Controller
           control={control}
           name="mood"
@@ -273,7 +267,7 @@ export default function DayEditorScreen() {
                 <ChoiceChip
                   key={mood.value}
                   compact
-                  label={mood.label}
+                  label={t.mood[mood.value]}
                   icon={mood.icon}
                   selected={value === mood.value}
                   onPress={() => onChange(value === mood.value ? null : mood.value)}
@@ -286,8 +280,8 @@ export default function DayEditorScreen() {
 
       <Card style={styles.section}>
         <View>
-          <Typography variant="heading">Energie</Typography>
-          <Typography muted>1 ist sehr niedrig, 5 sehr hoch.</Typography>
+          <Typography variant="heading">{t.category.energy}</Typography>
+          <Typography muted>{t.dayEditor.energyScale}</Typography>
         </View>
         <Controller
           control={control}
@@ -297,24 +291,24 @@ export default function DayEditorScreen() {
               value={value}
               values={[1, 2, 3, 4, 5]}
               onChange={onChange}
-              accessibilityLabel="Energie"
+              accessibilityLabel={t.category.energy}
             />
           )}
         />
       </Card>
 
       <Card style={styles.section}>
-        <Typography variant="heading">Schlaf</Typography>
+        <Typography variant="heading">{t.category.sleep}</Typography>
         <Controller
           control={control}
           name="sleepHours"
           render={({ field: { value, onChange, onBlur } }) => (
             <TextInput
-              accessibilityLabel="Schlafdauer in Stunden"
-              placeholder="z. B. 7,5 Stunden"
+              accessibilityLabel={t.dayEditor.sleepHoursLabel}
+              placeholder={t.dayEditor.sleepHoursPlaceholder(formatNumber(7.5))}
               placeholderTextColor={theme.colors.textMuted}
               keyboardType="decimal-pad"
-              value={value == null ? '' : String(value).replace('.', ',')}
+              value={value == null ? '' : String(value).replace('.', decimalSeparator)}
               onBlur={onBlur}
               onChangeText={(text) => {
                 const normalized = Number(text.replace(',', '.'));
@@ -331,7 +325,7 @@ export default function DayEditorScreen() {
             />
           )}
         />
-        <Typography variant="label">Schlafqualität</Typography>
+        <Typography variant="label">{t.dayEditor.sleepQuality}</Typography>
         <Controller
           control={control}
           name="sleepQuality"
@@ -340,22 +334,22 @@ export default function DayEditorScreen() {
               value={value}
               values={[1, 2, 3, 4, 5]}
               onChange={onChange}
-              accessibilityLabel="Schlafqualität"
+              accessibilityLabel={t.dayEditor.sleepQuality}
             />
           )}
         />
       </Card>
 
       <Card style={styles.section}>
-        <Typography variant="heading">Symptome & Körper</Typography>
+        <Typography variant="heading">{t.dayEditor.symptomsTitle}</Typography>
         <View style={styles.chips}>
-          {symptoms.map(([code, label]) => {
+          {symptoms.map((code) => {
             const selected = selectedSymptoms.includes(code);
             return (
               <ChoiceChip
                 key={code}
                 compact
-                label={label}
+                label={t.symptom[code]}
                 selected={selected}
                 onPress={() =>
                   setValue(
@@ -374,7 +368,7 @@ export default function DayEditorScreen() {
 
       <Card style={styles.section}>
         <View style={styles.notesHeader}>
-          <Typography variant="heading">Notiz</Typography>
+          <Typography variant="heading">{t.dayEditor.note}</Typography>
           <Typography variant="caption" muted>
             {notes.length}/1000
           </Typography>
@@ -384,10 +378,10 @@ export default function DayEditorScreen() {
           name="notes"
           render={({ field: { value, onChange, onBlur } }) => (
             <TextInput
-              accessibilityLabel="Freie Notiz"
+              accessibilityLabel={t.dayEditor.noteLabel}
               multiline
               maxLength={1000}
-              placeholder="Was möchtest du festhalten?"
+              placeholder={t.dayEditor.notePlaceholder}
               placeholderTextColor={theme.colors.textMuted}
               value={value}
               onChangeText={onChange}
@@ -407,24 +401,21 @@ export default function DayEditorScreen() {
       </Card>
 
       <Button
-        label="Eintrag speichern"
+        label={t.dayEditor.save}
         icon="checkmark-circle-outline"
         loading={saveEntry.isPending}
         onPress={() => void onSubmit()}
       />
       {entryQuery.data ? (
         <Button
-          label="Tagesdaten löschen"
+          label={t.dayEditor.deleteDay}
           variant="danger"
           loading={deleteEntry.isPending}
           onPress={confirmDelete}
         />
       ) : null}
       {saveEntry.error ? (
-        <Typography style={{ color: theme.colors.danger }}>
-          Der Eintrag konnte nicht gespeichert werden. Deine bisherigen Daten wurden nicht
-          verändert.
-        </Typography>
+        <Typography style={{ color: theme.colors.danger }}>{t.dayEditor.saveError}</Typography>
       ) : null}
     </AppScreen>
   );
