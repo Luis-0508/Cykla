@@ -1,0 +1,29 @@
+{
+  "name": "cykla-video",
+  "private": true,
+  "type": "module",
+  "description": "Cykla launch video: deterministic captures of the real app composed with Remotion.",
+  "scripts": {
+    "build:app": "node scripts/build-app.mjs",
+    "serve": "node scripts/serve.mjs",
+    "capture": "node scripts/capture.mjs",
+    "studio": "remotion studio",
+    "preview": "remotion render CyklaTrailer out/preview.mp4 --scale=0.5 --crf=28",
+    "frames": "node scripts/frames.mjs",
+    "render": "remotion render CyklaTrailer out/cykla-trailer.mp4",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.532",
+    "@remotion/google-fonts": "^4.0.532",
+    "@remotion/paths": "^4.0.532",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "remotion": "^4.0.532"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.4",
+    "playwright-core": "^1.63.0",
+    "typescript": "~6.0.3"
+  }
+}

@@ -3,3 +3,5 @@ dist/
 coverage/
 .expo/
 LICENSE
+# Separate Remotion project with its own tooling
+video/
