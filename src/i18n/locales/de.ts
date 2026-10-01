@@ -167,7 +167,8 @@ export const de = {
     a11ySymptoms: 'Symptome dokumentiert',
   },
   dayStrip: {
-    periodHint: 'Dokumentierter Periodentag',
+    periodHint: 'Dokumentierte Blutung',
+    entryHint: 'Eintrag ohne Blutung',
     selectHint: 'Tag auswählen',
   },
   log: {
@@ -302,6 +303,8 @@ export const de = {
       'Diese Werte dienen nur als erste Annahme. Mit dokumentierten Zyklen wird die Schätzung persönlicher.',
     cycleLength: 'Zykluslänge',
     periodLength: 'Blutungsdauer',
+    periodLengthNote:
+      'Die typische Dauer ist nur ein Richtwert für die Schätzung. Cykla speichert nur den gewählten ersten Blutungstag; weitere Tage trägst du selbst ein.',
     decrease: (label: string) => `${label} verringern`,
     increase: (label: string) => `${label} erhöhen`,
     ready: 'Bereit für deinen ersten Überblick',

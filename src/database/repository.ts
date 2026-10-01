@@ -1,5 +1,4 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { addDays } from '@/domain/dateOnly';
 import type { AppSettings, DailyEntry, Goal, SymptomEntry } from '@/domain/models';
 
 import {
@@ -76,18 +75,18 @@ export async function completeOnboarding(
     await setSetting(db, 'typicalPeriodLength', input.typicalPeriodLength);
     await setSetting(db, 'onboardingCompleted', true);
 
-    for (let index = 0; index < input.typicalPeriodLength; index += 1) {
-      const date = addDays(input.lastPeriodDate, index);
-      await db.runAsync(
-        `INSERT INTO daily_entries
-          (date, flow, mood, pain, energy, sleep_hours, sleep_quality, notes, updated_at)
-         VALUES (?, ?, NULL, NULL, NULL, NULL, NULL, '', ?)
-         ON CONFLICT(date) DO UPDATE SET flow = excluded.flow, updated_at = excluded.updated_at`,
-        date,
-        index === 0 ? 'medium' : 'light',
-        new Date().toISOString(),
-      );
-    }
+    // Only the confirmed first day is an observation. The typical period length
+    // is a prediction input and must not create further (or future) bleeding days.
+    await db.runAsync(
+      `INSERT INTO daily_entries
+        (date, flow, mood, pain, energy, sleep_hours, sleep_quality, notes, updated_at)
+       VALUES (?, 'medium', NULL, NULL, NULL, NULL, NULL, '', ?)
+       ON CONFLICT(date) DO UPDATE SET
+         flow = CASE WHEN daily_entries.flow = 'none' THEN excluded.flow ELSE daily_entries.flow END,
+         updated_at = excluded.updated_at`,
+      input.lastPeriodDate,
+      new Date().toISOString(),
+    );
   });
 }
 

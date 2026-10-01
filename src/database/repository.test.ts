@@ -87,10 +87,9 @@ describe('repository with SQLite', () => {
       typicalCycleLength: 30,
       typicalPeriodLength: 3,
     });
-    expect((await repository.getAllEntries(test.db)).map((entry) => entry.date)).toEqual([
-      '2025-12-30',
-      '2025-12-31',
-      '2026-01-01',
+    // Only the confirmed start is recorded; the typical length creates no further days.
+    expect(await repository.getAllEntries(test.db)).toMatchObject([
+      { date: '2025-12-30', flow: 'medium' },
     ]);
     expect(await repository.getSettings(test.db)).toMatchObject({
       onboardingCompleted: true,
@@ -105,6 +104,17 @@ describe('repository with SQLite', () => {
     expect((await repository.getSettings(test.db)).language).toBe('system');
     await repository.setSetting(test.db, 'language', 'en');
     expect((await repository.getSettings(test.db)).language).toBe('en');
+  });
+  it('keeps an existing entry on the onboarding start date', async () => {
+    await repository.saveDailyEntry(test.db, { ...input, flow: 'heavy' });
+    await repository.saveDailyEntry(test.db, { ...input, date: '2026-01-02', flow: 'none' });
+    const onboarding = { goal: 'track', typicalCycleLength: 28, typicalPeriodLength: 5 } as const;
+    await repository.completeOnboarding(test.db, { ...onboarding, lastPeriodDate: '2026-01-01' });
+    await repository.completeOnboarding(test.db, { ...onboarding, lastPeriodDate: '2026-01-02' });
+    expect(await repository.getAllEntries(test.db)).toMatchObject([
+      { date: '2026-01-01', flow: 'heavy', mood: 'calm', symptoms: [{}, {}] },
+      { date: '2026-01-02', flow: 'medium' },
+    ]);
   });
   it('contains damaged dates/enums/scales without overwriting stored values', async () => {
     await repository.saveDailyEntry(test.db, input);
