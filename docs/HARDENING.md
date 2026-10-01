@@ -2,8 +2,12 @@
 
 ## Scope and baseline
 
-The app remains Expo SDK 54 / React Native / TypeScript with local SQLite, TanStack
-Query and Zustand. No backend, account, analytics, cloud service or product feature
+> These notes were recorded during the hardening pass on Expo SDK 54. The project
+> has since moved to Expo SDK 57; the dependency audit below has not been re-run
+> for SDK 57 and must be refreshed before relying on its counts.
+
+At the time of the hardening pass, the app was Expo SDK 54 / React Native /
+TypeScript with local SQLite, TanStack Query and Zustand. No backend, account, analytics, cloud service or product feature
 was added. The initial checkout had 14 passing tests, passing typecheck/lint/format
 and a working web export. Expo Doctor initially failed on a missing expo-font peer
 and four SDK patch mismatches; these are corrected.

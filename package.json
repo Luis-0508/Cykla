@@ -2,6 +2,12 @@
   "name": "cykla",
   "version": "0.1.0",
   "private": true,
+  "description": "Offline-first cycle and period tracker built with Expo, React Native and SQLite.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Luis-0508/Cykla.git"
+  },
+  "bugs": "https://github.com/Luis-0508/Cykla/issues",
   "engines": {
     "node": ">=24.12.0 <25"
   },

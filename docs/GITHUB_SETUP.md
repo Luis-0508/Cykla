@@ -9,7 +9,12 @@ Description: **Privacy-first, offline cycle and period tracker built with Expo,
 React Native and SQLite. No accounts, backend or analytics.**
 
 Topics: `expo`, `react-native`, `typescript`, `period-tracker`, `cycle-tracker`,
-`privacy`, `offline-first`, `sqlite`.
+`menstrual-cycle`, `privacy`, `offline-first`, `local-first`, `sqlite`.
+
+Social preview: upload `docs/images/social-preview.png` (1280 × 640) under
+**Settings → General → Social preview**. Leave the website field empty until a
+project page exists. Disable unused Wiki and Projects tabs so visitors land on
+the README, issues and pull requests.
 
 ## Actions and security
 
