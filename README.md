@@ -66,7 +66,8 @@ Cykla treats them as different kinds of information:
 
 **Privacy and control**
 
-- JSON and CSV export through the system share dialog
+- JSON and CSV export through the system share dialog; restore from a JSON export
+  in the mobile app
 - Deletion of all local data, including scheduled reminders
 - Optional app lock using device authentication (native platforms)
 - Daily reminder with neutral wording that contains no health details (native platforms)

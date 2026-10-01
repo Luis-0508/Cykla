@@ -354,6 +354,29 @@ export const de = {
     checkSystem: 'Bitte prüfe die Systemeinstellungen.',
     exportFailed: 'Export fehlgeschlagen',
     exportError: 'Die Exportdatei konnte nicht erstellt werden.',
+    importTitle: 'Sicherung wiederherstellen',
+    importBody:
+      'Ein JSON-Import ersetzt nach deiner Bestätigung alle Einträge und Zyklusausschlüsse auf diesem Gerät. Exportiere vorher deine aktuellen Daten. Darstellung, Sprache, Erinnerung und App-Sperre bleiben unverändert.',
+    importButton: 'JSON-Sicherung importieren',
+    importConfirmTitle: 'Cykla-Sicherung einspielen?',
+    importConfirmBody: (count: number) =>
+      `Die Datei enthält ${count} ${plural(count, 'dokumentierten Tag', 'dokumentierte Tage')}. Alle bisherigen Einträge und Zyklusausschlüsse auf diesem Gerät werden ersetzt.`,
+    importLegacyNote: 'Diese ältere Sicherung enthält keine Zyklusausschlüsse.',
+    importConfirm: 'Daten ersetzen',
+    importDoneTitle: 'Import abgeschlossen',
+    importDoneBody: 'Deine Cykla-Daten wurden aus der Sicherung wiederhergestellt.',
+    importFailed: 'Import fehlgeschlagen',
+    importReadError: 'Die Datei konnte nicht gelesen werden. Deine Daten wurden nicht verändert.',
+    importUnchanged:
+      'Die Sicherung konnte nicht eingespielt werden. Deine bisherigen Daten wurden nicht verändert.',
+    backupError: {
+      tooLarge: 'Die Datei ist zu groß für eine Cykla-Sicherung.',
+      invalidJson: 'Die Datei enthält kein gültiges JSON.',
+      unsupported: 'Die Datei ist kein unterstützter Cykla-Export.',
+      duplicateDates: 'Die Sicherung enthält doppelte Kalendertage.',
+      inconsistentSymptoms: 'Die Sicherung enthält widersprüchliche Symptomdaten.',
+      duplicateExclusions: 'Die Sicherung enthält doppelte Zyklusausschlüsse.',
+    },
     privacyBody:
       'Cykla nutzt kein Konto, kein Werbe-SDK und kein externes Analytics-SDK. Gesundheitsdaten werden nicht übertragen. Exportdateien enthalten sensible Angaben; bewahre sie geschützt auf.',
     version: (version: string) => `Version ${version} · Open Source · AGPL-3.0-only`,

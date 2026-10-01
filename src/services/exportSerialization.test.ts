@@ -17,17 +17,18 @@ const entry: DailyEntry = {
 describe('export serialization', () => {
   it('serializes versioned JSON with recorded data and only basic settings', () => {
     const data = JSON.parse(
-      entriesToJson([entry], parseSettings({}), new Date('2026-01-02T00:00:00Z')),
+      entriesToJson([entry], parseSettings({}), ['2026-01-01'], new Date('2026-01-02T00:00:00Z')),
     );
     expect(data).toEqual({
       format: 'cykla-export',
-      version: 1,
+      version: 2,
       exportedAt: '2026-01-02T00:00:00.000Z',
       notice: expect.any(String),
       settings: { goal: 'track', typicalCycleLength: 28, typicalPeriodLength: 5 },
       entries: [entry],
+      excludedCycleStarts: ['2026-01-01'],
     });
-    expect(JSON.parse(entriesToJson([], parseSettings({}))).entries).toEqual([]);
+    expect(JSON.parse(entriesToJson([], parseSettings({}), [])).entries).toEqual([]);
   });
   it('writes the documented CSV columns, nulls, zero and symptoms', () => {
     expect(entriesToCsv([entry]).split('\n')).toEqual([
@@ -42,7 +43,7 @@ describe('export serialization', () => {
       '"Äpfel, Grüße ""ja""\r\nzweite Zeile 🌙"',
     );
     expect(
-      JSON.parse(entriesToJson([{ ...entry, notes }], parseSettings({}))).entries[0].notes,
+      JSON.parse(entriesToJson([{ ...entry, notes }], parseSettings({}), [])).entries[0].notes,
     ).toBe(notes);
   });
   it.each([

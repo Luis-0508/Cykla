@@ -345,6 +345,28 @@ export const en: Messages = {
     checkSystem: 'Please check your system settings.',
     exportFailed: 'Export failed',
     exportError: 'The export file could not be created.',
+    importTitle: 'Restore a backup',
+    importBody:
+      'After you confirm, a JSON import replaces all entries and cycle exclusions on this device. Export your current data first. Appearance, language, reminder and app lock stay unchanged.',
+    importButton: 'Import JSON backup',
+    importConfirmTitle: 'Restore Cykla backup?',
+    importConfirmBody: (count) =>
+      `The file contains ${count} ${plural(count, 'logged day', 'logged days')}. All current entries and cycle exclusions on this device will be replaced.`,
+    importLegacyNote: 'This older backup contains no cycle exclusions.',
+    importConfirm: 'Replace data',
+    importDoneTitle: 'Import complete',
+    importDoneBody: 'Your Cykla data has been restored from the backup.',
+    importFailed: 'Import failed',
+    importReadError: 'The file could not be read. Your data has not been changed.',
+    importUnchanged: 'The backup could not be restored. Your existing data has not been changed.',
+    backupError: {
+      tooLarge: 'The file is too large for a Cykla backup.',
+      invalidJson: 'The file does not contain valid JSON.',
+      unsupported: 'The file is not a supported Cykla export.',
+      duplicateDates: 'The backup contains duplicate calendar days.',
+      inconsistentSymptoms: 'The backup contains inconsistent symptom data.',
+      duplicateExclusions: 'The backup contains duplicate cycle exclusions.',
+    },
     privacyBody:
       'Cykla uses no account, no advertising SDK and no external analytics SDK. Health data is not transmitted. Export files contain sensitive information; keep them protected.',
     version: (version) => `Version ${version} · Open source · AGPL-3.0-only`,
