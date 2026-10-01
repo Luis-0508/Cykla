@@ -37,9 +37,10 @@ export type Prediction = {
   windowStart: string;
   windowEnd: string;
   expectedPeriodEnd: string;
-  fertileWindowStart: string;
-  fertileWindowEnd: string;
-  estimatedOvulation: string;
+  // Null when the data does not support a day-level estimate; never means "infertile".
+  fertileWindowStart: string | null;
+  fertileWindowEnd: string | null;
+  estimatedOvulation: string | null;
   averageCycleLength: number;
   variationDays: number;
   confidence: Confidence;

@@ -160,7 +160,7 @@ export const de = {
     nothingRecorded: 'Für diesen Tag ist noch nichts dokumentiert.',
     noteTitle: 'Hinweis zur Schätzung',
     noteBody:
-      'Der mögliche fruchtbare Zeitraum ist eine rechnerische Annahme und keine sichere Verhütungsmethode.',
+      'Fruchtbarkeit lässt sich aus Kalenderdaten nicht sicher bestimmen. Auch außerhalb markierter Tage ist eine Schwangerschaft möglich; Cykla ist keine Verhütungsmethode.',
     a11yPeriod: 'dokumentierter Periodentag',
     a11yPrediction: 'möglicher Prognosezeitraum',
     a11yFertile: 'möglicher fruchtbarer Zeitraum',
@@ -229,7 +229,7 @@ export const de = {
     midpoint: (date: string) => `Der rechnerische Mittelpunkt liegt am ${date}.`,
     startsTitle: '1. Dokumentierte Starts',
     startsBody:
-      'Wir betrachten nur Tage, die du selbst als Blutung gespeichert hast. Zusammenhängende Periodentage bilden einen Periodenbeginn.',
+      'Wir betrachten nur Tage, die du selbst als leichte bis starke Blutung gespeichert hast. Zusammenhängende Blutungstage bilden einen Periodenbeginn; ein einzelner nicht eingetragener Tag trennt sie nicht. Schmierblutungen gelten nicht als Periodenbeginn.',
     startsMetric: (count: number) =>
       plural(count, 'vollständiger, einbezogener Zyklus', 'vollständige, einbezogene Zyklen'),
     averageTitle: '2. Gewichteter Durchschnitt',
@@ -238,11 +238,13 @@ export const de = {
     averageMetric: (days: number) => `${plural(days, 'Tag', 'Tage')} als gewichtete Zykluslänge`,
     spreadTitle: '3. Unsicherheit statt exaktem Tag',
     spreadBody:
-      'Die Streuung deiner bisherigen Zykluslängen bestimmt die Breite des Zeitraums. Weniger als drei vollständige Zyklen ergeben immer niedrige Konfidenz.',
+      'Die Streuung deiner bisherigen Zykluslängen bestimmt die Breite des Zeitraums, mindestens aber ±3 Tage. Weniger als drei vollständige Zyklen ergeben immer niedrige Konfidenz und einen breiteren Zeitraum.',
     spreadMetric: 'berechnete Streuung in Tagen',
     fertileTitle: 'Möglicher fruchtbarer Zeitraum',
     fertileBody:
-      'Diese grobe Annahme zählt 14 Tage vom erwarteten Periodenbeginn zurück und markiert fünf Tage davor bis einen Tag danach. Sie eignet sich nicht zur Verhütung.',
+      'Diese grobe Annahme zählt 14 Tage vom erwarteten Periodenbeginn zurück und markiert fünf Tage davor bis einen Tag danach. Sie erscheint nur bei mindestens drei gleichmäßigen Zyklen von 24 bis 38 Tagen. Kalenderdaten können den Eisprung nicht bestimmen; auch an anderen Tagen ist eine Schwangerschaft möglich. Nicht zur Verhütung geeignet.',
+    fertileUnavailable:
+      'Aus deinen bisherigen Daten lässt sich kein Tageszeitraum sinnvoll ableiten. Das bedeutet nicht, dass Tage unfruchtbar sind.',
     notEnoughTitle: 'Noch nicht genug für eine Schätzung',
     notEnoughBody:
       'Dokumentiere mindestens einen Periodenbeginn. Die erste Schätzung verwendet zusätzlich deine typische Zykluslänge aus dem Onboarding.',
@@ -250,7 +252,7 @@ export const de = {
     disclaimerBody:
       '„Hohe Konfidenz“ bedeutet nicht Gewissheit. Schwangerschaft, Erkrankungen, Stress, Medikamente und weitere Faktoren können Zyklen verändern.',
     footer: (cycles: number) =>
-      `Modellversion 1.0 · ${cycles} ${plural(cycles, 'erkannter Zyklus', 'erkannte Zyklen')} · Berechnung ausschließlich lokal`,
+      `Modellversion 1.1 · ${cycles} ${plural(cycles, 'erkannter Zyklus', 'erkannte Zyklen')} · Berechnung ausschließlich lokal`,
   },
   dayEditor: {
     invalidDate: 'Ungültiges Datum',

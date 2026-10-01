@@ -156,7 +156,7 @@ export const en: Messages = {
     nothingRecorded: 'Nothing has been logged for this day yet.',
     noteTitle: 'About this estimate',
     noteBody:
-      'The possible fertile window is a calculated assumption and not a reliable method of contraception.',
+      'Calendar data cannot reliably determine fertility. Pregnancy is possible outside the marked days too; Cykla is not a method of contraception.',
     a11yPeriod: 'recorded period day',
     a11yPrediction: 'possible prediction window',
     a11yFertile: 'possible fertile window',
@@ -222,7 +222,7 @@ export const en: Messages = {
     midpoint: (date) => `The calculated midpoint is ${date}.`,
     startsTitle: '1. Recorded starts',
     startsBody:
-      'We only consider days you saved as bleeding yourself. Consecutive period days form one period start.',
+      'We only consider days you saved yourself as light to heavy bleeding. Consecutive bleeding days form one period start; a single unlogged day does not split them. Spotting does not count as a period start.',
     startsMetric: (count) => plural(count, 'complete cycle included', 'complete cycles included'),
     averageTitle: '2. Weighted average',
     averageBody:
@@ -230,11 +230,13 @@ export const en: Messages = {
     averageMetric: (days) => `${plural(days, 'day', 'days')} as the weighted cycle length`,
     spreadTitle: '3. A range, not an exact day',
     spreadBody:
-      'The variation in your past cycle lengths sets the width of the window. Fewer than three complete cycles always give low confidence.',
+      'The variation in your past cycle lengths sets the width of the window, but it is always at least ±3 days. Fewer than three complete cycles always give low confidence and a wider window.',
     spreadMetric: 'calculated variation in days',
     fertileTitle: 'Possible fertile window',
     fertileBody:
-      'This rough assumption counts back 14 days from the expected period start and marks five days before to one day after. It is not suitable for contraception.',
+      'This rough assumption counts back 14 days from the expected period start and marks five days before to one day after. It only appears after at least three steady cycles of 24 to 38 days. Calendar data cannot determine ovulation; pregnancy is possible on other days too. Not suitable for contraception.',
+    fertileUnavailable:
+      'Your data so far does not support a day-level window. This does not mean that any days are infertile.',
     notEnoughTitle: 'Not enough data for an estimate yet',
     notEnoughBody:
       'Log at least one period start. The first estimate also uses the typical cycle length from onboarding.',
@@ -242,7 +244,7 @@ export const en: Messages = {
     disclaimerBody:
       '“High confidence” does not mean certainty. Pregnancy, illness, stress, medication and other factors can change cycles.',
     footer: (cycles) =>
-      `Model version 1.0 · ${cycles} ${plural(cycles, 'cycle', 'cycles')} detected · calculated on this device only`,
+      `Model version 1.1 · ${cycles} ${plural(cycles, 'cycle', 'cycles')} detected · calculated on this device only`,
   },
   dayEditor: {
     invalidDate: 'Invalid date',
