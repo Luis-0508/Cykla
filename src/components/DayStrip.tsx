@@ -30,6 +30,8 @@ export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
           const value = parseDateOnly(date);
           const selected = date === selectedDate;
           const entry = entryMap.get(date);
+          // Days without a saved entry are unknown, not bleeding days.
+          const hasBleeding = entry != null && entry.flow !== 'none';
           const isToday = date === todayDate();
           return (
             <Pressable
@@ -39,7 +41,11 @@ export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
               accessibilityState={{ selected }}
               accessibilityLabel={formatDate(date)}
               accessibilityHint={
-                entry?.flow !== 'none' ? t.dayStrip.periodHint : t.dayStrip.selectHint
+                hasBleeding
+                  ? t.dayStrip.periodHint
+                  : entry
+                    ? t.dayStrip.entryHint
+                    : t.dayStrip.selectHint
               }
               style={[
                 styles.day,
@@ -65,14 +71,13 @@ export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
                 style={[
                   styles.eventDot,
                   {
-                    backgroundColor:
-                      entry?.flow !== 'none'
-                        ? selected
-                          ? theme.colors.surfaceRaised
-                          : theme.colors.period
-                        : entry
-                          ? theme.colors.accent
-                          : 'transparent',
+                    backgroundColor: hasBleeding
+                      ? selected
+                        ? theme.colors.surfaceRaised
+                        : theme.colors.period
+                      : entry
+                        ? theme.colors.accent
+                        : 'transparent',
                   },
                 ]}
               />

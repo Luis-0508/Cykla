@@ -290,6 +290,7 @@ export default function OnboardingScreen() {
               />
             )}
           />
+          <Typography muted>{t.onboarding.periodLengthNote}</Typography>
         </View>
       ) : null}
 

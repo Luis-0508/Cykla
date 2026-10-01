@@ -163,7 +163,8 @@ export const en: Messages = {
     a11ySymptoms: 'symptoms logged',
   },
   dayStrip: {
-    periodHint: 'Recorded period day',
+    periodHint: 'Bleeding recorded',
+    entryHint: 'Entry without bleeding',
     selectHint: 'Select day',
   },
   log: {
@@ -293,6 +294,8 @@ export const en: Messages = {
       'These values are only a first assumption. As you record cycles, the estimate becomes more personal.',
     cycleLength: 'Cycle length',
     periodLength: 'Period length',
+    periodLengthNote:
+      'The typical length is only a guide for the estimate. Cykla saves just the first bleeding day you chose; you log any further days yourself.',
     decrease: (label) => `Decrease ${label.toLowerCase()}`,
     increase: (label) => `Increase ${label.toLowerCase()}`,
     ready: 'Ready for your first overview',
