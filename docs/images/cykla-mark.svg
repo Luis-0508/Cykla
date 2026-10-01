@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="Cykla mark">
+  <!-- Mirrors src/components/ui/CyklaMark.tsx; colors from src/config/branding.json. -->
+  <defs>
+    <clipPath id="disc">
+      <circle cx="48" cy="48" r="48"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#disc)">
+    <circle cx="48" cy="48" r="48" fill="#5A284F"/>
+    <circle cx="66.24" cy="35.52" r="37.44" fill="#F3A97E"/>
+    <circle cx="22.56" cy="75.36" r="8.16" fill="#E9DFEC"/>
+  </g>
+</svg>

@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { addDays, formatGermanDate, parseDateOnly, todayDate } from '@/domain/dateOnly';
+import { addDays, parseDateOnly, todayDate } from '@/domain/dateOnly';
 import type { DailyEntry } from '@/domain/models';
+import { useI18n } from '@/i18n/I18nProvider';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 import { Typography } from '@/components/ui/Typography';
 
@@ -12,12 +13,13 @@ type DayStripProps = {
 
 export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
   const theme = useCyklaTheme();
+  const { t, formatDate } = useI18n();
   const days = Array.from({ length: 11 }, (_, index) => addDays(selectedDate, index - 5));
   const entryMap = new Map(entries.map((entry) => [entry.date, entry]));
   return (
     <View>
       <Typography variant="caption" muted style={styles.monthLabel}>
-        {formatGermanDate(selectedDate, { month: 'long', year: 'numeric' })}
+        {formatDate(selectedDate, { month: 'long', year: 'numeric' })}
       </Typography>
       <ScrollView
         horizontal
@@ -35,9 +37,9 @@ export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
               onPress={() => onSelect(date)}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              accessibilityLabel={formatGermanDate(date)}
+              accessibilityLabel={formatDate(date)}
               accessibilityHint={
-                entry?.flow !== 'none' ? 'Dokumentierter Periodentag' : 'Tag auswählen'
+                entry?.flow !== 'none' ? t.dayStrip.periodHint : t.dayStrip.selectHint
               }
               style={[
                 styles.day,
@@ -51,10 +53,7 @@ export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
                 variant="caption"
                 style={selected ? { color: theme.colors.surfaceRaised } : undefined}
               >
-                {new Intl.DateTimeFormat('de-DE', {
-                  timeZone: 'UTC',
-                  weekday: 'short',
-                }).format(value)}
+                {formatDate(date, { weekday: 'short' })}
               </Typography>
               <Typography
                 variant="heading"

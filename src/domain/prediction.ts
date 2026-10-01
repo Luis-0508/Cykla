@@ -84,13 +84,6 @@ export function calculatePrediction(input: PredictionInput): Prediction | null {
   if (lengths.length >= 6 && variation <= 3) confidence = 'high';
   else if (lengths.length >= 3 && variation <= 7) confidence = 'medium';
 
-  const explanation =
-    lengths.length < 3
-      ? lengths.length === 1
-        ? 'Bisher liegt 1 vollständiger Zyklus vor. Deshalb ist der Zeitraum bewusst weiter gefasst.'
-        : `Bisher liegen ${lengths.length} vollständige Zyklen vor. Deshalb ist der Zeitraum bewusst weiter gefasst.`
-      : `Die Schätzung nutzt ${lengths.length} vollständige Zyklen. Neuere Zyklen zählen etwas stärker; auffällige Abweichungen etwas schwächer.`;
-
   const estimatedOvulation = addDays(expectedStart, -14);
   return {
     expectedStart,
@@ -104,6 +97,5 @@ export function calculatePrediction(input: PredictionInput): Prediction | null {
     variationDays: Math.round(variation * 10) / 10,
     confidence,
     completeCycleCount: lengths.length,
-    explanation,
   };
 }

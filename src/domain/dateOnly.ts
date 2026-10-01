@@ -54,14 +54,19 @@ export function eachDay(start: string, end: string): string[] {
   return Array.from({ length: count + 1 }, (_, index) => addDays(start, index));
 }
 
-export function formatGermanDate(date: string, options?: Intl.DateTimeFormatOptions): string {
+// Formats a calendar date in UTC so the shown day never shifts with the time zone.
+export function formatCalendarDate(
+  date: string,
+  locale: string,
+  options?: Intl.DateTimeFormatOptions,
+): string {
   const formatOptions: Intl.DateTimeFormatOptions = options ?? {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   };
 
-  return new Intl.DateTimeFormat('de-DE', {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: 'UTC',
     ...formatOptions,
   }).format(parseDateOnly(date));

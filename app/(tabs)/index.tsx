@@ -10,30 +10,15 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { Typography } from '@/components/ui/Typography';
 import { DayStrip } from '@/components/DayStrip';
-import { differenceInDays, formatGermanDate, todayDate } from '@/domain/dateOnly';
+import { differenceInDays, todayDate } from '@/domain/dateOnly';
 import { usePrediction } from '@/hooks/usePrediction';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useUiStore } from '@/store/uiStore';
 import { spacing, useCyklaTheme } from '@/theme/theme';
 
-const flowLabels = {
-  none: 'Keine Blutung',
-  spotting: 'Schmierblutung',
-  light: 'Leichte Blutung',
-  medium: 'Mittlere Blutung',
-  heavy: 'Starke Blutung',
-} as const;
-
-const moodLabels = {
-  calm: 'Ruhig',
-  happy: 'Zufrieden',
-  sensitive: 'Sensibel',
-  irritable: 'Gereizt',
-  sad: 'Traurig',
-  stressed: 'Gestresst',
-} as const;
-
 export default function TodayScreen() {
   const theme = useCyklaTheme();
+  const { t, formatDate, formatNumber } = useI18n();
   const selectedDate = useUiStore((state) => state.selectedDate);
   const setSelectedDate = useUiStore((state) => state.setSelectedDate);
   const { entries, starts, prediction, isLoading, error } = usePrediction();
@@ -43,25 +28,27 @@ export default function TodayScreen() {
   const cycleDay = latestStart ? differenceInDays(selectedDate, latestStart) + 1 : null;
   const daysUntil = prediction ? differenceInDays(prediction.expectedStart, selectedDate) : null;
 
-  if (isLoading) return <LoadingState label="Dein Überblick wird geladen …" />;
-  if (error) return <ErrorState message="Die lokalen Daten konnten nicht gelesen werden." />;
+  if (isLoading) return <LoadingState label={t.today.loading} />;
+  if (error) return <ErrorState message={t.today.error} />;
 
   const statusTitle = hasFlow
-    ? 'Dokumentierte Periode'
+    ? t.today.recordedPeriod
     : daysUntil !== null && daysUntil >= 0
-      ? 'Nächste Periode'
-      : 'Dein Zyklus';
+      ? t.today.nextPeriod
+      : t.today.yourCycle;
   const statusValue = hasFlow
     ? cycleDay
-      ? `Tag ${cycleDay}`
-      : flowLabels[selectedEntry.flow]
+      ? t.today.cycleDay(cycleDay)
+      : t.flow[selectedEntry.flow]
     : daysUntil === 0
-      ? 'ungefähr heute'
+      ? t.today.aboutToday
       : daysUntil !== null && daysUntil > 0
-        ? `ungefähr in ${daysUntil} Tagen`
+        ? t.today.aboutInDays(daysUntil)
         : prediction
-          ? `geschätzt ab ${formatGermanDate(prediction.windowStart, { day: 'numeric', month: 'short' })}`
-          : 'Noch keine Schätzung';
+          ? t.today.estimatedFrom(
+              formatDate(prediction.windowStart, { day: 'numeric', month: 'short' }),
+            )
+          : t.today.noEstimate;
 
   return (
     <AppScreen contentContainerStyle={styles.screen}>
@@ -69,10 +56,10 @@ export default function TodayScreen() {
         <CyklaMark size={45} />
         <View style={styles.headerText}>
           <Typography variant="caption" muted>
-            {selectedDate === todayDate() ? 'HEUTE' : 'AUSGEWÄHLTER TAG'}
+            {selectedDate === todayDate() ? t.today.eyebrowToday : t.today.eyebrowSelected}
           </Typography>
           <Typography variant="heading">
-            {formatGermanDate(selectedDate, {
+            {formatDate(selectedDate, {
               weekday: 'long',
               day: 'numeric',
               month: 'long',
@@ -80,7 +67,7 @@ export default function TodayScreen() {
           </Typography>
         </View>
         <Ionicons
-          accessibilityLabel="Alle Daten sind lokal gespeichert"
+          accessibilityLabel={t.today.localDataLabel}
           name="shield-checkmark-outline"
           size={25}
           color={theme.colors.primary}
@@ -92,7 +79,7 @@ export default function TodayScreen() {
       <Card tone="primary" style={styles.statusCard}>
         <View style={styles.eyebrowRow}>
           <Typography variant="caption" style={{ color: theme.colors.primary }}>
-            {hasFlow ? 'DOKUMENTIERT' : 'SCHÄTZUNG'}
+            {hasFlow ? t.today.eyebrowRecorded : t.today.eyebrowEstimate}
           </Typography>
           {prediction && !hasFlow ? <ConfidenceBadge confidence={prediction.confidence} /> : null}
         </View>
@@ -104,14 +91,15 @@ export default function TodayScreen() {
         </View>
         <Typography muted>
           {hasFlow
-            ? 'Diese Angabe stammt aus deinem Eintrag.'
-            : (prediction?.explanation ??
-              'Sobald ein Periodenbeginn dokumentiert ist, erscheint hier eine vorsichtige Schätzung.')}
+            ? t.today.fromEntry
+            : prediction
+              ? t.estimate.explanation(prediction.completeCycleCount)
+              : t.today.noEstimateBody}
         </Typography>
         <View style={styles.actionRow}>
           <View style={styles.action}>
             <Button
-              label={selectedEntry ? 'Eintrag bearbeiten' : 'Tag eintragen'}
+              label={selectedEntry ? t.entry.edit : t.entry.logDay}
               icon="create-outline"
               onPress={() => router.push(`/day/${selectedDate}`)}
             />
@@ -119,7 +107,7 @@ export default function TodayScreen() {
           {prediction ? (
             <View style={styles.action}>
               <Button
-                label="So rechnen wir"
+                label={t.today.howWeCalculate}
                 variant="secondary"
                 onPress={() => router.push('/prediction')}
               />
@@ -129,15 +117,15 @@ export default function TodayScreen() {
       </Card>
 
       <SectionHeader
-        title={selectedDate === todayDate() ? 'Heute eintragen' : 'Diesen Tag eintragen'}
-        subtitle="Die wichtigsten Angaben sind mit wenigen Berührungen erreichbar."
+        title={selectedDate === todayDate() ? t.today.logToday : t.today.logThisDay}
+        subtitle={t.today.quickSubtitle}
       />
       <View style={styles.quickGrid}>
         {[
-          ['water-outline', 'Blutung'],
-          ['pulse-outline', 'Schmerz'],
-          ['happy-outline', 'Stimmung'],
-          ['moon-outline', 'Schlaf'],
+          ['water-outline', t.category.bleeding],
+          ['pulse-outline', t.category.pain],
+          ['happy-outline', t.category.mood],
+          ['moon-outline', t.category.sleep],
         ].map(([icon, label]) => (
           <View style={styles.quickItem} key={label}>
             <Button
@@ -150,36 +138,38 @@ export default function TodayScreen() {
         ))}
       </View>
 
-      <SectionHeader title="Dein Tagesüberblick" />
+      <SectionHeader title={t.today.overview} />
       <View style={styles.metrics}>
         <Card style={styles.metric}>
           <Ionicons name="water-outline" color={theme.colors.period} size={23} />
-          <Typography variant="label">Blutung</Typography>
+          <Typography variant="label">{t.category.bleeding}</Typography>
           <Typography muted>
-            {selectedEntry ? flowLabels[selectedEntry.flow] : 'Nicht eingetragen'}
+            {selectedEntry ? t.flow[selectedEntry.flow] : t.common.notRecorded}
           </Typography>
         </Card>
         <Card style={styles.metric}>
           <Ionicons name="happy-outline" color={theme.colors.accent} size={23} />
-          <Typography variant="label">Stimmung</Typography>
+          <Typography variant="label">{t.category.mood}</Typography>
           <Typography muted>
-            {selectedEntry?.mood ? moodLabels[selectedEntry.mood] : 'Nicht eingetragen'}
+            {selectedEntry?.mood ? t.mood[selectedEntry.mood] : t.common.notRecorded}
           </Typography>
         </Card>
         <Card style={styles.metric}>
           <Ionicons name="moon-outline" color={theme.colors.primary} size={23} />
-          <Typography variant="label">Schlaf</Typography>
+          <Typography variant="label">{t.category.sleep}</Typography>
           <Typography muted>
             {selectedEntry?.sleepHours
-              ? `${selectedEntry.sleepHours} Stunden`
-              : 'Nicht eingetragen'}
+              ? t.common.hours(formatNumber(selectedEntry.sleepHours))
+              : t.common.notRecorded}
           </Typography>
         </Card>
         <Card style={styles.metric}>
           <Ionicons name="pulse-outline" color={theme.colors.danger} size={23} />
-          <Typography variant="label">Schmerz</Typography>
+          <Typography variant="label">{t.category.pain}</Typography>
           <Typography muted>
-            {selectedEntry?.pain != null ? `${selectedEntry.pain} von 10` : 'Nicht eingetragen'}
+            {selectedEntry?.pain != null
+              ? t.today.painValue(selectedEntry.pain)
+              : t.common.notRecorded}
           </Typography>
         </Card>
       </View>
@@ -187,11 +177,10 @@ export default function TodayScreen() {
       <Card tone="accent">
         <View style={styles.infoIcon}>
           <Ionicons name="information-circle-outline" color={theme.colors.primary} size={26} />
-          <Typography variant="heading">Einträge sind Beobachtungen</Typography>
+          <Typography variant="heading">{t.today.observationsTitle}</Typography>
         </View>
         <Typography muted style={styles.infoCopy}>
-          Schwankungen können viele Gründe haben. Cykla zeigt Muster, stellt aber keine Diagnose.
-          Bei starken oder anhaltenden Beschwerden hole bitte medizinischen Rat ein.
+          {t.today.observationsBody}
         </Typography>
       </Card>
     </AppScreen>

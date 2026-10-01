@@ -1,15 +1,17 @@
 import { StyleSheet, View } from 'react-native';
 import { BRAND } from '@/config/branding';
+import { useI18n } from '@/i18n/I18nProvider';
 
 type CyklaMarkProps = {
   size?: number;
 };
 
 export function CyklaMark({ size = 48 }: CyklaMarkProps) {
+  const { t } = useI18n();
   return (
     <View
       accessibilityRole="image"
-      accessibilityLabel="Abstrakte Cykla-Mondsichel"
+      accessibilityLabel={t.brand.markLabel}
       style={[
         styles.outer,
         {
