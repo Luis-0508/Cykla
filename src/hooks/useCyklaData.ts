@@ -12,10 +12,10 @@ import {
   saveDailyEntry,
   setSetting,
   toggleCycleExclusion,
+  type BackupData,
   type OnboardingInput,
   type SaveDailyEntryInput,
 } from '@/database/repository';
-import type { BackupData } from '@/domain/models';
 
 export function useSettings() {
   const db = useSQLiteContext();

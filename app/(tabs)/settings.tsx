@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Typography } from '@/components/ui/Typography';
-import type { BackupData } from '@/domain/models';
+import type { BackupData } from '@/database/repository';
 import {
   useEntries,
   useExcludedCycles,

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { dateSchema } from '@/database/validation';
-import type { BackupData } from '@/domain/models';
+import type { BackupData } from '@/database/repository';
 
 // Bounds an untrusted file before parsing; real exports are far smaller.
 export const MAX_BACKUP_BYTES = 10 * 1024 * 1024;

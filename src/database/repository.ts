@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { addDays } from '@/domain/dateOnly';
-import type { AppSettings, BackupData, DailyEntry, Goal, SymptomEntry } from '@/domain/models';
+import type { AppSettings, DailyEntry, Goal, SymptomEntry } from '@/domain/models';
 
 import {
   dailyRowSchema,
@@ -200,6 +200,14 @@ export async function deleteAllLocalData(db: SQLiteDatabase): Promise<void> {
     await db.runAsync('DELETE FROM app_settings');
   });
 }
+
+/** Validated contents of a JSON export, ready to restore. */
+export type BackupData = {
+  version: 1 | 2;
+  settings: Pick<AppSettings, 'goal' | 'typicalCycleLength' | 'typicalPeriodLength'>;
+  entries: DailyEntry[];
+  excludedCycleStarts: string[];
+};
 
 /**
  * Replaces all recorded data with a validated backup in one transaction: if any

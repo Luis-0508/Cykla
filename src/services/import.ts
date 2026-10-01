@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import { File } from 'expo-file-system';
-import type { BackupData } from '@/domain/models';
+import type { BackupData } from '@/database/repository';
 import { BackupError, MAX_BACKUP_BYTES, parseBackup } from './backup';
 
 /**

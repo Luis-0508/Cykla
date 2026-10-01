@@ -25,14 +25,6 @@ export type SymptomEntry = {
   intensity: number;
 };
 
-/** Validated contents of a JSON export, ready to restore. */
-export type BackupData = {
-  version: 1 | 2;
-  settings: Pick<AppSettings, 'goal' | 'typicalCycleLength' | 'typicalPeriodLength'>;
-  entries: DailyEntry[];
-  excludedCycleStarts: string[];
-};
-
 export type Cycle = {
   startDate: string;
   nextStartDate: string | null;
