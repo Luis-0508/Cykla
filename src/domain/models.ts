@@ -1,3 +1,5 @@
+import type { LanguagePreference } from '@/i18n/i18n';
+
 export type FlowIntensity = 'none' | 'spotting' | 'light' | 'medium' | 'heavy';
 export type Mood = 'calm' | 'happy' | 'sensitive' | 'irritable' | 'sad' | 'stressed';
 export type Confidence = 'low' | 'medium' | 'high';
@@ -42,7 +44,6 @@ export type Prediction = {
   variationDays: number;
   confidence: Confidence;
   completeCycleCount: number;
-  explanation: string;
 };
 
 export type AppSettings = {
@@ -51,5 +52,6 @@ export type AppSettings = {
   typicalCycleLength: number;
   typicalPeriodLength: number;
   theme: 'system' | 'light' | 'dark';
+  language: LanguagePreference;
   dailyReminderEnabled: boolean;
 };

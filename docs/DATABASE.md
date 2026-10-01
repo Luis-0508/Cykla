@@ -25,6 +25,7 @@ relationships; they do not replace testing the native Expo and web WASM adapters
 
 `validation.ts` validates stored settings and read boundaries with Zod. Invalid
 settings receive conservative defaults (cycle 28 days, period 5 days, theme system,
-goal track, booleans false). Invalid calendar dates are omitted from domain/UI
+language system, goal track, booleans false). Databases created before the
+`language` key existed read it as system, so no migration is needed. Invalid calendar dates are omitted from domain/UI
 reads; invalid flow becomes none, invalid mood/scales become null. Stored records
 are not overwritten on reads. Unknown nonempty symptom codes are preserved.

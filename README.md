@@ -21,7 +21,7 @@
   <img src="docs/images/hero-light.png" alt="Three Cykla screens: the Today overview with the next period estimate, the monthly calendar separating recorded period days from the estimated fertile window, and the explanation of how the estimate is calculated">
 </picture>
 
-<p align="center"><sub>Captured from the web development preview with synthetic data. The app interface is currently German.</sub></p>
+<p align="center"><sub>Captured from the web development preview with synthetic data. Screenshots show the English interface; German is also available.</sub></p>
 
 > [!IMPORTANT]
 > Cykla records data and calculates estimates. It does not diagnose, is not a
@@ -47,7 +47,7 @@ Cykla treats them as different kinds of information:
 
 **Tracking**
 
-- Short German onboarding: goal, most recent period, typical cycle and bleeding length
+- Short onboarding: goal, most recent period, typical cycle and bleeding length
 - Daily editor for bleeding, pain (0–10), mood, energy, sleep duration and quality,
   eight body symptoms and a free-text note
 - “Today” overview with a scrollable day strip and the current estimate
@@ -71,6 +71,7 @@ Cykla treats them as different kinds of information:
 - Optional app lock using device authentication (native platforms)
 - Daily reminder with neutral wording that contains no health details (native platforms)
 - Light, dark and system appearance
+- German and English interface that follows the device language, with a manual override
 
 ## Screens
 
@@ -150,7 +151,7 @@ src/
   database/             migrations, schema registry, repository, read validation
   domain/               pure date, cycle, statistics and prediction logic
   hooks/                TanStack Query bridge between UI and SQLite
-  i18n/                 German text catalog, split by area
+  i18n/                 typed German and English catalogs, language detection
   services/             export, local reminders, app lock lifecycle
   store/                transient UI state (Zustand)
   theme/                light and dark design tokens
@@ -234,15 +235,16 @@ Cykla is an early MVP (version 0.1.0). Open items before a public release includ
 export cleanup on iOS and Android, the remaining dependency audit findings, and
 the privacy and legal reviews listed in [docs/HARDENING.md](docs/HARDENING.md).
 
-German copy is being moved into the text catalog step by step; an English
-interface is not implemented yet.
+The interface is available in German and English. It follows the device
+language by default; a manual choice under “You” overrides it. Export files keep
+their German column names for format stability.
 
 ## Roadmap
 
 Planned work is tracked in [ROADMAP.md](ROADMAP.md). In short:
 
 - **0.2 – Hardening:** encrypted local database and backup strategy, component and
-  end-to-end tests, screen-reader and Dynamic Type review, English translation
+  end-to-end tests, screen-reader and Dynamic Type review
 - **0.3 – Extended tracking:** basal body temperature and test results,
   configurable symptoms, note search
 - **Not planned:** advertising, selling data, paywalls for export or deletion,

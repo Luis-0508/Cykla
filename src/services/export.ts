@@ -1,4 +1,3 @@
-import { de } from '@/i18n/de';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -6,7 +5,12 @@ import type { AppSettings, DailyEntry } from '@/domain/models';
 
 import { entriesToCsv, entriesToJson } from './exportSerialization';
 
-async function saveAndShare(name: string, content: string, mimeType: string): Promise<string> {
+async function saveAndShare(
+  name: string,
+  content: string,
+  mimeType: string,
+  dialogTitle?: string,
+): Promise<string> {
   if (Platform.OS === 'web') {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
@@ -32,7 +36,7 @@ async function saveAndShare(name: string, content: string, mimeType: string): Pr
     await FileSystem.makeDirectoryAsync(folder, { intermediates: true });
     await FileSystem.writeAsStringAsync(uri, content, { encoding: FileSystem.EncodingType.UTF8 });
     shareStarted = true;
-    await Sharing.shareAsync(uri, { mimeType, dialogTitle: de.settings.shareExport });
+    await Sharing.shareAsync(uri, { mimeType, dialogTitle });
     return name;
   } finally {
     // Android's activity result does not mean the recipient has finished reading.
@@ -45,19 +49,25 @@ async function saveAndShare(name: string, content: string, mimeType: string): Pr
   }
 }
 
-export async function exportJson(entries: DailyEntry[], settings: AppSettings): Promise<string> {
+export async function exportJson(
+  entries: DailyEntry[],
+  settings: AppSettings,
+  dialogTitle?: string,
+): Promise<string> {
   return saveAndShare(
     `cykla-export-${new Date().toISOString().slice(0, 10)}.json`,
     entriesToJson(entries, settings),
     'application/json',
+    dialogTitle,
   );
 }
 
-export async function exportCsv(entries: DailyEntry[]): Promise<string> {
+export async function exportCsv(entries: DailyEntry[], dialogTitle?: string): Promise<string> {
   return saveAndShare(
     `cykla-export-${new Date().toISOString().slice(0, 10)}.csv`,
     entriesToCsv(entries),
     'text/csv',
+    dialogTitle,
   );
 }
 

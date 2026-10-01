@@ -101,6 +101,10 @@ describe('repository with SQLite', () => {
     await repository.setSetting(test.db, 'theme', 'dark');
     await repository.setSetting(test.db, 'theme', 'light');
     expect((await repository.getSettings(test.db)).theme).toBe('light');
+    // Databases created before the language setting existed read as 'system'.
+    expect((await repository.getSettings(test.db)).language).toBe('system');
+    await repository.setSetting(test.db, 'language', 'en');
+    expect((await repository.getSettings(test.db)).language).toBe('en');
   });
   it('contains damaged dates/enums/scales without overwriting stored values', async () => {
     await repository.saveDailyEntry(test.db, input);
@@ -130,6 +134,7 @@ describe('stored settings boundaries', () => {
       parseSettings({
         goal: 'unsure',
         theme: 'dark',
+        language: 'de',
         typical_cycle_length: '60',
         typical_period_length: '10',
         onboarding_completed: 'true',
@@ -138,6 +143,7 @@ describe('stored settings boundaries', () => {
     ).toEqual({
       goal: 'unsure',
       theme: 'dark',
+      language: 'de',
       typicalCycleLength: 60,
       typicalPeriodLength: 10,
       onboardingCompleted: true,
@@ -157,6 +163,7 @@ describe('stored settings boundaries', () => {
       parseSettings({
         goal: 'future',
         theme: 'blue',
+        language: 'fr',
         onboarding_completed: '1',
         daily_reminder_enabled: 'TRUE',
       }),

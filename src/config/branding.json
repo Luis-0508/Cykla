@@ -1,6 +1,5 @@
 {
   "name": "Cykla",
-  "appTitle": "Cykla – Zyklusbegleiter",
   "slug": "cykla",
   "scheme": "cykla",
   "bundleId": "org.cykla.app",

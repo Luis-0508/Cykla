@@ -8,26 +8,28 @@ import { Card } from '@/components/ui/Card';
 import { Typography } from '@/components/ui/Typography';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { MonthCalendar } from '@/components/MonthCalendar';
-import { addMonths, formatGermanDate, startOfMonth, todayDate } from '@/domain/dateOnly';
+import { addMonths, startOfMonth, todayDate } from '@/domain/dateOnly';
 import { usePrediction } from '@/hooks/usePrediction';
+import { useI18n } from '@/i18n/I18nProvider';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 
 export default function CalendarScreen() {
   const theme = useCyklaTheme();
+  const { t, formatDate } = useI18n();
   const [month, setMonth] = useState(startOfMonth(todayDate()));
   const [selectedDate, setSelectedDate] = useState(todayDate());
   const { entries, prediction, isLoading, error } = usePrediction();
   const entry = entries.find((value) => value.date === selectedDate);
 
-  if (isLoading) return <LoadingState label="Kalender wird geladen …" />;
-  if (error) return <ErrorState message="Der lokale Kalender konnte nicht gelesen werden." />;
+  if (isLoading) return <LoadingState label={t.calendar.loading} />;
+  if (error) return <ErrorState message={t.calendar.error} />;
 
   return (
     <AppScreen contentContainerStyle={styles.screen}>
       <View style={styles.titleRow}>
         <View style={styles.titleText}>
-          <Typography variant="title">Kalender</Typography>
-          <Typography muted>Dokumentiertes und Berechnetes bleiben sichtbar getrennt.</Typography>
+          <Typography variant="title">{t.calendar.title}</Typography>
+          <Typography muted>{t.calendar.subtitle}</Typography>
         </View>
         <Ionicons name="calendar-outline" size={30} color={theme.colors.primary} />
       </View>
@@ -35,20 +37,20 @@ export default function CalendarScreen() {
       <Card style={styles.calendarCard}>
         <View style={styles.monthHeader}>
           <Button
-            label="Zurück"
+            label={t.calendar.previous}
             variant="ghost"
             icon="chevron-back"
-            accessibilityHint="Vorherigen Monat anzeigen"
+            accessibilityHint={t.calendar.previousMonth}
             onPress={() => setMonth(addMonths(month, -1))}
           />
           <Typography variant="heading" style={styles.monthName}>
-            {formatGermanDate(month, { month: 'long', year: 'numeric' })}
+            {formatDate(month, { month: 'long', year: 'numeric' })}
           </Typography>
           <Button
-            label="Weiter"
+            label={t.calendar.next}
             variant="ghost"
             icon="chevron-forward"
-            accessibilityHint="Nächsten Monat anzeigen"
+            accessibilityHint={t.calendar.nextMonth}
             onPress={() => setMonth(addMonths(month, 1))}
           />
         </View>
@@ -64,7 +66,7 @@ export default function CalendarScreen() {
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: theme.colors.period }]} />
-          <Typography variant="caption">Dokumentierte Periode</Typography>
+          <Typography variant="caption">{t.calendar.legendPeriod}</Typography>
         </View>
         <View style={styles.legendItem}>
           <View
@@ -73,15 +75,15 @@ export default function CalendarScreen() {
               { borderColor: theme.colors.period, borderWidth: 2, borderStyle: 'dashed' },
             ]}
           />
-          <Typography variant="caption">Prognosezeitraum</Typography>
+          <Typography variant="caption">{t.calendar.legendPrediction}</Typography>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: theme.colors.fertileSoft }]} />
-          <Typography variant="caption">Möglicher fruchtbarer Zeitraum</Typography>
+          <Typography variant="caption">{t.calendar.legendFertile}</Typography>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.tinyDot, { backgroundColor: theme.colors.accent }]} />
-          <Typography variant="caption">Symptom dokumentiert</Typography>
+          <Typography variant="caption">{t.calendar.legendSymptom}</Typography>
         </View>
       </View>
 
@@ -92,30 +94,30 @@ export default function CalendarScreen() {
         <View style={styles.dayCardHeader}>
           <View>
             <Typography variant="caption" muted>
-              AUSGEWÄHLTER TAG
+              {t.calendar.selectedDay}
             </Typography>
-            <Typography variant="heading">{formatGermanDate(selectedDate)}</Typography>
+            <Typography variant="heading">{formatDate(selectedDate)}</Typography>
           </View>
           {entry ? (
             <View style={[styles.savedBadge, { backgroundColor: theme.colors.accentSoft }]}>
-              <Typography variant="caption">Eintrag vorhanden</Typography>
+              <Typography variant="caption">{t.calendar.hasEntry}</Typography>
             </View>
           ) : null}
         </View>
         <Typography muted>
           {entry
             ? [
-                entry.flow !== 'none' ? 'Blutung' : null,
-                entry.mood ? 'Stimmung' : null,
-                entry.pain != null ? 'Schmerz' : null,
-                entry.symptoms.length ? `${entry.symptoms.length} Symptome` : null,
+                entry.flow !== 'none' ? t.category.bleeding : null,
+                entry.mood ? t.category.mood : null,
+                entry.pain != null ? t.category.pain : null,
+                entry.symptoms.length ? t.calendar.symptomCount(entry.symptoms.length) : null,
               ]
                 .filter(Boolean)
-                .join(' · ') || 'Notiz oder Tageswert dokumentiert'
-            : 'Für diesen Tag ist noch nichts dokumentiert.'}
+                .join(' · ') || t.calendar.otherRecorded
+            : t.calendar.nothingRecorded}
         </Typography>
         <Button
-          label={entry ? 'Eintrag öffnen' : 'Tag eintragen'}
+          label={entry ? t.entry.open : t.entry.logDay}
           icon="create-outline"
           onPress={() => router.push(`/day/${selectedDate}`)}
         />
@@ -123,10 +125,9 @@ export default function CalendarScreen() {
 
       {prediction ? (
         <Card tone="fertile">
-          <Typography variant="label">Hinweis zur Schätzung</Typography>
+          <Typography variant="label">{t.calendar.noteTitle}</Typography>
           <Typography muted style={styles.note}>
-            Der mögliche fruchtbare Zeitraum ist eine rechnerische Annahme und keine sichere
-            Verhütungsmethode.
+            {t.calendar.noteBody}
           </Typography>
         </Card>
       ) : null}
