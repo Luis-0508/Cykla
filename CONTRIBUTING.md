@@ -70,6 +70,8 @@ When a screen changes noticeably, refresh the affected images:
 
 - Capture the real app, not mockups. The web preview (`npm run web`) at a
   390 × 844 viewport with a device pixel ratio of 3 matches the existing images.
+- Capture the English interface (browser language `en-US`); single screens use the
+  light theme.
 - Use a fresh browser profile and synthetic data only. There is no demo-data
   mode, so complete onboarding and enter invented period days in the daily editor.
 - Provide matching light and dark versions of the hero composites.

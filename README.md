@@ -21,7 +21,7 @@
   <img src="docs/images/hero-light.png" alt="Three Cykla screens: the Today overview with the next period estimate, the monthly calendar separating recorded period days from the estimated fertile window, and the explanation of how the estimate is calculated">
 </picture>
 
-<p align="center"><sub>Captured from the web development preview with synthetic data. Screenshots show the German interface; English is also available.</sub></p>
+<p align="center"><sub>Captured from the web development preview with synthetic data. Screenshots show the English interface; German is also available.</sub></p>
 
 > [!IMPORTANT]
 > Cykla records data and calculates estimates. It does not diagnose, is not a
