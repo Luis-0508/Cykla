@@ -28,7 +28,7 @@ is required for solo development. Do not commit local exports, databases, secret
 or `.env` files. See [GitHub setup](docs/GITHUB_SETUP.md).
 
 Use Node 24.12+ within Node 24; CI uses `.node-version`. Keep Expo/native packages
-compatible with SDK 54 and run Doctor after updates. Add migrations rather than
+compatible with Expo SDK 57 and run Doctor after updates. Add migrations rather than
 editing released schema steps. Add user-visible copy to the existing German
 catalog with meaningful keys and parameterized messages; do not add an i18n library.
 
@@ -56,3 +56,21 @@ Describe:
 
 Use only synthetic data in screenshots and tests. Medical statements require expert
 review before publication.
+
+## Documentation Screenshots
+
+README images live in `docs/images/`: the hero composites (`hero-light.png`,
+`hero-dark.png`), single screens in `docs/images/screenshots/`, and the
+`cykla-mark.svg` logo, which mirrors `src/components/ui/CyklaMark.tsx`.
+
+When a screen changes noticeably, refresh the affected images:
+
+- Capture the real app, not mockups. The web preview (`npm run web`) at a
+  390 × 844 viewport with a device pixel ratio of 3 matches the existing images.
+- Use a fresh browser profile and synthetic data only. There is no demo-data
+  mode, so complete onboarding and enter invented period days in the daily editor.
+- Provide matching light and dark versions of the hero composites.
+- Keep files small: downscale single screens to 585 px wide and save PNGs with a
+  reduced palette. Check that small accents such as the confidence badge keep
+  their color.
+- Update the image `alt` text in `README.md` if the content changes.
