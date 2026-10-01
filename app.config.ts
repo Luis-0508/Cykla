@@ -3,6 +3,9 @@ import type { ExpoConfig } from 'expo/config';
 import BRAND from './src/config/branding.json';
 
 const faceIdPermission = `${BRAND.name} kann Face ID verwenden, um deine lokalen Einträge zu schützen.`;
+const faceIdPermissionEn = `${BRAND.name} can use Face ID to protect your local entries.`;
+// Keep in sync with LANGUAGES in src/i18n/i18n.ts.
+const supportedLocales = ['de', 'en'];
 
 const config: ExpoConfig = {
   name: BRAND.name,
@@ -11,6 +14,11 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   scheme: BRAND.scheme,
   userInterfaceStyle: 'automatic',
+  // Localized native strings shown by iOS outside the JavaScript UI.
+  locales: {
+    de: { ios: { NSFaceIDUsageDescription: faceIdPermission } },
+    en: { ios: { NSFaceIDUsageDescription: faceIdPermissionEn } },
+  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: BRAND.bundleId,
@@ -40,6 +48,8 @@ const config: ExpoConfig = {
       },
     ],
     'expo-font',
+    // Declares the app languages for the per-app language setting on iOS and Android 13+.
+    ['expo-localization', { supportedLocales }],
     'expo-sqlite',
     'expo-secure-store',
     'expo-sharing',

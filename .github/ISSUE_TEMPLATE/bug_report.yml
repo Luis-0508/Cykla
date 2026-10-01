@@ -1,5 +1,6 @@
 name: Bug report
 description: Report a reproducible problem using synthetic data only.
+labels: [bug]
 body:
   - type: markdown
     attributes:
@@ -16,6 +17,16 @@ body:
     attributes:
       label: Steps to reproduce
       description: Use synthetic examples only.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - iOS
+        - Android
+        - Web preview
     validations:
       required: true
   - type: input

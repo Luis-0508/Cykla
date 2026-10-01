@@ -8,27 +8,29 @@ import { ConfidenceBadge } from '@/components/ui/ConfidenceBadge';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { Typography } from '@/components/ui/Typography';
 import { calculateCycleStats } from '@/domain/statistics';
-import { formatGermanDate } from '@/domain/dateOnly';
 import { useToggleCycleExclusion } from '@/hooks/useCyklaData';
 import { usePrediction } from '@/hooks/usePrediction';
+import { useI18n } from '@/i18n/I18nProvider';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 
 export default function InsightsScreen() {
   const theme = useCyklaTheme();
+  const { t, formatDate } = useI18n();
+  const shortDate = (date: string) => formatDate(date, { day: 'numeric', month: 'short' });
   const { entries, cycles, prediction, isLoading, error } = usePrediction();
   const toggleExclusion = useToggleCycleExclusion();
   const stats = calculateCycleStats(cycles, entries);
   const maximumLength = Math.max(1, ...cycles.map((cycle) => cycle.lengthDays ?? 0));
 
-  if (isLoading) return <LoadingState label="Trends werden berechnet …" />;
-  if (error) return <ErrorState message="Die lokalen Einträge konnten nicht ausgewertet werden." />;
+  if (isLoading) return <LoadingState label={t.insights.loading} />;
+  if (error) return <ErrorState message={t.insights.error} />;
 
   return (
     <AppScreen contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Typography variant="title">Deine Trends</Typography>
-          <Typography muted>Nur dokumentierte Daten fließen in diese Übersicht ein.</Typography>
+          <Typography variant="title">{t.insights.title}</Typography>
+          <Typography muted>{t.insights.subtitle}</Typography>
         </View>
         <Ionicons name="analytics-outline" size={31} color={theme.colors.primary} />
       </View>
@@ -36,33 +38,32 @@ export default function InsightsScreen() {
       <View style={styles.statsGrid}>
         <Card style={styles.statCard}>
           <Typography variant="display">{stats.averageLength ?? '–'}</Typography>
-          <Typography variant="label">Tage im Durchschnitt</Typography>
+          <Typography variant="label">{t.insights.averageLabel}</Typography>
           <Typography variant="caption" muted>
-            aus {stats.usableCycles}{' '}
-            {stats.usableCycles === 1 ? 'vollständigem Zyklus' : 'vollständigen Zyklen'}
+            {t.insights.fromCycles(stats.usableCycles)}
           </Typography>
         </Card>
         <Card tone="accent" style={styles.statCard}>
           <Typography variant="display">
             {stats.shortest && stats.longest ? `${stats.shortest}–${stats.longest}` : '–'}
           </Typography>
-          <Typography variant="label">Persönliche Spanne</Typography>
+          <Typography variant="label">{t.insights.rangeLabel}</Typography>
           <Typography variant="caption" muted>
-            kürzester bis längster Zyklus
+            {t.insights.rangeCaption}
           </Typography>
         </Card>
         <Card style={styles.statCard}>
           <Typography variant="display">{stats.documentedDays}</Typography>
-          <Typography variant="label">Dokumentierte Tage</Typography>
+          <Typography variant="label">{t.insights.documentedDays}</Typography>
           <Typography variant="caption" muted>
-            insgesamt auf diesem Gerät
+            {t.insights.documentedCaption}
           </Typography>
         </Card>
         <Card tone="fertile" style={styles.statCard}>
           <Typography variant="display">{stats.symptomDays}</Typography>
-          <Typography variant="label">Tage mit Symptomen</Typography>
+          <Typography variant="label">{t.insights.symptomDays}</Typography>
           <Typography variant="caption" muted>
-            keine medizinische Bewertung
+            {t.insights.symptomCaption}
           </Typography>
         </Card>
       </View>
@@ -70,39 +71,35 @@ export default function InsightsScreen() {
       {prediction ? (
         <Card tone="primary" style={styles.predictionCard}>
           <View style={styles.predictionHeader}>
-            <Typography variant="heading">Aktuelle Prognose</Typography>
+            <Typography variant="heading">{t.insights.currentPrediction}</Typography>
             <ConfidenceBadge confidence={prediction.confidence} />
           </View>
           <Typography variant="title">
-            {formatGermanDate(prediction.windowStart, { day: 'numeric', month: 'short' })} –{' '}
-            {formatGermanDate(prediction.windowEnd, { day: 'numeric', month: 'short' })}
+            {t.estimate.range(shortDate(prediction.windowStart), shortDate(prediction.windowEnd))}
           </Typography>
-          <Typography muted>{prediction.explanation}</Typography>
+          <Typography muted>{t.estimate.explanation(prediction.completeCycleCount)}</Typography>
           <Button
-            label="Berechnung verstehen"
+            label={t.insights.understand}
             variant="secondary"
             onPress={() => router.push('/prediction')}
           />
         </Card>
       ) : (
         <Card>
-          <Typography variant="heading">Noch keine Prognose</Typography>
+          <Typography variant="heading">{t.insights.noPrediction}</Typography>
           <Typography muted style={styles.cardCopy}>
-            Trage einen Periodenbeginn ein. Mehrere vollständige Zyklen verbessern die
-            Konfidenzanzeige.
+            {t.insights.noPredictionBody}
           </Typography>
         </Card>
       )}
 
       <View style={styles.sectionHead}>
-        <Typography variant="heading">Zyklusverlauf</Typography>
-        <Typography muted>
-          Ausgeschlossene Zyklen bleiben erhalten, zählen aber nicht zur Prognose.
-        </Typography>
+        <Typography variant="heading">{t.insights.history}</Typography>
+        <Typography muted>{t.insights.historySubtitle}</Typography>
       </View>
       {cycles.length === 0 ? (
         <Card>
-          <Typography muted>Noch kein Zyklusverlauf vorhanden.</Typography>
+          <Typography muted>{t.insights.noHistory}</Typography>
         </Card>
       ) : (
         <View style={styles.cycleList}>
@@ -111,15 +108,17 @@ export default function InsightsScreen() {
               <View style={styles.cycleHeader}>
                 <View>
                   <Typography variant="label">
-                    Start {formatGermanDate(cycle.startDate, { day: 'numeric', month: 'short' })}
+                    {t.insights.cycleStart(shortDate(cycle.startDate))}
                   </Typography>
                   <Typography variant="caption" muted>
-                    {cycle.lengthDays ? `${cycle.lengthDays} Tage` : 'Aktueller Zyklus'}
+                    {cycle.lengthDays
+                      ? t.common.dayCount(cycle.lengthDays)
+                      : t.insights.currentCycle}
                   </Typography>
                 </View>
                 {cycle.lengthDays ? (
                   <Button
-                    label={cycle.excluded ? 'Einbeziehen' : 'Ausschließen'}
+                    label={cycle.excluded ? t.insights.include : t.insights.exclude}
                     variant="ghost"
                     onPress={() =>
                       toggleExclusion.mutate({
@@ -132,7 +131,7 @@ export default function InsightsScreen() {
               </View>
               {cycle.lengthDays ? (
                 <View
-                  accessibilityLabel={`Zykluslänge ${cycle.lengthDays} Tage`}
+                  accessibilityLabel={t.insights.cycleLengthLabel(cycle.lengthDays)}
                   style={[styles.barTrack, { backgroundColor: theme.colors.primarySoft }]}
                 >
                   <View
@@ -154,10 +153,9 @@ export default function InsightsScreen() {
       )}
 
       <Card tone="accent">
-        <Typography variant="label">Keine Diagnose</Typography>
+        <Typography variant="label">{t.insights.noDiagnosis}</Typography>
         <Typography muted style={styles.cardCopy}>
-          Veränderungen können normal sein. Bei starken, neuen oder anhaltenden Beschwerden solltest
-          du medizinischen Rat einholen.
+          {t.insights.noDiagnosisBody}
         </Typography>
       </Card>
     </AppScreen>

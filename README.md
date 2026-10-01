@@ -1,194 +1,265 @@
-# Cykla
+<p align="center">
+  <img src="docs/images/cykla-mark.svg" width="72" height="72" alt="Cykla mark: a plum disc with an apricot crescent">
+</p>
 
-Cykla is a free, open-source, offline-first cycle, period, and health tracker for
-iOS and Android. The MVP works without an account or backend. Health data remains
-in a local SQLite database.
+<h1 align="center">Cykla</h1>
 
-> Cykla records data and provides estimates. The app does not provide diagnoses,
-> is not a reliable method of contraception, and does not replace medical advice.
+<p align="center">
+  An offline-first cycle and period tracker that keeps what you record apart from what it estimates.
+</p>
 
-## MVP Features
+<p align="center">
+  <a href="#features">Features</a>&nbsp;&nbsp;&nbsp;
+  <a href="#privacy-model">Privacy</a>&nbsp;&nbsp;&nbsp;
+  <a href="#getting-started">Getting started</a>&nbsp;&nbsp;&nbsp;
+  <a href="#architecture">Architecture</a>&nbsp;&nbsp;&nbsp;
+  <a href="ROADMAP.md">Roadmap</a>
+</p>
 
-- German onboarding covering the user's goal, most recent period, and typical cycle
-  and bleeding duration
-- “Today” home screen with recorded status and cautiously worded predictions
-- monthly calendar with clearly separated recorded and calculated markers
-- daily editor for bleeding, pain, mood, energy, sleep, symptoms, and notes
-- rule-based local period prediction with a date range, confidence level, and explanation
-- basic cycle statistics and the ability to manually exclude individual cycles
-- local daily reminder with neutral wording
-- optional app lock using device security
-- light, dark, and system appearance modes
-- JSON and CSV exports, plus complete local data deletion
-- no advertising, external analytics SDK, account, or cloud service
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
+  <img src="docs/images/hero-light.png" alt="Three Cykla screens: the Today overview with the next period estimate, the monthly calendar separating recorded period days from the estimated fertile window, and the explanation of how the estimate is calculated">
+</picture>
 
-## Installation
+<p align="center"><sub>Captured from the web development preview with synthetic data. Screenshots show the English interface; German is also available.</sub></p>
+
+> [!IMPORTANT]
+> Cykla records data and calculates estimates. It does not diagnose, is not a
+> reliable method of contraception, and does not replace medical advice.
+
+## Why Cykla
+
+Most cycle trackers blend what you entered with what an algorithm guessed.
+Cykla treats them as different kinds of information:
+
+- **Recorded and estimated data stay separate.** Period days, symptoms and notes
+  are stored as entries. Expected period start, prediction window, confidence,
+  estimated ovulation and possible fertile window are calculated at runtime and
+  never stored or exported as if you had entered them. The calendar draws them
+  differently.
+- **Every estimate explains itself.** Predictions are a date range with a
+  confidence level, not a single day. A dedicated screen shows how many cycles
+  were used, the weighted cycle length and the spread behind the window.
+- **Your data stays on the device.** No account, backend, cloud sync, advertising
+  or external analytics SDK. Health data lives in a local SQLite database.
+
+## Features
+
+**Tracking**
+
+- Short onboarding: goal, most recent period, typical cycle and bleeding length
+- Daily editor for bleeding, pain (0–10), mood, energy, sleep duration and quality,
+  eight body symptoms and a free-text note
+- “Today” overview with a scrollable day strip and the current estimate
+
+**Calendar and estimates**
+
+- Monthly calendar with distinct markers for recorded period days, the prediction
+  window, the possible fertile window and days with symptoms
+- Rule-based local prediction with a date range, confidence level and explanation
+- Cycle history with the option to exclude individual cycles from the prediction
+
+**Trends**
+
+- Average cycle length, personal range, recorded days and symptom days, based only
+  on recorded data
+
+**Privacy and control**
+
+- JSON and CSV export through the system share dialog
+- Deletion of all local data, including scheduled reminders
+- Optional app lock using device authentication (native platforms)
+- Daily reminder with neutral wording that contains no health details (native platforms)
+- Light, dark and system appearance
+- German and English interface that follows the device language, with a manual override
+
+## Screens
+
+<table>
+  <tr>
+    <td align="center" width="25%"><img src="docs/images/screenshots/onboarding.png" width="200" alt="Onboarding welcome screen stating that no account is needed"></td>
+    <td align="center" width="25%"><img src="docs/images/screenshots/day-editor.png" width="200" alt="Daily editor with bleeding, pain and mood selections"></td>
+    <td align="center" width="25%"><img src="docs/images/screenshots/trends.png" width="200" alt="Trends screen with average cycle length, range and current estimate"></td>
+    <td align="center" width="25%"><img src="docs/images/screenshots/data-and-privacy.png" width="200" alt="Settings section with JSON and CSV export and local data deletion"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Onboarding without an account</sub></td>
+    <td align="center"><sub>Daily entry</sub></td>
+    <td align="center"><sub>Trends from recorded cycles</sub></td>
+    <td align="center"><sub>Export and deletion</sub></td>
+  </tr>
+</table>
+
+## How the prediction works
+
+The model lives in [`src/domain/prediction.ts`](src/domain/prediction.ts) as pure,
+tested functions.
+
+1. Consecutive recorded bleeding days form a period; the gap between two period
+   starts is one complete cycle.
+2. More recent cycles receive a weight of `0.85 ^ age`.
+3. Clear outliers stay in the data but receive an additional lower weight.
+   Manually excluded cycles are ignored.
+4. The weighted mean sets the expected start; the sample variation sets the width
+   of the visible window.
+5. Fewer than three complete cycles always yield low confidence. High confidence
+   requires at least six complete cycles with a spread of three days or less.
+
+All calculations use local calendar dates (`YYYY-MM-DD`), so travel or time-zone
+changes cannot move a recorded day to a different date.
+
+## Privacy model
+
+What is true for the current MVP:
+
+- Health data is not transmitted. There are no network requests for app data.
+- Exports are created locally and handed to the operating system share dialog.
+- The app lock stores only its enabled state in SecureStore; authentication is
+  handled by the operating system.
+
+Known limits: the SQLite database is not additionally encrypted, deleted SQLite
+pages may persist on disk until reused, and the app-switcher protection is a
+JavaScript lifecycle gate rather than a native screenshot guarantee. A production
+release still needs a threat model, a data protection impact assessment and legal
+review. Details are in [PRIVACY.md](PRIVACY.md) and
+[docs/HARDENING.md](docs/HARDENING.md).
+
+## Tech stack
+
+| Area          | Choice                                                            |
+| ------------- | ----------------------------------------------------------------- |
+| App framework | Expo SDK 57, React Native 0.86, React 19, Expo Router             |
+| Language      | TypeScript                                                        |
+| Storage       | `expo-sqlite` with versioned migrations (WASM on web)             |
+| Data access   | TanStack Query over the local repository; Zustand for UI state    |
+| Forms         | React Hook Form with Zod validation                               |
+| Device APIs   | `expo-local-authentication`, `expo-notifications`, `expo-sharing` |
+| Tooling       | Vitest with V8 coverage, ESLint, Prettier, Expo Doctor            |
+| CI            | GitHub Actions quality workflow; CodeQL once the repo is public   |
+
+## Architecture
+
+```text
+app/                    Expo Router routes
+  (tabs)/               Today, Calendar, Log, Trends, Settings
+  day/[date].tsx        daily editor (modal)
+  prediction.tsx        prediction explanation (modal)
+  onboarding.tsx        first-run flow
+src/
+  components/           shared UI and calendar components
+  config/branding.json  single source for name, IDs and brand colors
+  database/             migrations, schema registry, repository, read validation
+  domain/               pure date, cycle, statistics and prediction logic
+  hooks/                TanStack Query bridge between UI and SQLite
+  i18n/                 typed German and English catalogs, language detection
+  services/             export, local reminders, app lock lifecycle
+  store/                transient UI state (Zustand)
+  theme/                light and dark design tokens
+```
+
+Screens never calculate predictions themselves. They read recorded entries
+through hooks, and `src/domain/` derives estimates from them. The domain layer
+has no React Native dependency and is covered by unit tests.
+
+Recorded data lives in `daily_entries`, `symptom_entries`, `cycle_exclusions` and
+`app_settings`. Migrations are transactional, tracked with `PRAGMA user_version`,
+and reject unsupported newer schemas. See [docs/DATABASE.md](docs/DATABASE.md).
+
+## Getting started
 
 Requirements:
 
-- Node.js 24.12 or newer within Node 24 (see `.node-version`; SQLite tests use `node:sqlite`)
+- Node.js 24.12 or newer within Node 24 (see [`.node-version`](.node-version);
+  the SQLite tests use the built-in `node:sqlite` module)
 - npm
-- Expo Go or an Android/iOS simulator
+- Expo Go for SDK 57, a compatible development build, or an Android/iOS simulator
 
 ```bash
 npm ci
 npm start
 ```
 
-You can then launch the app by scanning the QR code with Expo Go, or by pressing
-`a` or `i` in the terminal.
+Scan the QR code with Expo Go, or press `a` (Android) or `i` (iOS) in the terminal.
+When testing upgrades on a phone, keep the existing Expo Go app and its local data.
 
-The project targets Expo SDK 57. Use Expo Go for SDK 57 or a compatible
-development build. Preserve the existing Expo Go app and its local data when testing upgrades.
-
-Additional commands:
+### Web preview
 
 ```bash
-npm run android
-npm run ios
 npm run web
-npm run typecheck
-npm run lint
-npm run format
-npm test
 ```
 
-On Windows, you can alternatively double-click `start-ios.bat` to use a physical
-iPhone with Expo Go, or `start-web.bat` to launch the web preview.
+The preview runs at `http://localhost:8082`. The start script adds the
+cross-origin isolation headers that Expo SQLite needs on the web. The web build is
+a development preview: notifications and the biometric app lock require a mobile
+device.
 
-Local notifications and the biometric app lock require a supported mobile device.
-The web build is intended as a responsive development preview and is available at
-`http://localhost:8082` after running `npm run web`. The startup script adds the
-cross-origin headers required by Expo SQLite/WASM.
+On Windows, `start-web.bat` launches the web preview and `start-ios.bat` starts
+Expo for a physical iPhone with Expo Go.
 
-## Architecture
+### Scripts
 
-```text
-app/                         Expo Router routes and screens
-  (tabs)/                    Today, Calendar, Log, Trends, Settings
-  day/[date].tsx             daily editor
-src/
-  components/                reusable UI and calendar components
-  config/branding.json       shared source for the name, IDs, and brand colors
-  database/                  migrations and SQLite repository
-  domain/                    pure date, cycle, statistics, and prediction logic
-  hooks/                     TanStack Query bridge between the UI and SQLite
-  i18n/                      German text catalog with sections per area
-  services/                  exports, local reminders, and app lock
-  store/                     transient UI state managed with Zustand
-  theme/                     custom light/dark design system
-```
+| Command                 | Purpose                                                 |
+| ----------------------- | ------------------------------------------------------- |
+| `npm start`             | Start the Expo dev server                               |
+| `npm run android`       | Start and open on Android                               |
+| `npm run ios`           | Start and open on iOS                                   |
+| `npm run web`           | Web preview with the required headers on port 8082      |
+| `npm run typecheck`     | TypeScript without emitting files                       |
+| `npm run lint`          | ESLint with zero warnings allowed                       |
+| `npm run format`        | Check formatting with Prettier (`format:write` fixes)   |
+| `npm test`              | Run the Vitest suite once (`test:watch` for watch mode) |
+| `npm run test:coverage` | Tests with V8 coverage written to `coverage/`           |
+| `npm run doctor`        | Expo Doctor dependency and config checks                |
+| `npm run build:smoke`   | Export web, iOS and Android bundles                     |
 
-React components do not calculate predictions. `src/domain/` is independent of
-React Native and tested with Vitest. React Hook Form and Zod validate the onboarding
-flow and daily editor. TanStack Query coordinates reading and invalidating local
-SQLite data; there are no network requests.
-
-## Data Model
-
-Recorded data is stored in `daily_entries` and `symptom_entries`. Manual cycle
-exclusions are stored separately in `cycle_exclusions`. Settings are stored as
-simple key-value pairs in `app_settings`.
-
-Versioned, transactional migrations use SQLite `user_version`, preserve existing
-v1 data, and reject unsupported newer schemas. Stored settings and relevant entry
-values are validated at read boundaries with Zod. See [database notes](docs/DATABASE.md).
-
-Calculated data is **not** stored:
-
-- expected period start
-- prediction window
-- confidence level
-- estimated ovulation
-- possible fertile window
-
-These values are calculated at runtime from recorded period days. This prevents a
-calculated day from accidentally appearing as a user entry or being included in an
-export.
-
-## Prediction Model
-
-1. Consecutive recorded bleeding days form periods.
-2. The difference between two period start dates produces a complete cycle length.
-3. More recent cycles receive a weight of `0.85 ^ age`.
-4. Clear outliers remain in the data but receive an additional lower weight.
-5. Manually excluded cycles are not included.
-6. The weighted mean determines the calculated start date.
-7. Sample variation determines the width of the visible prediction window.
-8. Fewer than three complete cycles always produce low confidence; “high” confidence
-   is only assigned after six stable cycles.
-
-All calculations use local calendar dates in `YYYY-MM-DD` format so that travel or
-time-zone changes cannot shift a period day to a different calendar date.
-
-## Privacy and Security
-
-The MVP does not transmit health data. It contains no advertising or external
-analytics SDK. JSON and CSV exports are created locally and then shared through the
-system share dialog. Mobile files use temporary cache storage. Android retains
-shared files until the next cold start so recipients can still read them; iOS cleans
-up after sharing completes. Startup retries cleanup after interruptions. The biometric app lock stores only its enabled state in
-SecureStore; authentication is handled by the operating system.
-
-SQLite data is stored locally in the MVP but is not additionally encrypted field by
-field. A production-ready release should add encrypted backups, a threat model, a
-data protection impact assessment, and legal review. See
-[PRIVACY.md](./PRIVACY.md) for details and [SECURITY.md](./SECURITY.md) for private
-vulnerability reporting with synthetic data only.
-
-## Development Data
-
-The app does not include seed or demo data during normal use. Onboarding creates only
-the most recent period confirmed by the user. An optional development mode with demo
-data is intentionally not included at this time.
-
-## Quality
-
-CI runs on pull requests to and pushes on `master`. Local and CI checks use the
-same scripts:
+## Testing
 
 ```bash
-npm ci
-npm run typecheck
-npm run lint
-npm run format
 npm test
 npm run test:coverage
-npm run doctor
-npm run build:smoke
 ```
 
-Tests cover domain/date/prediction edge cases, real SQLite migrations and repository
-operations, stored-data validation, export serialization/cleanup, app-lock lifecycle
-and local reminders. Coverage reports are in `coverage/` (HTML and LCOV), also
-uploaded by CI; no minimum percentage or external service is required. Coverage
-currently measures domain, database and services, not React Native UI.
+Tests cover date handling and prediction edge cases, statistics, real SQLite
+migrations and repository operations (in-memory `node:sqlite`), stored-data
+validation, export serialization and cleanup, the app-lock lifecycle and local
+reminders. Coverage measures `src/domain`, `src/database` and `src/services`;
+React Native UI is not covered by automated tests yet.
 
-The smoke test exports Web, iOS and Android bundles; it is not a signed native build
-or device test. See [hardening notes](docs/HARDENING.md) for remaining dependency
-risks and device checks. Use feature branches and PRs; see [CONTRIBUTING.md](CONTRIBUTING.md)
-and [GitHub setup](docs/GITHUB_SETUP.md) for solo-maintainer rules and required checks.
+CI runs typecheck, lint, format, tests, coverage, Expo Doctor and the bundle
+export on every pull request to `master`. The bundle export is a smoke test, not
+a signed native build or device test.
 
-German text extraction is incremental: onboarding, settings, lock, shared states,
-navigation and notifications use the catalog. Remaining daily-editor/calendar/home
-and prediction copy can move in subsequent changes. English translation is not
-implemented.
+## Project status
 
-## Intentionally Not Implemented Yet
+Cykla is an early MVP (version 0.1.0). Open items before a public release include device testing of the app lock and
+export cleanup on iOS and Android, the remaining dependency audit findings, and
+the privacy and legal reviews listed in [docs/HARDENING.md](docs/HARDENING.md).
 
-- accounts, backend, cloud synchronization, and multi-device use
-- pregnancy mode and partner access
-- AI assistant, diagnoses, or medical chatbot
-- community features, advertising, subscriptions, and paywalls
-- Apple Health, Health Connect, basal body temperature, and ovulation tests
-- medical article library and medical report
-- English user interface (German text centralization is ongoing)
-- encrypted SQLite database and encrypted automatic backups
+The interface is available in German and English. It follows the device
+language by default; a manual choice under “You” overrides it. Export files keep
+their German column names for format stability.
 
-See [ROADMAP.md](./ROADMAP.md) for planned next steps.
+## Roadmap
 
-## Contributing and License
+Planned work is tracked in [ROADMAP.md](ROADMAP.md). In short:
 
-Contributions are welcome; see [CONTRIBUTING.md](./CONTRIBUTING.md). Cykla is licensed
-under **AGPL-3.0-only** (GNU Affero General Public License version 3 only); see
-[LICENSE](./LICENSE) for the complete official text.
+- **0.2 – Hardening:** encrypted local database and backup strategy, component and
+  end-to-end tests, screen-reader and Dynamic Type review
+- **0.3 – Extended tracking:** basal body temperature and test results,
+  configurable symptoms, note search
+- **Not planned:** advertising, selling data, paywalls for export or deletion,
+  AI diagnoses, presenting estimates as contraception
+
+## Contributing
+
+Contributions are welcome. Cykla handles sensitive health data, so small,
+reviewable changes and data-minimizing decisions come first. Read
+[CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, and use only
+synthetic data in issues, tests and screenshots.
+
+Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+
+## License
+
+Cykla is licensed under the [GNU Affero General Public License v3.0 only](LICENSE)
+(`AGPL-3.0-only`).

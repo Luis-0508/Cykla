@@ -10,12 +10,13 @@ import { Card } from '@/components/ui/Card';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { CyklaMark } from '@/components/ui/CyklaMark';
 import { Typography } from '@/components/ui/Typography';
-import { addDays, formatGermanDate, parseDateOnly, todayDate } from '@/domain/dateOnly';
+import { addDays, parseDateOnly, todayDate } from '@/domain/dateOnly';
 import type { Goal } from '@/domain/models';
 import { useCompleteOnboarding } from '@/hooks/useCyklaData';
-import { de } from '@/i18n/de';
+import { useI18n } from '@/i18n/I18nProvider';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 
+// Validation messages are shown from the active catalog, not from the schema.
 const schema = z.object({
   goal: z.enum(['track', 'conceive', 'unsure']),
   lastPeriodDate: z.string().refine((value) => {
@@ -24,30 +25,12 @@ const schema = z.object({
     } catch {
       return false;
     }
-  }, de.onboardingDetails.invalidDate),
+  }),
   typicalCycleLength: z.number().int().min(20).max(60),
   typicalPeriodLength: z.number().int().min(1).max(10),
 });
 
 type OnboardingForm = z.infer<typeof schema>;
-
-const goalOptions: { value: Goal; title: string; body: string }[] = [
-  {
-    value: 'track',
-    title: de.onboardingDetails.trackTitle,
-    body: de.onboardingDetails.trackBody,
-  },
-  {
-    value: 'conceive',
-    title: de.onboardingDetails.conceiveTitle,
-    body: de.onboardingDetails.conceiveBody,
-  },
-  {
-    value: 'unsure',
-    title: de.onboardingDetails.unsureTitle,
-    body: de.onboardingDetails.unsureBody,
-  },
-];
 
 function Stepper({
   label,
@@ -61,17 +44,18 @@ function Stepper({
   value: number;
   minimum: number;
   maximum: number;
-  suffix: string;
+  suffix: (value: number) => string;
   onChange: (value: number) => void;
 }) {
   const theme = useCyklaTheme();
+  const { t } = useI18n();
   return (
     <Card style={styles.stepperCard}>
       <Typography variant="label">{label}</Typography>
       <View style={styles.stepper}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={de.onboardingDetails.decrease(label)}
+          accessibilityLabel={t.onboarding.decrease(label)}
           onPress={() => onChange(Math.max(minimum, value - 1))}
           style={[styles.stepperButton, { borderColor: theme.colors.border }]}
         >
@@ -79,11 +63,11 @@ function Stepper({
         </Pressable>
         <View style={styles.stepperValue}>
           <Typography variant="display">{value}</Typography>
-          <Typography muted>{suffix}</Typography>
+          <Typography muted>{suffix(value)}</Typography>
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={de.onboardingDetails.increase(label)}
+          accessibilityLabel={t.onboarding.increase(label)}
           onPress={() => onChange(Math.min(maximum, value + 1))}
           style={[styles.stepperButton, { borderColor: theme.colors.border }]}
         >
@@ -96,6 +80,12 @@ function Stepper({
 
 export default function OnboardingScreen() {
   const theme = useCyklaTheme();
+  const { t, formatDate } = useI18n();
+  const goalOptions: { value: Goal; title: string; body: string }[] = [
+    { value: 'track', title: t.onboarding.trackTitle, body: t.onboarding.trackBody },
+    { value: 'conceive', title: t.onboarding.conceiveTitle, body: t.onboarding.conceiveBody },
+    { value: 'unsure', title: t.onboarding.unsureTitle, body: t.onboarding.unsureBody },
+  ];
   const [step, setStep] = useState(0);
   const complete = useCompleteOnboarding();
   const {
@@ -149,25 +139,22 @@ export default function OnboardingScreen() {
       {step === 0 ? (
         <View style={styles.hero}>
           <CyklaMark size={84} />
-          <Typography variant="display">{de.onboarding.welcomeTitle}</Typography>
-          <Typography muted>{de.onboarding.welcomeBody}</Typography>
+          <Typography variant="display">{t.onboarding.welcomeTitle}</Typography>
+          <Typography muted>{t.onboarding.welcomeBody}</Typography>
           <Card tone="accent">
-            <Typography variant="label">{de.onboardingDetails.privateTitle}</Typography>
+            <Typography variant="label">{t.onboarding.privateTitle}</Typography>
             <Typography muted style={styles.cardCopy}>
-              {de.onboarding.privacy}
+              {t.onboarding.privacy}
             </Typography>
           </Card>
-          <Button
-            label={de.onboardingDetails.continueWithoutAccount}
-            onPress={() => void goForward()}
-          />
+          <Button label={t.onboarding.continueWithoutAccount} onPress={() => void goForward()} />
         </View>
       ) : null}
 
       {step === 1 ? (
         <View style={styles.step}>
-          <Typography variant="title">{de.onboardingDetails.goalTitle}</Typography>
-          <Typography muted>{de.onboardingDetails.goalBody}</Typography>
+          <Typography variant="title">{t.onboarding.goalTitle}</Typography>
+          <Typography muted>{t.onboarding.goalBody}</Typography>
           <Controller
             control={control}
             name="goal"
@@ -214,16 +201,16 @@ export default function OnboardingScreen() {
 
       {step === 2 ? (
         <View style={styles.step}>
-          <Typography variant="title">{de.onboardingDetails.periodTitle}</Typography>
-          <Typography muted>{de.onboardingDetails.periodBody}</Typography>
+          <Typography variant="title">{t.onboarding.periodTitle}</Typography>
+          <Typography muted>{t.onboarding.periodBody}</Typography>
           <Controller
             control={control}
             name="lastPeriodDate"
             render={({ field: { value, onChange, onBlur } }) => (
               <>
                 <TextInput
-                  accessibilityLabel={de.onboardingDetails.periodLabel}
-                  placeholder={de.onboardingDetails.datePlaceholder}
+                  accessibilityLabel={t.onboarding.periodLabel}
+                  placeholder={t.onboarding.datePlaceholder}
                   placeholderTextColor={theme.colors.textMuted}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -243,14 +230,14 @@ export default function OnboardingScreen() {
                   ]}
                 />
                 {schema.shape.lastPeriodDate.safeParse(value).success ? (
-                  <Typography variant="label">{formatGermanDate(value)}</Typography>
+                  <Typography variant="label">{formatDate(value)}</Typography>
                 ) : null}
               </>
             )}
           />
           {errors.lastPeriodDate ? (
             <Typography style={{ color: theme.colors.danger }}>
-              {errors.lastPeriodDate.message}
+              {t.onboarding.invalidDate}
             </Typography>
           ) : null}
           <View style={styles.chipWrap}>
@@ -261,8 +248,8 @@ export default function OnboardingScreen() {
                 selected={selectedDate === date}
                 label={
                   date === todayDate()
-                    ? de.onboardingDetails.today
-                    : formatGermanDate(date, { day: 'numeric', month: 'short' })
+                    ? t.common.today
+                    : formatDate(date, { day: 'numeric', month: 'short' })
                 }
                 onPress={() => setValue('lastPeriodDate', date, { shouldValidate: true })}
               />
@@ -273,18 +260,18 @@ export default function OnboardingScreen() {
 
       {step === 3 ? (
         <View style={styles.step}>
-          <Typography variant="title">{de.onboardingDetails.typicalTitle}</Typography>
-          <Typography muted>{de.onboardingDetails.typicalBody}</Typography>
+          <Typography variant="title">{t.onboarding.typicalTitle}</Typography>
+          <Typography muted>{t.onboarding.typicalBody}</Typography>
           <Controller
             control={control}
             name="typicalCycleLength"
             render={({ field: { value, onChange } }) => (
               <Stepper
-                label={de.onboardingDetails.cycleLength}
+                label={t.onboarding.cycleLength}
                 value={value}
                 minimum={20}
                 maximum={60}
-                suffix={de.onboardingDetails.days}
+                suffix={t.common.days}
                 onChange={onChange}
               />
             )}
@@ -294,11 +281,11 @@ export default function OnboardingScreen() {
             name="typicalPeriodLength"
             render={({ field: { value, onChange } }) => (
               <Stepper
-                label={de.onboardingDetails.periodLength}
+                label={t.onboarding.periodLength}
                 value={value}
                 minimum={1}
                 maximum={10}
-                suffix={de.onboardingDetails.days}
+                suffix={t.common.days}
                 onChange={onChange}
               />
             )}
@@ -309,46 +296,40 @@ export default function OnboardingScreen() {
       {step === 4 ? (
         <View style={styles.step}>
           <CyklaMark size={64} />
-          <Typography variant="title">{de.onboardingDetails.ready}</Typography>
+          <Typography variant="title">{t.onboarding.ready}</Typography>
           <Card tone="primary">
-            <Typography variant="heading">{de.onboardingDetails.privacyTitle}</Typography>
+            <Typography variant="heading">{t.onboarding.privacyTitle}</Typography>
             <Typography muted style={styles.cardCopy}>
-              {de.onboardingDetails.privacyBody}
+              {t.onboarding.privacyBody}
             </Typography>
           </Card>
           <Card>
-            <Typography variant="label">{de.onboardingDetails.cautionTitle}</Typography>
+            <Typography variant="label">{t.onboarding.cautionTitle}</Typography>
             <Typography muted style={styles.cardCopy}>
-              {de.onboardingDetails.cautionBody}
+              {t.onboarding.cautionBody}
             </Typography>
           </Card>
           <Button
-            label={de.onboardingDetails.open}
+            label={t.onboarding.open}
             loading={complete.isPending}
             onPress={() => void finish()}
           />
           {complete.error ? (
-            <Typography style={{ color: theme.colors.danger }}>
-              {de.onboardingDetails.saveError}
-            </Typography>
+            <Typography style={{ color: theme.colors.danger }}>{t.onboarding.saveError}</Typography>
           ) : null}
         </View>
       ) : null}
 
       {step > 0 && step < 4 ? (
         <View style={styles.footer}>
-          <Button
-            label={de.onboardingDetails.back}
-            variant="ghost"
-            onPress={() => setStep(step - 1)}
-          />
+          <Button label={t.common.back} variant="ghost" onPress={() => setStep(step - 1)} />
           <View style={styles.footerMain}>
-            <Button label={de.onboardingDetails.continue} onPress={() => void goForward()} />
+            <Button label={t.common.continue} onPress={() => void goForward()} />
           </View>
         </View>
       ) : null}
       {step === 4 ? (
-        <Button label={de.onboardingDetails.back} variant="ghost" onPress={() => setStep(3)} />
+        <Button label={t.common.back} variant="ghost" onPress={() => setStep(3)} />
       ) : null}
     </AppScreen>
   );

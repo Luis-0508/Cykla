@@ -1,4 +1,3 @@
-import { de } from '@/i18n/de';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Platform, StyleSheet, View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -12,6 +11,8 @@ import { initializeDatabase } from '@/database/schema';
 import { createLockController } from '@/services/lockLifecycle';
 import { cleanupTemporaryExports } from '@/services/export';
 import { authenticateApp, isAppLockEnabled } from '@/services/appLock';
+import { refreshDailyReminderText } from '@/services/notifications';
+import { I18nProvider, useI18n } from '@/i18n/I18nProvider';
 import { useSettings } from '@/hooks/useCyklaData';
 import { useUiStore } from '@/store/uiStore';
 import { useCyklaTheme } from '@/theme/theme';
@@ -45,13 +46,33 @@ function ThemeBootstrap() {
   return null;
 }
 
+// Scheduled notifications keep the text they were created with; reword an active
+// reminder whenever the resolved UI language changes. Best effort: a failure keeps
+// the previous wording and is retried on the next launch.
+function ReminderLanguageSync() {
+  const settings = useSettings();
+  const { t } = useI18n();
+  const reminderEnabled = settings.data?.dailyReminderEnabled ?? false;
+  useEffect(() => {
+    if (!reminderEnabled) return;
+    void refreshDailyReminderText(t.notifications).catch(() => undefined);
+  }, [reminderEnabled, t]);
+  return null;
+}
+
 function LockGate({ children }: { children: React.ReactNode }) {
   const theme = useCyklaTheme();
+  const { t } = useI18n();
   const locked = useUiStore((state) => state.locked);
   const setLocked = useUiStore((state) => state.setLocked);
   const [checking, setChecking] = useState(Platform.OS !== 'web');
 
   const controller = useRef<ReturnType<typeof createLockController> | null>(null);
+  // The lock controller lives across renders; read the current language at prompt time.
+  const lockText = useRef(t.lock);
+  useEffect(() => {
+    lockText.current = t.lock;
+  }, [t]);
   const unlock = () => controller.current?.unlock();
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -62,7 +83,7 @@ function LockGate({ children }: { children: React.ReactNode }) {
     const lifecycle = createLockController(
       {
         readEnabled: isAppLockEnabled,
-        authenticate: authenticateApp,
+        authenticate: () => authenticateApp(lockText.current),
         onChange: setLocked,
       },
       AppState.currentState ?? 'unknown',
@@ -94,12 +115,12 @@ function LockGate({ children }: { children: React.ReactNode }) {
       {locked ? (
         <View style={[styles.lockScreen, { backgroundColor: theme.colors.background }]}>
           <CyklaMark size={72} />
-          <Typography variant="title">{de.lock.title}</Typography>
+          <Typography variant="title">{t.lock.title}</Typography>
           <Typography muted style={styles.lockCopy}>
-            {de.lock.body}
+            {t.lock.body}
           </Typography>
           <View style={styles.lockButton}>
-            <Button label={de.lock.unlock} icon="lock-open-outline" onPress={() => void unlock()} />
+            <Button label={t.lock.unlock} icon="lock-open-outline" onPress={() => void unlock()} />
           </View>
         </View>
       ) : null}
@@ -142,9 +163,12 @@ export default function RootLayout() {
           }}
         >
           <ThemeBootstrap />
-          <LockGate>
-            <RootNavigator />
-          </LockGate>
+          <I18nProvider>
+            <ReminderLanguageSync />
+            <LockGate>
+              <RootNavigator />
+            </LockGate>
+          </I18nProvider>
         </SQLiteProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

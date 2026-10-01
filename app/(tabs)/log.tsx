@@ -7,42 +7,61 @@ import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Typography } from '@/components/ui/Typography';
 import { DayStrip } from '@/components/DayStrip';
-import { formatGermanDate } from '@/domain/dateOnly';
 import { useEntries } from '@/hooks/useCyklaData';
+import { useI18n } from '@/i18n/I18nProvider';
+import type { Messages } from '@/i18n/i18n';
 import { useUiStore } from '@/store/uiStore';
 import { spacing, useCyklaTheme } from '@/theme/theme';
 
-const categories = [
-  {
-    icon: 'water-outline',
-    title: 'Blutung',
-    body: 'Von keiner Blutung bis stark',
-    color: 'period',
-  },
-  { icon: 'pulse-outline', title: 'Schmerzen', body: 'Intensität von 0 bis 10', color: 'danger' },
-  {
-    icon: 'happy-outline',
-    title: 'Stimmung',
-    body: 'Ruhig, zufrieden, sensibel und mehr',
-    color: 'accent',
-  },
-  {
-    icon: 'flash-outline',
-    title: 'Energie',
-    body: 'Von sehr niedrig bis sehr hoch',
-    color: 'fertile',
-  },
-  { icon: 'moon-outline', title: 'Schlaf', body: 'Dauer und Qualität', color: 'primary' },
-  {
-    icon: 'sparkles-outline',
-    title: 'Symptome',
-    body: 'Körperliche Beobachtungen',
-    color: 'accent',
-  },
-] as const;
+const categories = (t: Messages) =>
+  [
+    {
+      key: 'bleeding',
+      icon: 'water-outline',
+      title: t.category.bleeding,
+      body: t.log.bleedingBody,
+      color: 'period',
+    },
+    {
+      key: 'pain',
+      icon: 'pulse-outline',
+      title: t.category.painPlural,
+      body: t.log.painBody,
+      color: 'danger',
+    },
+    {
+      key: 'mood',
+      icon: 'happy-outline',
+      title: t.category.mood,
+      body: t.log.moodBody,
+      color: 'accent',
+    },
+    {
+      key: 'energy',
+      icon: 'flash-outline',
+      title: t.category.energy,
+      body: t.log.energyBody,
+      color: 'fertile',
+    },
+    {
+      key: 'sleep',
+      icon: 'moon-outline',
+      title: t.category.sleep,
+      body: t.log.sleepBody,
+      color: 'primary',
+    },
+    {
+      key: 'symptoms',
+      icon: 'sparkles-outline',
+      title: t.category.symptoms,
+      body: t.log.symptomsBody,
+      color: 'accent',
+    },
+  ] as const;
 
 export default function LogScreen() {
   const theme = useCyklaTheme();
+  const { t, formatDate } = useI18n();
   const selectedDate = useUiStore((state) => state.selectedDate);
   const setSelectedDate = useUiStore((state) => state.setSelectedDate);
   const entriesQuery = useEntries();
@@ -53,8 +72,8 @@ export default function LogScreen() {
     <AppScreen contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Typography variant="title">Eintragen</Typography>
-          <Typography muted>Alles an einem Ort – gespeichert auf diesem Gerät.</Typography>
+          <Typography variant="title">{t.log.title}</Typography>
+          <Typography muted>{t.log.subtitle}</Typography>
         </View>
         <Ionicons name="add-circle-outline" size={32} color={theme.colors.primary} />
       </View>
@@ -63,30 +82,23 @@ export default function LogScreen() {
 
       <Card tone="primary" style={styles.mainCard}>
         <Typography variant="caption" muted>
-          {formatGermanDate(selectedDate).toUpperCase()}
+          {formatDate(selectedDate).toUpperCase()}
         </Typography>
-        <Typography variant="heading">
-          {entry ? 'Eintrag ergänzen oder bearbeiten' : 'Wie geht es dir an diesem Tag?'}
-        </Typography>
-        <Typography muted>
-          Du entscheidest, was du dokumentierst. Leere Bereiche bleiben leer.
-        </Typography>
+        <Typography variant="heading">{entry ? t.log.editHeading : t.log.newHeading}</Typography>
+        <Typography muted>{t.log.body}</Typography>
         <Button
-          label={entry ? 'Eintrag öffnen' : 'Eintrag beginnen'}
+          label={entry ? t.entry.open : t.log.start}
           icon="create-outline"
           onPress={() => router.push(`/day/${selectedDate}`)}
         />
       </Card>
 
-      <SectionHeader
-        title="Kategorien"
-        subtitle="Der vollständige Tageseditor speichert alle ausgewählten Kategorien gemeinsam."
-      />
+      <SectionHeader title={t.log.categories} subtitle={t.log.categoriesSubtitle} />
       <View style={styles.categoryList}>
-        {categories.map((category) => {
+        {categories(t).map((category) => {
           const color = theme.colors[category.color];
           return (
-            <Card key={category.title} style={styles.categoryCard}>
+            <Card key={category.key} style={styles.categoryCard}>
               <View style={[styles.categoryIcon, { backgroundColor: `${color}22` }]}>
                 <Ionicons
                   name={category.icon as keyof typeof Ionicons.glyphMap}

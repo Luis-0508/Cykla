@@ -1,6 +1,10 @@
 name: Feature request
 description: Suggest an improvement consistent with Cykla's privacy principles.
+labels: [enhancement]
 body:
+  - type: markdown
+    attributes:
+      value: Check ROADMAP.md first, including the "Not Planned" section. Do not include personal health information.
   - type: textarea
     id: problem
     attributes:
