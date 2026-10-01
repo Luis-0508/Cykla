@@ -95,15 +95,20 @@ Cykla treats them as different kinds of information:
 The model lives in [`src/domain/prediction.ts`](src/domain/prediction.ts) as pure,
 tested functions.
 
-1. Consecutive recorded bleeding days form a period; the gap between two period
-   starts is one complete cycle.
+1. Recorded light to heavy bleeding days form a period; a single unlogged day does
+   not split it, and spotting never starts a period. The gap between two period
+   starts is one complete cycle; only lengths of 15–90 days are used.
 2. More recent cycles receive a weight of `0.85 ^ age`.
 3. Clear outliers stay in the data but receive an additional lower weight.
    Manually excluded cycles are ignored.
 4. The weighted mean sets the expected start; the sample variation sets the width
-   of the visible window.
+   of the visible window, which is never narrower than ±3 days (±5 with fewer than
+   three complete cycles, ±7 with none).
 5. Fewer than three complete cycles always yield low confidence. High confidence
    requires at least six complete cycles with a spread of three days or less.
+6. A day-level fertile window is shown only with at least three complete cycles of
+   24–38 days, non-low confidence, and not directly after recorded bleeding. A
+   hidden window never means that days are infertile.
 
 All calculations use local calendar dates (`YYYY-MM-DD`), so travel or time-zone
 changes cannot move a recorded day to a different date.

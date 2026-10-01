@@ -1,5 +1,10 @@
 import { useMemo } from 'react';
-import { deriveCycles, derivePeriodStarts, calculatePrediction } from '@/domain/prediction';
+import {
+  bleedingDaysForEstimates,
+  calculatePrediction,
+  deriveCycles,
+  derivePeriodStarts,
+} from '@/domain/prediction';
 import { useEntries, useExcludedCycles, useSettings } from '@/hooks/useCyklaData';
 
 export function usePrediction() {
@@ -9,7 +14,7 @@ export function usePrediction() {
 
   const derived = useMemo(() => {
     const entries = entriesQuery.data ?? [];
-    const periodDays = entries.filter((entry) => entry.flow !== 'none').map((entry) => entry.date);
+    const periodDays = bleedingDaysForEstimates(entries);
     const starts = derivePeriodStarts(periodDays);
     const excludedStarts = exclusionsQuery.data ?? [];
     const settings = settingsQuery.data;
