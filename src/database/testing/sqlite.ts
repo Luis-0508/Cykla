@@ -2,8 +2,8 @@ import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 // Real SQLite, adapting only Expo's async interface. No SQL behavior is mocked.
-export function createTestDatabase() {
-  const sqlite = new DatabaseSync(':memory:');
+export function createTestDatabase(path = ':memory:') {
+  const sqlite = new DatabaseSync(path);
   const adapter = {
     async execAsync(sql: string) {
       sqlite.exec(sql);
@@ -18,8 +18,8 @@ export function createTestDatabase() {
       return sqlite.prepare(sql).all(...parameters);
     },
     async withTransactionAsync(work: () => Promise<void>) {
-      sqlite.exec('BEGIN');
       try {
+        sqlite.exec('BEGIN');
         await work();
         sqlite.exec('COMMIT');
       } catch (error) {

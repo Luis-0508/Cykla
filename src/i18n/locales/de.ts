@@ -6,6 +6,7 @@ const plural = (count: number, one: string, other: string) => (count === 1 ? one
 
 export const de = {
   common: {
+    retry: 'Erneut versuchen',
     cancel: 'Abbrechen',
     back: 'Zurück',
     continue: 'Weiter',
@@ -30,6 +31,7 @@ export const de = {
     settingsLabel: (appName: string) => `${appName} Einstellungen`,
   },
   states: {
+    prepareError: 'Deine Einstellungen konnten nicht geladen werden. Bitte versuche es erneut.',
     loading: 'Wird geladen …',
     error: 'Etwas ist schiefgegangen.',
     errorTitle: 'Das hat nicht geklappt',
@@ -255,6 +257,8 @@ export const de = {
       `Modellversion 1.1 · ${cycles} ${plural(cycles, 'erkannter Zyklus', 'erkannte Zyklen')} · Berechnung ausschließlich lokal`,
   },
   dayEditor: {
+    loadError:
+      'Deine Tagesdaten konnten nicht geladen werden. Bitte versuche es erneut, bevor du sie bearbeitest.',
     invalidDate: 'Ungültiges Datum',
     loading: 'Eintrag wird geladen …',
     deleteTitle: 'Eintrag löschen?',

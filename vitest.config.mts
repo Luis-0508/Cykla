@@ -7,6 +7,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  oxc: { jsx: { runtime: 'automatic' } },
   test: {
     environment: 'node',
     coverage: {
@@ -15,6 +16,6 @@ export default defineConfig({
       include: ['src/domain/**/*.ts', 'src/database/**/*.ts', 'src/services/**/*.ts'],
       exclude: ['**/*.test.ts', '**/testing/**', '**/models.ts'],
     },
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
   },
 });

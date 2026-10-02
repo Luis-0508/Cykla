@@ -4,6 +4,7 @@ const plural = (count: number, one: string, other: string) => (count === 1 ? one
 
 export const en: Messages = {
   common: {
+    retry: 'Try again',
     cancel: 'Cancel',
     back: 'Back',
     continue: 'Continue',
@@ -28,6 +29,7 @@ export const en: Messages = {
     settingsLabel: (appName) => `${appName} settings`,
   },
   states: {
+    prepareError: 'Your settings could not be loaded. Please try again.',
     loading: 'Loading …',
     error: 'Something went wrong.',
     errorTitle: 'That didn’t work',
@@ -247,6 +249,7 @@ export const en: Messages = {
       `Model version 1.1 · ${cycles} ${plural(cycles, 'cycle', 'cycles')} detected · calculated on this device only`,
   },
   dayEditor: {
+    loadError: 'Your daily data could not be loaded. Please try again before editing.',
     invalidDate: 'Invalid date',
     loading: 'Loading entry …',
     deleteTitle: 'Delete entry?',
