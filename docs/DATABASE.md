@@ -35,6 +35,35 @@ databases. `SQLiteProvider` awaits initialization before consumers mount. The
 web-compatible Expo transaction API is used; no other connection work may run
 concurrently during initialization.
 
+## Runtime access policy
+
+All runtime SQL goes through `repository.ts` using the single `SQLiteProvider`
+database instance. `access.ts` queues complete repository operations per instance;
+it holds the connection through commit or rollback and releases it after errors.
+This includes single-statement reads/writes, since otherwise they could join an
+unrelated transaction. Operations on other connections and non-database work are
+not queued. Transaction callbacks use raw SQL or private unqueued helpers; calling
+another queued repository operation from a callback would deadlock.
+
+Entry/symptom reads use one read transaction for both SELECTs. Entry saves,
+onboarding and reset use one write transaction. This prevents readers from seeing
+half a replacement and gives multi-statement reads a SQLite snapshot. Public
+repository signatures and released migrations are unchanged.
+
+Expo's `withTransactionAsync` operates on the shared connection, so its callback
+alone does not isolate unrelated async queries. The queue provides sole ownership
+of that connection while using this web-compatible API. Native
+`withExclusiveTransactionAsync` instead opens another connection and requires SQL
+on the provided transaction object; it is unsupported on web. Using the existing
+configured connection on both platforms also preserves its foreign-key settings.
+See the [Expo transaction documentation](https://docs.expo.dev/versions/latest/sdk/sqlite/#executing-queries-within-an-async-transaction).
+
+Do not bypass the repository with raw runtime SQL or open another wrapper that
+shares its underlying Expo connection. Independent connections rely on SQLite's
+locking/snapshot semantics and may return busy errors; the queue does not coordinate
+other processes, tabs or connections. Initialization still finishes before any
+runtime consumers mount.
+
 ## Read validation
 
 `src/database/validation.ts` validates stored settings and read boundaries with
@@ -46,10 +75,20 @@ Invalid calendar dates are omitted from domain and UI reads; invalid flow become
 none, invalid mood and scales become null. Stored records are not overwritten on
 reads. Unknown nonempty symptom codes are preserved.
 
+Query failures remain errors, not absent rows. The day form mounts only after a
+successful read (including a confirmed absent day); read/refetch errors remove the
+form and expose a translated retry action. Settings read errors also block the
+startup redirect instead of sending an existing installation to onboarding.
+
 ## Tests
 
 Tests use Node's real in-memory SQLite (`node:sqlite`) through a small
 Expo-interface adapter in `src/database/testing/`. `schema.test.ts` and
 `repository.test.ts` verify SQL, upgrade preservation, rollback, version handling
-and cascading relationships. They do not replace testing the native Expo and web
-WASM adapters on real platforms.
+and cascading relationships. `repository.interleaving.test.ts` pauses real SQL
+operations to verify concurrent writes, rollback isolation and entry/symptom
+snapshots. `read-errors.test.tsx` renders the real screens, React Query hooks and
+forms over SQLite, mocking only platform surfaces and injecting read failures.
+It checks unchanged stored values, blocked editing, retry and settings redirects.
+The test-only React renderer matches the app's React version. These tests do not
+replace testing the native Expo and web WASM adapters on real platforms.

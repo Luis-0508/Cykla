@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,10 +8,10 @@ import { AppScreen } from '@/components/ui/AppScreen';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
-import { LoadingState } from '@/components/ui/States';
+import { ErrorState, LoadingState } from '@/components/ui/States';
 import { Typography } from '@/components/ui/Typography';
 import { parseDateOnly } from '@/domain/dateOnly';
-import type { FlowIntensity, Mood } from '@/domain/models';
+import type { DailyEntry, FlowIntensity, Mood } from '@/domain/models';
 import { useDeleteEntry, useEntry, useSaveEntry } from '@/hooks/useCyklaData';
 import { useI18n } from '@/i18n/I18nProvider';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
@@ -117,47 +116,8 @@ export default function DayEditorScreen() {
       return null;
     }
   })();
-  const theme = useCyklaTheme();
-  const { t, formatDate, formatNumber, decimalSeparator } = useI18n();
+  const { t } = useI18n();
   const entryQuery = useEntry(validDate ?? '');
-  const saveEntry = useSaveEntry();
-  const deleteEntry = useDeleteEntry();
-  const {
-    control,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm<EntryForm>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      flow: 'none',
-      mood: null,
-      pain: null,
-      energy: null,
-      sleepHours: null,
-      sleepQuality: null,
-      symptoms: [],
-      notes: '',
-    },
-  });
-  const selectedSymptoms = useWatch({ control, name: 'symptoms' });
-  const notes = useWatch({ control, name: 'notes' });
-
-  useEffect(() => {
-    if (!entryQuery.data) return;
-    reset({
-      flow: entryQuery.data.flow,
-      mood: entryQuery.data.mood,
-      pain: entryQuery.data.pain,
-      energy: entryQuery.data.energy,
-      sleepHours: entryQuery.data.sleepHours,
-      sleepQuality: entryQuery.data.sleepQuality,
-      symptoms: entryQuery.data.symptoms.map((symptom) => symptom.code),
-      notes: entryQuery.data.notes,
-    });
-  }, [entryQuery.data, reset]);
-
   if (!validDate) {
     return (
       <AppScreen>
@@ -166,7 +126,44 @@ export default function DayEditorScreen() {
       </AppScreen>
     );
   }
-  if (entryQuery.isLoading) return <LoadingState label={t.dayEditor.loading} />;
+  if (entryQuery.isError) {
+    return (
+      <AppScreen>
+        <ErrorState message={t.dayEditor.loadError} onRetry={() => void entryQuery.refetch()} />
+        <Button label={t.common.close} onPress={() => router.back()} />
+      </AppScreen>
+    );
+  }
+  if (!entryQuery.isSuccess) return <LoadingState label={t.dayEditor.loading} />;
+  return <DayEntryForm key={validDate} date={validDate} entry={entryQuery.data} />;
+}
+
+// The form mounts only after a successful read; null alone means a new day.
+function DayEntryForm({ date: validDate, entry }: { date: string; entry: DailyEntry | null }) {
+  const theme = useCyklaTheme();
+  const { t, formatDate, formatNumber, decimalSeparator } = useI18n();
+  const saveEntry = useSaveEntry();
+  const deleteEntry = useDeleteEntry();
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<EntryForm>({
+    resolver: zodResolver(formSchema),
+    values: {
+      flow: entry?.flow ?? 'none',
+      mood: entry?.mood ?? null,
+      pain: entry?.pain ?? null,
+      energy: entry?.energy ?? null,
+      sleepHours: entry?.sleepHours ?? null,
+      sleepQuality: entry?.sleepQuality ?? null,
+      symptoms: entry?.symptoms.map((symptom) => symptom.code) ?? [],
+      notes: entry?.notes ?? '',
+    },
+  });
+  const selectedSymptoms = useWatch({ control, name: 'symptoms' });
+  const notes = useWatch({ control, name: 'notes' });
 
   const onSubmit = handleSubmit(async (values) => {
     await saveEntry.mutateAsync({
@@ -406,7 +403,7 @@ export default function DayEditorScreen() {
         loading={saveEntry.isPending}
         onPress={() => void onSubmit()}
       />
-      {entryQuery.data ? (
+      {entry ? (
         <Button
           label={t.dayEditor.deleteDay}
           variant="danger"
