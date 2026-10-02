@@ -35,19 +35,19 @@ export const CUES: Cue[] = [
   { sfx: 'estimated', from: at('grammar', GRAMMAR_CUES.ring), volume: 0.9 },
   { sfx: 'mark', from: at('grammar', GRAMMAR_CUES.mark), volume: 0.8 },
   // First run: "Continue without an account".
-  { sfx: 'tap', from: at('firstRun', FIRST_RUN_TAP), volume: 0.75 },
+  { sfx: 'tap', from: at('firstRun', FIRST_RUN_TAP), volume: 1 },
   // You record: open the editor, save, and the card turns into RECORDED.
-  { sfx: 'tap', from: at('record', RECORD_CUES.logDay), volume: 0.75 },
-  { sfx: 'tap', from: at('record', RECORD_CUES.save), volume: 0.8 },
+  { sfx: 'tap', from: at('record', RECORD_CUES.logDay), volume: 1 },
+  { sfx: 'tap', from: at('record', RECORD_CUES.save), volume: 1 },
   { sfx: 'confirm', from: at('record', RECORD_CUES.recorded), volume: 0.85 },
   // Calendar: recorded days (felt), then the prediction window (air).
   { sfx: 'haloRecorded', from: at('estimates', ESTIMATE_CUES.period), volume: 0.8 },
-  { sfx: 'haloWindow', from: at('estimates', ESTIMATE_CUES.window), volume: 0.8 },
+  { sfx: 'haloWindow', from: at('estimates', ESTIMATE_CUES.window), volume: 0.9 },
   // Night: the crescent, the recorded starts, the projection and its range.
-  { sfx: 'sweepIn', from: at('explain', 0), volume: 0.9 },
+  { sfx: 'sweepIn', from: at('explain', 0), volume: 1 },
   { sfx: 'history', from: at('explain', EXPLAIN_CUES.history), volume: 0.85 },
-  { sfx: 'projection', from: at('explain', EXPLAIN_CUES.projection), volume: 0.85 },
+  { sfx: 'projection', from: at('explain', EXPLAIN_CUES.projection), volume: 0.95 },
   // Back to day, and the end card resolves.
-  { sfx: 'sweepOut', from: at('end', 0), volume: 0.85 },
+  { sfx: 'sweepOut', from: at('end', 0), volume: 1 },
   { sfx: 'closing', from: at('end', END_RESOLVE - 4), volume: 0.85 },
 ];

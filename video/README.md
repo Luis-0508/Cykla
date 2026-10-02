@@ -2,11 +2,12 @@
 
 A 39-second product trailer (1920×1080, 30 fps) built with
 [Remotion](https://www.remotion.dev/) from real footage of the running app, in
-two cuts that share one picture and one sound design:
+two cuts that share one picture, one music bed and one sound design:
 
-- `out/cykla-trailer.mp4` (composition `CyklaTrailer`): sound design, no voice
+- `out/cykla-trailer.mp4` (composition `CyklaTrailer`): music and effects, no
+  voice
 - `out/cykla-trailer-narrated.mp4` (`CyklaTrailerNarrated`): the same, plus a
-  narrator; the effects duck under the voice
+  narrator; music and effects duck under the voice
 It is a separate npm project: the app does not depend on it, and the root
 typecheck, lint and format scripts ignore `video/`.
 
@@ -50,7 +51,13 @@ to daylight for the end card. Upright type stands for recorded facts and
 6. **Sound** (`scripts/sound.mjs`): every effect is synthesised in plain Node
    (sine partials, filtered noise, a small reverb, seeded noise) into
    `public/sfx/`. Same bytes on every run; no third-party audio.
-7. **Voice** (`scripts/voice.py`, optional): the narrator is generated locally
+7. **Music** (`scripts/music.mjs`): one continuous, procedural score composed
+   against the scene anchors in `src/sound/music.json` (soft pad, a near-silent
+   pulse, a few felt-piano notes, room tone), written to
+   `public/music/bed.wav`. The effects and the music share their instruments
+   (`scripts/dsp.mjs`) and key. Remotion refuses to render if the anchors no
+   longer match the timeline.
+8. **Voice** (`scripts/voice.py`, optional): the narrator is generated locally
    with [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) through
    [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx), voice `af_heart`,
    from `src/sound/script.json`. The resulting `public/voice/*.wav` and their
@@ -86,7 +93,9 @@ npm install
 npm run build:app      # export the Cykla web build to .app/
 npm run capture        # seed profiles (first run) and capture all shots
 npm run studio         # preview and scrub in Remotion Studio
-npm run sfx            # synthesise the sound effects → public/sfx/
+npm run audio          # synthesise effects and music → public/sfx/, public/music/
+npm run sfx            # effects only
+npm run music          # music bed only
 npm run voice          # optional: regenerate the narration → public/voice/
 npm run preview        # quick half-resolution render → out/preview.mp4
 npm run frames         # extract review frames from out/preview.mp4 → out/frames/
@@ -108,8 +117,8 @@ timestamps; `python scripts/sheet.py` tiles `out/frames/` into contact sheets.
 (used while designing the video).
 
 `.app/`, `.profiles/`, `public/captures/` (about 190 MB of frames),
-`public/sfx/`, `.voice/` and `out/` are generated and gitignored; the render
-scripts run `npm run sfx` first. The composition imports the capture metadata, so run
+`public/sfx/`, `public/music/`, `.voice/` and `out/` are generated and
+gitignored; the render scripts run `npm run audio` first. The composition imports the capture metadata, so run
 `npm run capture` before Studio or a render.
 
 ## Layout
@@ -121,12 +130,14 @@ scripts/demo-data.mjs   Synthetic dataset, demo date and the on-camera entry
 scripts/app-driver.mjs  Playwright helpers: launch, seed through the UI, profiles
 scripts/capture.mjs     Shot definitions and the frame-by-frame capture
 scripts/frames.mjs      Frame extraction for review
+scripts/dsp.mjs         Shared synthesis: felt and breath tones, filters, reverb, WAV writer
 scripts/sound.mjs       Procedural sound effects → public/sfx/
+scripts/music.mjs       Procedural music bed → public/music/bed.wav
 scripts/voice.py        Local narration (Kokoro) → public/voice/, src/sound/voice.json
 src/Root.tsx            The two compositions (sound design, narrated)
 src/timeline.ts         Scene order, overlaps and total length
 src/Trailer.tsx         Picture plus the sound layer
-src/sound/              Cue sheet, narration script and timing, mix and ducking
+src/sound/              Cue sheet, music anchors, narration script and timing, mix and ducking
 src/scenes/             Grammar, Phones (first run, record), Estimates, Explain, Closing
 src/components/         Phone, Capture (+ touches), Brand (mark, rings, type), CrescentWipe, Copy
 src/theme.ts            Colours from the app, fonts, easing, phone placement
@@ -137,13 +148,17 @@ coupled (for example the save tap at capture frame 240 in `record`, and the
 scroll steps in `explain` that the timeline graphic follows). Change them
 together. Sound cues are tied to the same scene constants (`GRAMMAR_CUES`,
 `RECORD_CUES`, `ESTIMATE_CUES`, `EXPLAIN_CUES`, `END_RESOLVE`), so they follow
-retimed scenes. After changing narration text, run `npm run voice` and check
+retimed scenes. The music is not: after retiming, update the anchors in
+`src/sound/music.json` (the render error names the expected frames) and run
+`npm run music`. After changing narration text, run `npm run voice` and check
 that no line runs into the silent moments listed in STORYBOARD.md.
 
 ## Sound and voice licensing
 
-- **Effects:** original, synthesised by `scripts/sound.mjs`; no samples or
-  third-party recordings.
+- **Effects and music:** original, composed and synthesised for this
+  trailer by `scripts/sound.mjs` and `scripts/music.mjs` (shared code in
+  `scripts/dsp.mjs`); no samples, loops, presets or third-party recordings.
+  Covered by the repository's licence like the rest of the code.
 - **Narration:** synthetic speech from Kokoro-82M (model weights Apache-2.0,
   by hexgrad), run locally with kokoro-onnx (MIT). Apache-2.0 places no
   restriction on generated audio, and no API or service terms apply. The

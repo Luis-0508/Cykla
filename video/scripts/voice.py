@@ -34,7 +34,7 @@ VOICE = os.environ.get('CYKLA_VOICE', 'af_heart')
 SPEED = float(os.environ.get('CYKLA_VOICE_SPEED', '0.9'))
 LANG = 'en-us'
 TARGET_RMS_DB = -18.0  # per-line loudness, so the voice sits evenly
-PEAK_LIMIT_DB = -2.0
+PEAK_LIMIT_DB = -3.0
 
 
 def trim(audio, sr, threshold_db=-50.0, pad=0.04):
@@ -85,7 +85,9 @@ def main():
     for line in lines:
         audio, sr = kokoro.create(line['text'], voice=VOICE, speed=SPEED, lang=LANG)
         audio = level(highpass(trim(np.asarray(audio, dtype=np.float64), sr), sr), sr)
-        sf.write(os.path.join(OUT, f"{line['id']}.wav"), audio.astype(np.float32), sr, subtype='PCM_16')
+        # Two identical channels: Remotion plays a mono file at -3 dB per channel.
+        stereo = np.stack([audio, audio], axis=1).astype(np.float32)
+        sf.write(os.path.join(OUT, f"{line['id']}.wav"), stereo, sr, subtype='PCM_16')
         durations[line['id']] = round(len(audio) / sr, 3)
         print(f"{line['id']:14s} {durations[line['id']]:5.2f}s  {line['text']}")
     with open(DURATIONS, 'w', encoding='utf-8') as f:
