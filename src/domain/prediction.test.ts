@@ -6,7 +6,11 @@ import {
   parseDateOnly,
   todayDate,
 } from '@/domain/dateOnly';
-import { calculatePrediction, derivePeriodStarts } from '@/domain/prediction';
+import {
+  bleedingDaysForEstimates,
+  calculatePrediction,
+  derivePeriodStarts,
+} from '@/domain/prediction';
 
 describe('calculatePrediction', () => {
   it('predicts regular 28-day cycles with medium confidence after three cycles', () => {
@@ -141,6 +145,83 @@ describe('prediction edge cases', () => {
     expect(prediction.expectedStart).toBe('2028-02-29');
     expect(prediction.windowStart < prediction.expectedStart).toBe(true);
     expect(prediction.windowEnd > prediction.expectedStart).toBe(true);
-    expect(differenceInDays(prediction.expectedStart, prediction.estimatedOvulation)).toBe(14);
+    // A single period gives no basis for day-level fertility dates.
+    expect(prediction.estimatedOvulation).toBeNull();
+    expect(prediction.fertileWindowStart).toBeNull();
+  });
+});
+
+describe('cautious estimates', () => {
+  const stable = ['2026-01-01', '2026-01-29', '2026-02-26', '2026-03-26'];
+
+  it('keeps one undocumented day inside a bleeding episode', () => {
+    expect(derivePeriodStarts(['2026-01-01', '2026-01-03', '2026-01-29'])).toEqual([
+      '2026-01-01',
+      '2026-01-29',
+    ]);
+    expect(derivePeriodStarts(['2026-01-01', '2026-01-04'])).toEqual(['2026-01-01', '2026-01-04']);
+  });
+
+  it('does not count spotting as a period day for estimates', () => {
+    expect(
+      bleedingDaysForEstimates([
+        { date: '2026-01-01', flow: 'none' },
+        { date: '2026-01-10', flow: 'spotting' },
+        { date: '2026-01-11', flow: 'light' },
+        { date: '2026-01-12', flow: 'medium' },
+        { date: '2026-01-13', flow: 'heavy' },
+      ]),
+    ).toEqual(['2026-01-11', '2026-01-12', '2026-01-13']);
+  });
+
+  it('shows a day-level fertile window for three or more steady cycles', () => {
+    const prediction = calculatePrediction({ periodDays: stable })!;
+    expect(prediction.estimatedOvulation).toBe('2026-04-09');
+    expect(prediction.fertileWindowStart).toBe('2026-04-04');
+    expect(prediction.fertileWindowEnd).toBe('2026-04-10');
+  });
+
+  it('hides the fertile window with fewer than three complete cycles', () => {
+    const prediction = calculatePrediction({ periodDays: stable.slice(0, 3) })!;
+    expect(prediction.confidence).toBe('low');
+    expect(prediction.fertileWindowStart).toBeNull();
+    expect(prediction.fertileWindowEnd).toBeNull();
+  });
+
+  it('hides the fertile window for cycles shorter than 24 or longer than 38 days', () => {
+    const short = calculatePrediction({
+      periodDays: ['2026-01-01', '2026-01-23', '2026-02-14', '2026-03-08'],
+    })!;
+    expect(short.completeCycleCount).toBe(3);
+    expect(short.confidence).toBe('medium');
+    expect(short.fertileWindowStart).toBeNull();
+    const long = calculatePrediction({
+      periodDays: ['2026-01-01', '2026-02-10', '2026-03-22', '2026-05-01'],
+    })!;
+    expect(long.confidence).toBe('medium');
+    expect(long.fertileWindowStart).toBeNull();
+  });
+
+  it('hides the fertile window right after prolonged recorded bleeding', () => {
+    const bleeding = Array.from({ length: 8 }, (_, index) => addDays('2026-03-26', index));
+    const prediction = calculatePrediction({ periodDays: [...stable.slice(0, 3), ...bleeding] })!;
+    expect(prediction.completeCycleCount).toBe(3);
+    expect(prediction.confidence).toBe('medium');
+    expect(prediction.fertileWindowStart).toBeNull();
+  });
+
+  it('keeps the window at least three days wide on each side', () => {
+    const starts = Array.from({ length: 7 }, (_, index) => addDays('2026-01-01', index * 28));
+    const prediction = calculatePrediction({ periodDays: starts })!;
+    expect(prediction.variationDays).toBe(0);
+    expect(differenceInDays(prediction.expectedStart, prediction.windowStart)).toBe(3);
+    expect(differenceInDays(prediction.windowEnd, prediction.expectedStart)).toBe(3);
+  });
+
+  it('widens the window when there is little history', () => {
+    const none = calculatePrediction({ periodDays: ['2026-01-01'] })!;
+    expect(differenceInDays(none.expectedStart, none.windowStart)).toBe(7);
+    const two = calculatePrediction({ periodDays: stable.slice(0, 3) })!;
+    expect(differenceInDays(two.expectedStart, two.windowStart)).toBe(5);
   });
 });

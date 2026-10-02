@@ -1,6 +1,6 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+cd /d "%~dp0\..\.."
 
 where node >nul 2>nul
 if errorlevel 1 (
@@ -25,20 +25,15 @@ if not exist "node_modules\" (
 )
 
 echo.
-echo Cykla fuer iPhone wird gestartet.
-echo.
-echo 1. Oeffne Expo Go auf dem iPhone.
-echo 2. Verbinde iPhone und PC mit demselben WLAN.
-echo 3. Scanne den gleich angezeigten QR-Code.
-echo.
-echo Hinweis: Ein iOS-Simulator kann nur auf einem Mac gestartet werden.
+echo Cykla Web wird gestartet.
+echo Oeffne danach im Browser: http://localhost:8082
 echo Beenden mit Strg+C.
 echo.
 
-call npx expo start --clear
+call npm run web
 
 if errorlevel 1 (
   echo.
-  echo Expo wurde mit einem Fehler beendet.
+  echo Die Web-Vorschau wurde mit einem Fehler beendet.
   pause
 )

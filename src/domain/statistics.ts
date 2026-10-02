@@ -1,4 +1,5 @@
 import type { Cycle, DailyEntry } from '@/domain/models';
+import { isPlausibleCycleLength } from '@/domain/prediction';
 
 export type CycleStats = {
   usableCycles: number;
@@ -11,7 +12,10 @@ export type CycleStats = {
 
 export function calculateCycleStats(cycles: Cycle[], entries: DailyEntry[]): CycleStats {
   const lengths = cycles
-    .filter((cycle) => !cycle.excluded && cycle.lengthDays !== null)
+    .filter(
+      (cycle) =>
+        !cycle.excluded && cycle.lengthDays !== null && isPlausibleCycleLength(cycle.lengthDays),
+    )
     .map((cycle) => cycle.lengthDays!);
   return {
     usableCycles: lengths.length,

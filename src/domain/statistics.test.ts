@@ -25,6 +25,15 @@ describe('cycle statistics', () => {
       longest: 30,
     });
   });
+  it('uses the same 15–90 day cycle lengths as predictions', () => {
+    const cycles = deriveCycles(['2026-01-01', '2026-01-11', '2026-02-08', '2026-06-01']);
+    expect(calculateCycleStats(cycles, [])).toMatchObject({
+      usableCycles: 1,
+      averageLength: 28,
+      shortest: 28,
+      longest: 28,
+    });
+  });
   it('counts symptom days rather than individual symptoms', () => {
     const base: DailyEntry = {
       date: '2026-01-01',

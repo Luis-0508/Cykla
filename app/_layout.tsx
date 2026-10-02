@@ -145,6 +145,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="day/[date]" options={{ presentation: 'modal' }} />
         <Stack.Screen name="prediction" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="roadmap" options={{ presentation: 'modal' }} />
       </Stack>
     </>
   );

@@ -6,6 +6,7 @@ const plural = (count: number, one: string, other: string) => (count === 1 ? one
 
 export const de = {
   common: {
+    retry: 'Erneut versuchen',
     cancel: 'Abbrechen',
     back: 'Zurück',
     continue: 'Weiter',
@@ -30,6 +31,7 @@ export const de = {
     settingsLabel: (appName: string) => `${appName} Einstellungen`,
   },
   states: {
+    prepareError: 'Deine Einstellungen konnten nicht geladen werden. Bitte versuche es erneut.',
     loading: 'Wird geladen …',
     error: 'Etwas ist schiefgegangen.',
     errorTitle: 'Das hat nicht geklappt',
@@ -160,14 +162,15 @@ export const de = {
     nothingRecorded: 'Für diesen Tag ist noch nichts dokumentiert.',
     noteTitle: 'Hinweis zur Schätzung',
     noteBody:
-      'Der mögliche fruchtbare Zeitraum ist eine rechnerische Annahme und keine sichere Verhütungsmethode.',
+      'Fruchtbarkeit lässt sich aus Kalenderdaten nicht sicher bestimmen. Auch außerhalb markierter Tage ist eine Schwangerschaft möglich; Cykla ist keine Verhütungsmethode.',
     a11yPeriod: 'dokumentierter Periodentag',
     a11yPrediction: 'möglicher Prognosezeitraum',
     a11yFertile: 'möglicher fruchtbarer Zeitraum',
     a11ySymptoms: 'Symptome dokumentiert',
   },
   dayStrip: {
-    periodHint: 'Dokumentierter Periodentag',
+    periodHint: 'Dokumentierte Blutung',
+    entryHint: 'Eintrag ohne Blutung',
     selectHint: 'Tag auswählen',
   },
   log: {
@@ -228,7 +231,7 @@ export const de = {
     midpoint: (date: string) => `Der rechnerische Mittelpunkt liegt am ${date}.`,
     startsTitle: '1. Dokumentierte Starts',
     startsBody:
-      'Wir betrachten nur Tage, die du selbst als Blutung gespeichert hast. Zusammenhängende Periodentage bilden einen Periodenbeginn.',
+      'Wir betrachten nur Tage, die du selbst als leichte bis starke Blutung gespeichert hast. Zusammenhängende Blutungstage bilden einen Periodenbeginn; ein einzelner nicht eingetragener Tag trennt sie nicht. Schmierblutungen gelten nicht als Periodenbeginn.',
     startsMetric: (count: number) =>
       plural(count, 'vollständiger, einbezogener Zyklus', 'vollständige, einbezogene Zyklen'),
     averageTitle: '2. Gewichteter Durchschnitt',
@@ -237,11 +240,13 @@ export const de = {
     averageMetric: (days: number) => `${plural(days, 'Tag', 'Tage')} als gewichtete Zykluslänge`,
     spreadTitle: '3. Unsicherheit statt exaktem Tag',
     spreadBody:
-      'Die Streuung deiner bisherigen Zykluslängen bestimmt die Breite des Zeitraums. Weniger als drei vollständige Zyklen ergeben immer niedrige Konfidenz.',
+      'Die Streuung deiner bisherigen Zykluslängen bestimmt die Breite des Zeitraums, mindestens aber ±3 Tage. Weniger als drei vollständige Zyklen ergeben immer niedrige Konfidenz und einen breiteren Zeitraum.',
     spreadMetric: 'berechnete Streuung in Tagen',
     fertileTitle: 'Möglicher fruchtbarer Zeitraum',
     fertileBody:
-      'Diese grobe Annahme zählt 14 Tage vom erwarteten Periodenbeginn zurück und markiert fünf Tage davor bis einen Tag danach. Sie eignet sich nicht zur Verhütung.',
+      'Diese grobe Annahme zählt 14 Tage vom erwarteten Periodenbeginn zurück und markiert fünf Tage davor bis einen Tag danach. Sie erscheint nur bei mindestens drei gleichmäßigen Zyklen von 24 bis 38 Tagen. Kalenderdaten können den Eisprung nicht bestimmen; auch an anderen Tagen ist eine Schwangerschaft möglich. Nicht zur Verhütung geeignet.',
+    fertileUnavailable:
+      'Aus deinen bisherigen Daten lässt sich kein Tageszeitraum sinnvoll ableiten. Das bedeutet nicht, dass Tage unfruchtbar sind.',
     notEnoughTitle: 'Noch nicht genug für eine Schätzung',
     notEnoughBody:
       'Dokumentiere mindestens einen Periodenbeginn. Die erste Schätzung verwendet zusätzlich deine typische Zykluslänge aus dem Onboarding.',
@@ -249,9 +254,11 @@ export const de = {
     disclaimerBody:
       '„Hohe Konfidenz“ bedeutet nicht Gewissheit. Schwangerschaft, Erkrankungen, Stress, Medikamente und weitere Faktoren können Zyklen verändern.',
     footer: (cycles: number) =>
-      `Modellversion 1.0 · ${cycles} ${plural(cycles, 'erkannter Zyklus', 'erkannte Zyklen')} · Berechnung ausschließlich lokal`,
+      `Modellversion 1.1 · ${cycles} ${plural(cycles, 'erkannter Zyklus', 'erkannte Zyklen')} · Berechnung ausschließlich lokal`,
   },
   dayEditor: {
+    loadError:
+      'Deine Tagesdaten konnten nicht geladen werden. Bitte versuche es erneut, bevor du sie bearbeitest.',
     invalidDate: 'Ungültiges Datum',
     loading: 'Eintrag wird geladen …',
     deleteTitle: 'Eintrag löschen?',
@@ -302,6 +309,8 @@ export const de = {
       'Diese Werte dienen nur als erste Annahme. Mit dokumentierten Zyklen wird die Schätzung persönlicher.',
     cycleLength: 'Zykluslänge',
     periodLength: 'Blutungsdauer',
+    periodLengthNote:
+      'Die typische Dauer ist nur ein Richtwert für die Schätzung. Cykla speichert nur den gewählten ersten Blutungstag; weitere Tage trägst du selbst ein.',
     decrease: (label: string) => `${label} verringern`,
     increase: (label: string) => `${label} erhöhen`,
     ready: 'Bereit für deinen ersten Überblick',
@@ -384,6 +393,76 @@ export const de = {
       'Cykla ist keine medizinische Anwendung zur Diagnose und keine sichere Verhütungsmethode.',
     documentedDays: (count: number) =>
       `${count} ${plural(count, 'dokumentierter Tag', 'dokumentierte Tage')} auf diesem Gerät`,
+    roadmap: 'Roadmap',
+    roadmapCaption: 'Was verfügbar, in Arbeit und geplant ist',
+  },
+  roadmap: {
+    title: 'Roadmap',
+    intro:
+      'Was Cykla heute kann und was als Nächstes kommt. Pläne sind Schätzungen und können sich ändern.',
+    close: 'Roadmap schließen',
+    stage: {
+      released: 'In deiner App',
+      now: 'In Arbeit',
+      next: 'Als Nächstes',
+      later: 'Später',
+    },
+    legendPlanned: 'Geplant',
+    showFeatures: (count: number) => `${count} ${plural(count, 'Funktion', 'Funktionen')} anzeigen`,
+    hideFeatures: 'Funktionen ausblenden',
+    phaseLabel: (version: string | null, title: string, stage: string) =>
+      version ? `Version ${version}, ${title}, ${stage}` : `${title}, ${stage}`,
+    phases: {
+      mvp: {
+        title: 'Lokale Grundfunktionen',
+        summary: 'Alles, um deinen Zyklus privat auf diesem Gerät zu beobachten.',
+      },
+      hardening: {
+        title: 'Sicherheit und Verlässlichkeit',
+        summary: 'Was es gibt, wird sicherer und robuster, bevor Neues dazukommt.',
+      },
+      extended: {
+        title: 'Erweitertes Tracking',
+        summary:
+          'Mehr Möglichkeiten, deinen Körper zu dokumentieren, mit nachvollziehbaren Ergebnissen.',
+      },
+      later: {
+        title: 'Weiter voraus',
+        summary: 'Jeder dieser Punkte braucht vorher eine eigene Datenschutzentscheidung.',
+      },
+    },
+    items: {
+      onboarding: 'Einstieg und Wahl deines Ziels',
+      tracking: 'Tägliches Tracking und Monatskalender',
+      prediction: 'Nachvollziehbare Periodenschätzung',
+      statistics: 'Zyklusstatistik mit manuellem Ausschließen',
+      protection: 'Erinnerungen, App-Sperre, Export, Löschen und dunkles Design',
+      languages: 'Oberfläche auf Deutsch und Englisch',
+      encryption: 'Verschlüsselte lokale Datenbank und Backup-Konzept',
+      tests: 'Automatisierte Komponenten- und End-to-End-Tests',
+      accessibility: 'Gründliche Prüfung mit Screenreader und großer Schrift',
+      reviews: 'Medizinische, rechtliche und Datenschutzprüfung',
+      migrations: 'Sichere Datenbank-Updates mit Wiederherstellungstests',
+      bodySignals: 'Basaltemperatur, Ovulations- und Schwangerschaftstests',
+      symptoms: 'Eigene Symptomkategorien',
+      noteSearch: 'Suche in Notizen',
+      comparisons: 'Regelbasierte Symptomvergleiche mit erklärten Ergebnissen',
+      devMode:
+        'Optionaler Entwicklungsmodus mit synthetischen Daten, nur nach ausdrücklichem Einschalten',
+      sync: 'Ende-zu-Ende-verschlüsselte Synchronisierung',
+      health: 'Apple Health und Health Connect mit fein abgestuften Berechtigungen',
+      pregnancy: 'Module für Kinderwunsch und Schwangerschaft',
+      education:
+        'Medizinisch geprüfte Inhalte und eine exportierbare Zusammenfassung fürs Arztgespräch',
+    },
+    notPlannedTitle: 'Nicht geplant',
+    notPlannedSubtitle: 'Zusagen, die für jede Version gelten.',
+    notPlanned: {
+      ads: 'Werbung oder Verkauf sensibler Daten',
+      paywalls: 'Bezahlschranken für Export, Löschen oder Datenschutzfunktionen',
+      aiDiagnosis: 'KI-Diagnosen oder ein angeblicher „KI-Arzt“',
+      contraception: 'Schätzungen als sichere Verhütungsmethode darstellen',
+    },
   },
 };
 

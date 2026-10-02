@@ -4,7 +4,7 @@ labels: [bug]
 body:
   - type: markdown
     attributes:
-      value: Do not include real health data, database files, exports or personal screenshots. Report vulnerabilities privately; see SECURITY.md.
+      value: Do not include real health data, database files, exports or personal screenshots. Report vulnerabilities privately as described in [SECURITY.md](https://github.com/Luis-0508/Cykla/blob/master/SECURITY.md).
   - type: textarea
     id: problem
     attributes:

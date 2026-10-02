@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Platform, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { AppScreen } from '@/components/ui/AppScreen';
@@ -365,6 +365,27 @@ export default function SettingsScreen() {
         loading={resetData.isPending}
         onPress={confirmReset}
       />
+
+      <Card>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t.settings.roadmap}
+          accessibilityHint={t.settings.roadmapCaption}
+          onPress={() => router.push('/roadmap')}
+          style={({ pressed }) => [styles.settingRow, { opacity: pressed ? 0.7 : 1 }]}
+        >
+          <View style={styles.settingIcon}>
+            <Ionicons name="map-outline" size={23} color={theme.colors.primary} />
+          </View>
+          <View style={styles.settingText}>
+            <Typography variant="label">{t.settings.roadmap}</Typography>
+            <Typography variant="caption" muted>
+              {t.settings.roadmapCaption}
+            </Typography>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
+        </Pressable>
+      </Card>
 
       <View style={styles.about}>
         <Typography variant="label">{t.brand.appTitle}</Typography>

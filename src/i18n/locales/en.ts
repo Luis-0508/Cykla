@@ -4,6 +4,7 @@ const plural = (count: number, one: string, other: string) => (count === 1 ? one
 
 export const en: Messages = {
   common: {
+    retry: 'Try again',
     cancel: 'Cancel',
     back: 'Back',
     continue: 'Continue',
@@ -28,6 +29,7 @@ export const en: Messages = {
     settingsLabel: (appName) => `${appName} settings`,
   },
   states: {
+    prepareError: 'Your settings could not be loaded. Please try again.',
     loading: 'Loading …',
     error: 'Something went wrong.',
     errorTitle: 'That didn’t work',
@@ -156,14 +158,15 @@ export const en: Messages = {
     nothingRecorded: 'Nothing has been logged for this day yet.',
     noteTitle: 'About this estimate',
     noteBody:
-      'The possible fertile window is a calculated assumption and not a reliable method of contraception.',
+      'Calendar data cannot reliably determine fertility. Pregnancy is possible outside the marked days too; Cykla is not a method of contraception.',
     a11yPeriod: 'recorded period day',
     a11yPrediction: 'possible prediction window',
     a11yFertile: 'possible fertile window',
     a11ySymptoms: 'symptoms logged',
   },
   dayStrip: {
-    periodHint: 'Recorded period day',
+    periodHint: 'Bleeding recorded',
+    entryHint: 'Entry without bleeding',
     selectHint: 'Select day',
   },
   log: {
@@ -221,7 +224,7 @@ export const en: Messages = {
     midpoint: (date) => `The calculated midpoint is ${date}.`,
     startsTitle: '1. Recorded starts',
     startsBody:
-      'We only consider days you saved as bleeding yourself. Consecutive period days form one period start.',
+      'We only consider days you saved yourself as light to heavy bleeding. Consecutive bleeding days form one period start; a single unlogged day does not split them. Spotting does not count as a period start.',
     startsMetric: (count) => plural(count, 'complete cycle included', 'complete cycles included'),
     averageTitle: '2. Weighted average',
     averageBody:
@@ -229,11 +232,13 @@ export const en: Messages = {
     averageMetric: (days) => `${plural(days, 'day', 'days')} as the weighted cycle length`,
     spreadTitle: '3. A range, not an exact day',
     spreadBody:
-      'The variation in your past cycle lengths sets the width of the window. Fewer than three complete cycles always give low confidence.',
+      'The variation in your past cycle lengths sets the width of the window, but it is always at least ±3 days. Fewer than three complete cycles always give low confidence and a wider window.',
     spreadMetric: 'calculated variation in days',
     fertileTitle: 'Possible fertile window',
     fertileBody:
-      'This rough assumption counts back 14 days from the expected period start and marks five days before to one day after. It is not suitable for contraception.',
+      'This rough assumption counts back 14 days from the expected period start and marks five days before to one day after. It only appears after at least three steady cycles of 24 to 38 days. Calendar data cannot determine ovulation; pregnancy is possible on other days too. Not suitable for contraception.',
+    fertileUnavailable:
+      'Your data so far does not support a day-level window. This does not mean that any days are infertile.',
     notEnoughTitle: 'Not enough data for an estimate yet',
     notEnoughBody:
       'Log at least one period start. The first estimate also uses the typical cycle length from onboarding.',
@@ -241,9 +246,10 @@ export const en: Messages = {
     disclaimerBody:
       '“High confidence” does not mean certainty. Pregnancy, illness, stress, medication and other factors can change cycles.',
     footer: (cycles) =>
-      `Model version 1.0 · ${cycles} ${plural(cycles, 'cycle', 'cycles')} detected · calculated on this device only`,
+      `Model version 1.1 · ${cycles} ${plural(cycles, 'cycle', 'cycles')} detected · calculated on this device only`,
   },
   dayEditor: {
+    loadError: 'Your daily data could not be loaded. Please try again before editing.',
     invalidDate: 'Invalid date',
     loading: 'Loading entry …',
     deleteTitle: 'Delete entry?',
@@ -293,6 +299,8 @@ export const en: Messages = {
       'These values are only a first assumption. As you record cycles, the estimate becomes more personal.',
     cycleLength: 'Cycle length',
     periodLength: 'Period length',
+    periodLengthNote:
+      'The typical length is only a guide for the estimate. Cykla saves just the first bleeding day you chose; you log any further days yourself.',
     decrease: (label) => `Decrease ${label.toLowerCase()}`,
     increase: (label) => `Increase ${label.toLowerCase()}`,
     ready: 'Ready for your first overview',
@@ -372,5 +380,71 @@ export const en: Messages = {
     version: (version) => `Version ${version} · Open source · AGPL-3.0-only`,
     medical: 'Cykla is not a medical diagnostic app and not a reliable method of contraception.',
     documentedDays: (count) => `${count} ${plural(count, 'day', 'days')} logged on this device`,
+    roadmap: 'Roadmap',
+    roadmapCaption: 'What’s available, in progress and planned',
+  },
+  roadmap: {
+    title: 'Roadmap',
+    intro: 'What Cykla can do today and what comes next. Plans are estimates and may change.',
+    close: 'Close roadmap',
+    stage: {
+      released: 'In your app',
+      now: 'In progress',
+      next: 'Up next',
+      later: 'Later',
+    },
+    legendPlanned: 'Planned',
+    showFeatures: (count) => `Show ${count} ${plural(count, 'feature', 'features')}`,
+    hideFeatures: 'Hide features',
+    phaseLabel: (version, title, stage) =>
+      version ? `Version ${version}, ${title}, ${stage}` : `${title}, ${stage}`,
+    phases: {
+      mvp: {
+        title: 'Local essentials',
+        summary: 'Everything you need to follow your cycle privately on this device.',
+      },
+      hardening: {
+        title: 'Safety and reliability',
+        summary: 'Making what exists safer and sturdier before adding more.',
+      },
+      extended: {
+        title: 'Extended tracking',
+        summary: 'More ways to record your body, with results you can follow.',
+      },
+      later: {
+        title: 'Further ahead',
+        summary: 'Each of these needs its own privacy decision before work starts.',
+      },
+    },
+    items: {
+      onboarding: 'Onboarding and choosing your goal',
+      tracking: 'Daily tracking and monthly calendar',
+      prediction: 'Transparent period estimate',
+      statistics: 'Cycle statistics with manual exclusions',
+      protection: 'Reminders, app lock, exports, deletion and dark mode',
+      languages: 'German and English interface',
+      encryption: 'Encrypted local database and backup strategy',
+      tests: 'Automated component and end-to-end tests',
+      accessibility: 'Thorough screen reader and large text review',
+      reviews: 'Medical, legal and privacy review',
+      migrations: 'Safe database updates with recovery tests',
+      bodySignals: 'Basal body temperature, ovulation and pregnancy tests',
+      symptoms: 'Configurable symptom categories',
+      noteSearch: 'Note search',
+      comparisons: 'Rule-based symptom comparisons with explained results',
+      devMode: 'Optional development mode with synthetic data, only when switched on',
+      sync: 'End-to-end encrypted sync',
+      health: 'Apple Health and Health Connect with granular permissions',
+      pregnancy: 'Conception and pregnancy modules',
+      education: 'Medically reviewed guides and an exportable summary for appointments',
+    },
+    notPlannedTitle: 'Not planned',
+    notPlannedSubtitle: 'Commitments that hold for every version.',
+    notPlanned: {
+      ads: 'Advertising or selling sensitive data',
+      paywalls: 'Paywalls for exports, deletion or privacy features',
+      aiDiagnosis: 'AI diagnoses or a so-called “AI doctor”',
+      contraception: 'Presenting estimates as reliable contraception',
+    },
   },
 };

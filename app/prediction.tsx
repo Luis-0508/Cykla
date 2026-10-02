@@ -86,10 +86,12 @@ export default function PredictionScreen() {
           <Card tone="fertile" style={styles.section}>
             <Typography variant="heading">{t.prediction.fertileTitle}</Typography>
             <Typography>
-              {t.estimate.rangeWords(
-                formatDate(prediction.fertileWindowStart, { day: 'numeric', month: 'short' }),
-                formatDate(prediction.fertileWindowEnd, { day: 'numeric', month: 'short' }),
-              )}
+              {prediction.fertileWindowStart && prediction.fertileWindowEnd
+                ? t.estimate.rangeWords(
+                    formatDate(prediction.fertileWindowStart, { day: 'numeric', month: 'short' }),
+                    formatDate(prediction.fertileWindowEnd, { day: 'numeric', month: 'short' }),
+                  )
+                : t.prediction.fertileUnavailable}
             </Typography>
             <Typography muted>{t.prediction.fertileBody}</Typography>
           </Card>

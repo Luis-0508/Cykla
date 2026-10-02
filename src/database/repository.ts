@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { addDays } from '@/domain/dateOnly';
+import { withDatabaseAccess, withDatabaseTransaction } from './access';
 import type { AppSettings, DailyEntry, Goal, SymptomEntry } from '@/domain/models';
 
 import {
@@ -39,14 +39,16 @@ function createId(): string {
 }
 
 export async function getSettings(db: SQLiteDatabase): Promise<AppSettings> {
-  const rows = await db.getAllAsync<{ key: string; value: string }>(
-    'SELECT key, value FROM app_settings',
-  );
-  const values = Object.fromEntries(rows.map((row) => [row.key, row.value]));
-  return parseSettings(values);
+  return withDatabaseAccess(db, async () => {
+    const rows = await db.getAllAsync<{ key: string; value: string }>(
+      'SELECT key, value FROM app_settings',
+    );
+    const values = Object.fromEntries(rows.map((row) => [row.key, row.value]));
+    return parseSettings(values);
+  });
 }
 
-export async function setSetting(
+async function writeSetting(
   db: SQLiteDatabase,
   key: keyof typeof SETTINGS_KEYS,
   value: string | number | boolean,
@@ -57,6 +59,14 @@ export async function setSetting(
     SETTINGS_KEYS[key],
     String(value),
   );
+}
+
+export async function setSetting(
+  db: SQLiteDatabase,
+  key: keyof typeof SETTINGS_KEYS,
+  value: string | number | boolean,
+): Promise<void> {
+  return withDatabaseAccess(db, () => writeSetting(db, key, value));
 }
 
 export type OnboardingInput = {
@@ -70,54 +80,58 @@ export async function completeOnboarding(
   db: SQLiteDatabase,
   input: OnboardingInput,
 ): Promise<void> {
-  await db.withTransactionAsync(async () => {
-    await setSetting(db, 'goal', input.goal);
-    await setSetting(db, 'typicalCycleLength', input.typicalCycleLength);
-    await setSetting(db, 'typicalPeriodLength', input.typicalPeriodLength);
-    await setSetting(db, 'onboardingCompleted', true);
+  await withDatabaseTransaction(db, async () => {
+    await writeSetting(db, 'goal', input.goal);
+    await writeSetting(db, 'typicalCycleLength', input.typicalCycleLength);
+    await writeSetting(db, 'typicalPeriodLength', input.typicalPeriodLength);
+    await writeSetting(db, 'onboardingCompleted', true);
 
-    for (let index = 0; index < input.typicalPeriodLength; index += 1) {
-      const date = addDays(input.lastPeriodDate, index);
-      await db.runAsync(
-        `INSERT INTO daily_entries
-          (date, flow, mood, pain, energy, sleep_hours, sleep_quality, notes, updated_at)
-         VALUES (?, ?, NULL, NULL, NULL, NULL, NULL, '', ?)
-         ON CONFLICT(date) DO UPDATE SET flow = excluded.flow, updated_at = excluded.updated_at`,
-        date,
-        index === 0 ? 'medium' : 'light',
-        new Date().toISOString(),
-      );
-    }
+    // Only the confirmed first day is an observation. The typical period length
+    // is a prediction input and must not create further (or future) bleeding days.
+    await db.runAsync(
+      `INSERT INTO daily_entries
+        (date, flow, mood, pain, energy, sleep_hours, sleep_quality, notes, updated_at)
+       VALUES (?, 'medium', NULL, NULL, NULL, NULL, NULL, '', ?)
+       ON CONFLICT(date) DO UPDATE SET
+         flow = CASE WHEN daily_entries.flow = 'none' THEN excluded.flow ELSE daily_entries.flow END,
+         updated_at = excluded.updated_at`,
+      input.lastPeriodDate,
+      new Date().toISOString(),
+    );
   });
 }
 
 export async function getAllEntries(db: SQLiteDatabase): Promise<DailyEntry[]> {
-  const rows = await db.getAllAsync<unknown>('SELECT * FROM daily_entries ORDER BY date ASC');
-  const symptomRows = await db.getAllAsync<unknown>(
-    'SELECT * FROM symptom_entries ORDER BY date ASC, code ASC',
-  );
-  const symptomsByDate = new Map<string, SymptomEntry[]>();
-  parseSymptoms(symptomRows).forEach((row) => {
-    const list = symptomsByDate.get(row.date) ?? [];
-    list.push(row);
-    symptomsByDate.set(row.date, list);
-  });
-  return rows.flatMap((row) => {
-    const parsed = dailyRowSchema.safeParse(row);
-    if (!parsed.success) return [];
-    const entry = toEntry(parsed.data, symptomsByDate.get(parsed.data.date) ?? []);
-    return entry ? [entry] : [];
+  return withDatabaseTransaction(db, async () => {
+    const rows = await db.getAllAsync<unknown>('SELECT * FROM daily_entries ORDER BY date ASC');
+    const symptomRows = await db.getAllAsync<unknown>(
+      'SELECT * FROM symptom_entries ORDER BY date ASC, code ASC',
+    );
+    const symptomsByDate = new Map<string, SymptomEntry[]>();
+    parseSymptoms(symptomRows).forEach((row) => {
+      const list = symptomsByDate.get(row.date) ?? [];
+      list.push(row);
+      symptomsByDate.set(row.date, list);
+    });
+    return rows.flatMap((row) => {
+      const parsed = dailyRowSchema.safeParse(row);
+      if (!parsed.success) return [];
+      const entry = toEntry(parsed.data, symptomsByDate.get(parsed.data.date) ?? []);
+      return entry ? [entry] : [];
+    });
   });
 }
 
 export async function getEntry(db: SQLiteDatabase, date: string): Promise<DailyEntry | null> {
-  const row = await db.getFirstAsync<unknown>('SELECT * FROM daily_entries WHERE date = ?', date);
-  if (!row) return null;
-  const symptoms = await db.getAllAsync<unknown>(
-    'SELECT * FROM symptom_entries WHERE date = ? ORDER BY code ASC',
-    date,
-  );
-  return toEntry(row, parseSymptoms(symptoms));
+  return withDatabaseTransaction(db, async () => {
+    const row = await db.getFirstAsync<unknown>('SELECT * FROM daily_entries WHERE date = ?', date);
+    if (!row) return null;
+    const symptoms = await db.getAllAsync<unknown>(
+      'SELECT * FROM symptom_entries WHERE date = ? ORDER BY code ASC',
+      date,
+    );
+    return toEntry(row, parseSymptoms(symptoms));
+  });
 }
 
 export type SaveDailyEntryInput = Omit<DailyEntry, 'updatedAt' | 'symptoms'> & {
@@ -128,7 +142,7 @@ export async function saveDailyEntry(
   db: SQLiteDatabase,
   input: SaveDailyEntryInput,
 ): Promise<void> {
-  await db.withTransactionAsync(async () => {
+  await withDatabaseTransaction(db, async () => {
     await db.runAsync(
       `INSERT INTO daily_entries
         (date, flow, mood, pain, energy, sleep_hours, sleep_quality, notes, updated_at)
@@ -166,14 +180,18 @@ export async function saveDailyEntry(
 }
 
 export async function deleteDailyEntry(db: SQLiteDatabase, date: string): Promise<void> {
-  await db.runAsync('DELETE FROM daily_entries WHERE date = ?', date);
+  return withDatabaseAccess(db, async () => {
+    await db.runAsync('DELETE FROM daily_entries WHERE date = ?', date);
+  });
 }
 
 export async function getExcludedCycleStarts(db: SQLiteDatabase): Promise<string[]> {
-  const rows = await db.getAllAsync<{ start_date: string }>(
-    'SELECT start_date FROM cycle_exclusions ORDER BY start_date ASC',
-  );
-  return rows.map((row) => row.start_date).filter((date) => dateSchema.safeParse(date).success);
+  return withDatabaseAccess(db, async () => {
+    const rows = await db.getAllAsync<{ start_date: string }>(
+      'SELECT start_date FROM cycle_exclusions ORDER BY start_date ASC',
+    );
+    return rows.map((row) => row.start_date).filter((date) => dateSchema.safeParse(date).success);
+  });
 }
 
 export async function toggleCycleExclusion(
@@ -181,19 +199,21 @@ export async function toggleCycleExclusion(
   startDate: string,
   excluded: boolean,
 ): Promise<void> {
-  if (excluded) {
-    await db.runAsync(
-      'INSERT OR REPLACE INTO cycle_exclusions (start_date, reason) VALUES (?, ?)',
-      startDate,
-      'manual',
-    );
-  } else {
-    await db.runAsync('DELETE FROM cycle_exclusions WHERE start_date = ?', startDate);
-  }
+  return withDatabaseAccess(db, async () => {
+    if (excluded) {
+      await db.runAsync(
+        'INSERT OR REPLACE INTO cycle_exclusions (start_date, reason) VALUES (?, ?)',
+        startDate,
+        'manual',
+      );
+    } else {
+      await db.runAsync('DELETE FROM cycle_exclusions WHERE start_date = ?', startDate);
+    }
+  });
 }
 
 export async function deleteAllLocalData(db: SQLiteDatabase): Promise<void> {
-  await db.withTransactionAsync(async () => {
+  await withDatabaseTransaction(db, async () => {
     await db.runAsync('DELETE FROM symptom_entries');
     await db.runAsync('DELETE FROM daily_entries');
     await db.runAsync('DELETE FROM cycle_exclusions');

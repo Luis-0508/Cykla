@@ -1,0 +1,14 @@
+{
+  "fps": 30,
+  "anchors": {
+    "firstRun": 124,
+    "record": 222,
+    "recorded": 442,
+    "estimates": 512,
+    "night": 674,
+    "yours": 914,
+    "day": 1018,
+    "resolve": 1040,
+    "end": 1168
+  }
+}

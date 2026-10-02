@@ -1,13 +1,19 @@
 # Security
 
-Cykla is an early MVP processing sensitive health information. Security fixes target
-the current development version on `master`; older snapshots are not maintained
-separately. The app lock is not database encryption.
+Cykla is an early MVP that processes sensitive health information. The data
+protection model and its known limits are described in [PRIVACY.md](PRIVACY.md)
+and [docs/HARDENING.md](docs/HARDENING.md). The app lock is not database
+encryption.
+
+## Supported versions
+
+Security fixes target the current development version on `master`; older
+snapshots are not maintained separately.
 
 ## Reporting a vulnerability
 
 Do **not** open a public GitHub issue containing vulnerability details. Never attach
-real health data, production databases, personal exports, credentials, or personal
+real health data, production databases, personal exports, credentials or personal
 screenshots. Use **synthetic data only**, including in private reports.
 
 If this repository's **Security → Report a vulnerability** button is available,
@@ -22,7 +28,7 @@ is currently published by this project.
 
 A useful private report includes:
 
-- affected commit/app version and OS version;
+- affected commit or app version and OS version;
 - expected and observed behavior;
 - minimal reproduction using invented records;
 - potential impact and an optional proposed fix.
@@ -33,7 +39,7 @@ available; no response-time guarantee is currently offered.
 
 ## Maintainer setup
 
-Before making the repository public, enable private vulnerability reporting and
-verify the reporting button, or publish a monitored private contact. Enable
-Dependabot alerts and available secret scanning/push protection. See
-[GitHub setup](docs/GITHUB_SETUP.md) for the remaining settings.
+The repository is public. Enable private vulnerability reporting and verify the
+reporting button, or publish a monitored private contact in this file. Enable
+Dependabot alerts and available secret scanning and push protection. See
+[docs/GITHUB_SETUP.md](docs/GITHUB_SETUP.md) for the remaining settings.

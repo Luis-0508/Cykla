@@ -32,7 +32,9 @@ export function MonthCalendar({
     prediction ? eachDay(prediction.windowStart, prediction.windowEnd) : [],
   );
   const fertile = new Set(
-    prediction ? eachDay(prediction.fertileWindowStart, prediction.fertileWindowEnd) : [],
+    prediction?.fertileWindowStart && prediction.fertileWindowEnd
+      ? eachDay(prediction.fertileWindowStart, prediction.fertileWindowEnd)
+      : [],
   );
   const currentMonth = startOfMonth(month).slice(0, 7);
 
