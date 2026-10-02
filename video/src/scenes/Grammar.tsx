@@ -6,19 +6,23 @@ import { BRAND, LIGHT, clamp, easeInOut, span } from '../theme';
  * 0:00 — The grammar of the app, before the app: a filled dot (recorded) and a
  * dashed ring (estimated). They stay apart, then settle into the Cykla mark.
  */
-export const GRAMMAR_FRAMES = 168;
+export const GRAMMAR_FRAMES = 134;
+
+/** Frames (scene-relative) the sound layer follows. */
+export const GRAMMAR_CUES = { dot: 6, ring: 28, mark: 90 };
 
 export function Grammar() {
   const f = useCurrentFrame();
-  const dotIn = span(f, 8, 26);
-  const ringIn = span(f, 34, 62);
-  const words1 = span(f, 14, 30);
-  const words2 = span(f, 42, 60);
-  const line3 = span(f, 70, 88);
-  const out = span(f, 98, 118, easeInOut);
-  const markIn = span(f, 108, 132);
-  const wordmark = span(f, 118, 140);
-  const fadeAll = 1 - span(f, 154, 168, easeInOut);
+  const dotIn = span(f, 6, 22);
+  const ringIn = span(f, 28, 54);
+  const words1 = span(f, 10, 26);
+  const words2 = span(f, 34, 52);
+  const line3 = span(f, 58, 74);
+  const out = span(f, 82, 100, easeInOut);
+  const markIn = span(f, 90, 110);
+  const wordmark = span(f, 96, 114);
+  // Gone before the first phone rises past the wordmark (First run overlaps by 10 frames).
+  const fadeAll = 1 - span(f, 117, 130, easeInOut);
 
   // Dot and ring sit apart, then drift toward the centre as the mark appears.
   const gap = interpolate(out, [0, 1], [190, 40], clamp);
@@ -69,7 +73,7 @@ export function Grammar() {
             opacity: words2,
           }}
         >
-          <Est color={BRAND.period} p={span(f, 50, 70)}>
+          <Est color={BRAND.period} p={span(f, 42, 60)}>
             Estimated.
           </Est>
         </Headline>

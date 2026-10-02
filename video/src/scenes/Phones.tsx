@@ -7,6 +7,8 @@ import { BRAND, LIGHT, keys, span } from '../theme';
 
 /** 0:05 — First run: the real onboarding welcome, no account. */
 export const FIRST_RUN_FRAMES = 108;
+/** Scene frame of the "Continue without an account" tap (capture frames play 1:1). */
+export const FIRST_RUN_TAP = 66;
 
 export function FirstRun() {
   const f = useCurrentFrame();
@@ -41,6 +43,14 @@ export function FirstRun() {
  * the user logs Light bleeding and the same card turns into RECORDED.
  */
 export const RECORD_FRAMES = 300;
+/** Capture frames play at 1.1× here (330 capture frames over 300 scene frames). */
+const RECORD_SPEED = 330 / 300;
+/** Scene frames the sound layer follows: Log day tap, Save tap, first frame showing RECORDED. */
+export const RECORD_CUES = {
+  logDay: Math.round(50 / RECORD_SPEED),
+  save: Math.round(240 / RECORD_SPEED),
+  recorded: Math.round(242 / RECORD_SPEED),
+};
 
 export function Record() {
   const f = useCurrentFrame();
@@ -89,7 +99,7 @@ export function Record() {
       />
       <Phone camera={{ s, fx, fy }}>
         <div style={{ position: 'absolute', inset: 0, opacity: screenIn }}>
-          <Capture shot="record" at={[[0, 0], [300, 330]]} />
+          <Capture shot="record" at={[[0, 0], [RECORD_FRAMES, RECORD_FRAMES * RECORD_SPEED]]} />
         </div>
       </Phone>
     </AbsoluteFill>

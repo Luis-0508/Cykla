@@ -2,15 +2,19 @@
   "name": "cykla-video",
   "private": true,
   "type": "module",
-  "description": "Cykla launch video: deterministic captures of the real app composed with Remotion.",
+  "description": "Cykla launch video: deterministic captures of the real app composed with Remotion, with procedural sound and an optional narrated cut.",
   "scripts": {
     "build:app": "node scripts/build-app.mjs",
     "serve": "node scripts/serve.mjs",
     "capture": "node scripts/capture.mjs",
     "studio": "remotion studio",
-    "preview": "remotion render CyklaTrailer out/preview.mp4 --scale=0.5 --crf=28",
+    "sfx": "node scripts/sound.mjs",
+    "voice": "node -e \"require('node:child_process').execFileSync(process.platform === 'win32' ? '.voice/venv/Scripts/python' : '.voice/venv/bin/python', ['scripts/voice.py'], { stdio: 'inherit' })\"",
+    "preview": "npm run sfx && remotion render CyklaTrailer out/preview.mp4 --scale=0.5 --crf=28",
     "frames": "node scripts/frames.mjs",
-    "render": "remotion render CyklaTrailer out/cykla-trailer.mp4",
+    "render": "npm run sfx && remotion render CyklaTrailer out/cykla-trailer.mp4 && remotion render CyklaTrailerNarrated out/cykla-trailer-narrated.mp4",
+    "render:sound": "npm run sfx && remotion render CyklaTrailer out/cykla-trailer.mp4",
+    "render:narrated": "npm run sfx && remotion render CyklaTrailerNarrated out/cykla-trailer-narrated.mp4",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

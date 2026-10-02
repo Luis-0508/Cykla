@@ -4,18 +4,23 @@ import { Capture } from '../components/Capture';
 import { CopyBlock } from '../components/Copy';
 import { CrescentWipe } from '../components/CrescentWipe';
 import { Phone } from '../components/Phone';
-import { DARK, F, span } from '../theme';
+import { DARK, F, easeInOut, span } from '../theme';
 
 /**
  * 0:24 — Night falls through the crescent of the mark. The calendar turns dark,
  * then the real explanation screen scrolls while, beside it, the recorded
  * period starts become a timeline and the timeline becomes a range.
  */
-export const EXPLAIN_FRAMES = 262;
+export const EXPLAIN_FRAMES = 250;
+/** Left column fades before the next scene's copy rises (Yours overlaps by 10 frames). */
+const EXIT = EXPLAIN_FRAMES - 10;
 export const WIPE_FRAMES = 38;
 
 // Capture frame = (scene frame - SWITCH) * SPEED once the explanation is on screen.
 const SWITCH = 66;
+
+/** Scene frames the sound layer follows: recorded starts land, the projection draws. */
+export const EXPLAIN_CUES = { history: 96, projection: 172 };
 const SPEED = 1.25;
 
 export function Explain() {
@@ -29,7 +34,7 @@ export function Explain() {
         <CopyBlock
           top={200}
           start={36}
-          end={EXPLAIN_FRAMES + 30}
+          end={EXIT}
           lines={[
             <Eyebrow key="e" color={DARK.accent} style={{ marginBottom: 22 }}>
               Transparent model
@@ -62,10 +67,12 @@ const WINDOW: [string, string] = ['2026-10-27', '2026-11-02'];
 
 const T0 = Date.UTC(2026, 4, 1); // May 1
 const X0 = 172;
-const PX_PER_DAY = 4.4;
-const AXIS_Y = 712;
+const PX_PER_DAY = 4.6;
+const AXIS_Y = 700;
 const day = (iso: string) => (Date.parse(`${iso}T00:00:00Z`) - T0) / 86_400_000;
 const x = (iso: string) => X0 + day(iso) * PX_PER_DAY;
+/** Axis ink: brighter than the app's border colour so the history reads at small sizes. */
+const AXIS = 'rgba(205, 191, 200, 0.42)';
 const MONTHS = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'];
 
 function Timeline() {
@@ -74,7 +81,8 @@ function Timeline() {
   const projection = span(f, 172, 202);
   const range = span(f, 194, 222);
   const label = span(f, 208, 228);
-  const dim = 1 - 0.4 * span(f, 172, 196); // history recedes as the estimate appears
+  const dim = 1 - 0.25 * span(f, 172, 196); // history recedes a little as the estimate appears
+  const exit = 1 - span(f, EXIT - 14, EXIT, easeInOut);
   const width = day('2026-11-08') * PX_PER_DAY;
   const xs = x(STARTS[5]);
   const xe = x(EXPECTED);
@@ -82,15 +90,15 @@ function Timeline() {
   const r1 = x(WINDOW[1]) + 9;
   const arcH = 120;
   return (
-    <div style={{ position: 'absolute', inset: 0 }}>
+    <div style={{ position: 'absolute', inset: 0, opacity: exit }}>
       <svg width={1920} height={1080} style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
-        <line x1={X0} y1={AXIS_Y} x2={X0 + width * axis} y2={AXIS_Y} stroke={DARK.border} strokeWidth={2} />
+        <line x1={X0} y1={AXIS_Y} x2={X0 + width * axis} y2={AXIS_Y} stroke={AXIS} strokeWidth={2.5} />
         {MONTHS.map((month, i) => {
           const mx = x(`2026-${String(5 + i).padStart(2, '0')}-01`);
           return (
             <g key={month} opacity={axis}>
-              <line x1={mx} y1={AXIS_Y - 7} x2={mx} y2={AXIS_Y + 7} stroke={DARK.border} strokeWidth={2} />
-              <text x={mx + 7} y={AXIS_Y + 36} fill={DARK.muted} fontFamily={F.sans} fontSize={20} opacity={0.75}>
+              <line x1={mx} y1={AXIS_Y - 8} x2={mx} y2={AXIS_Y + 8} stroke={AXIS} strokeWidth={2.5} />
+              <text x={mx + 7} y={AXIS_Y + 40} fill={DARK.muted} fontFamily={F.sans} fontSize={24}>
                 {month}
               </text>
             </g>
@@ -101,12 +109,12 @@ function Timeline() {
           const a = x(STARTS[i]);
           const b = x(STARTS[i + 1]);
           const p = span(f, 116 + i * 7, 136 + i * 7);
-          const h = 58;
+          const h = 66;
           const d = `M ${a} ${AXIS_Y - 16} Q ${(a + b) / 2} ${AXIS_Y - 16 - h * 2} ${b} ${AXIS_Y - 16}`;
           return (
             <g key={i} opacity={p * dim}>
-              <path d={d} fill="none" stroke={DARK.muted} strokeWidth={1.6} opacity={0.5} />
-              <text x={(a + b) / 2} y={AXIS_Y - 16 - h - 16} fill={DARK.text} fontFamily={F.sans} fontWeight={500} fontSize={27} textAnchor="middle">
+              <path d={d} fill="none" stroke={DARK.muted} strokeWidth={2} opacity={0.72} />
+              <text x={(a + b) / 2} y={AXIS_Y - 16 - h - 18} fill={DARK.text} fontFamily={F.sans} fontWeight={500} fontSize={32} textAnchor="middle">
                 {length}
               </text>
             </g>
@@ -116,7 +124,7 @@ function Timeline() {
         {STARTS.map((start, i) =>
           Array.from({ length: PERIOD_DAYS[i] }, (_, k) => {
             const p = span(f, 96 + i * 5 + k, 108 + i * 5 + k);
-            return <circle key={`${i}-${k}`} cx={x(start) + k * PX_PER_DAY} cy={AXIS_Y} r={6.5 * p} fill={DARK.period} />;
+            return <circle key={`${i}-${k}`} cx={x(start) + k * PX_PER_DAY} cy={AXIS_Y} r={8 * p} fill={DARK.period} />;
           }),
         )}
         {/* Projection: the weighted cycle length carried forward, dashed. */}
@@ -128,10 +136,10 @@ function Timeline() {
           d={`M ${xs} ${AXIS_Y - 16} Q ${(xs + xe) / 2} ${AXIS_Y - 16 - arcH * 2} ${xe} ${AXIS_Y - 20}`}
           fill="none"
           stroke={DARK.period}
-          strokeWidth={2.4}
-          strokeDasharray="8 7"
+          strokeWidth={2.8}
+          strokeDasharray="9 7"
         />
-        <text x={(xs + xe) / 2} y={AXIS_Y - 16 - arcH - 18} fill={DARK.period} fontFamily={F.serif} fontStyle="italic" fontSize={44} textAnchor="middle" opacity={projection}>
+        <text x={(xs + xe) / 2} y={AXIS_Y - 16 - arcH - 18} fill={DARK.period} fontFamily={F.serif} fontStyle="italic" fontSize={50} textAnchor="middle" opacity={projection}>
           ≈ 29
         </text>
         {/* Range: the window around the expected start, drawn like the app's dashed cells. */}
@@ -141,14 +149,14 @@ function Timeline() {
         <rect
           clipPath="url(#range-reveal)"
           x={r0}
-          y={AXIS_Y - 17}
+          y={AXIS_Y - 19}
           width={r1 - r0}
-          height={34}
-          rx={17}
+          height={38}
+          rx={19}
           fill={DARK.period}
-          fillOpacity={0.14}
+          fillOpacity={0.18}
           stroke={DARK.period}
-          strokeWidth={2.4}
+          strokeWidth={2.6}
           strokeDasharray="6 5"
         />
       </svg>
@@ -162,7 +170,7 @@ function Timeline() {
           transform: `translateY(${(1 - label) * 10}px)`,
         }}
       >
-        <div style={{ fontFamily: F.sans, fontWeight: 600, fontSize: 27, color: DARK.text }}>Oct 27 – Nov 2</div>
+        <div style={{ fontFamily: F.sans, fontWeight: 600, fontSize: 29, color: DARK.text }}>Oct 27 – Nov 2</div>
         <div
           style={{
             display: 'inline-flex',
@@ -173,7 +181,7 @@ function Timeline() {
             borderRadius: 999,
             border: `1.5px solid ${DARK.accent}`,
             fontFamily: F.sans,
-            fontSize: 20,
+            fontSize: 23,
             color: DARK.text,
           }}
         >
@@ -187,8 +195,8 @@ function Timeline() {
           left: X0,
           top: AXIS_Y + 58,
           fontFamily: F.sans,
-          fontSize: 23,
-          lineHeight: 1.5,
+          fontSize: 26,
+          lineHeight: 1.45,
           color: DARK.muted,
           opacity: span(f, 120, 140),
         }}

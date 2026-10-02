@@ -7,15 +7,15 @@ import { Phone } from '../components/Phone';
 import { BRAND, DARK, F, LIGHT, keys, span } from '../theme';
 
 /** 0:32 — Yours: export and delete controls, all local. */
-export const YOURS_FRAMES = 150;
+export const YOURS_FRAMES = 140;
 
 export function Yours() {
   const f = useCurrentFrame();
   const [s, fx, fy] = keys(f, [
     [0, 1, 195, 422],
     [30, 1, 195, 422],
-    [100, 1.16, 195, 360],
-    [150, 1.18, 195, 360],
+    [94, 1.16, 195, 360],
+    [140, 1.18, 195, 360],
   ]);
   return (
     <Ground dark>
@@ -48,17 +48,19 @@ export function Yours() {
 }
 
 /** 0:37 — The crescent returns the frame to day: one full cycle. End card. */
-export const END_FRAMES = 170;
+export const END_FRAMES = 150;
+/** Scene-relative frame where the end card resolves (mark lands); the closing tone follows it. */
+export const END_RESOLVE = 26;
 export const END_WIPE = 36;
 
 export function EndCard() {
   const f = useCurrentFrame();
   const wipe = span(f, 0, END_WIPE);
-  const mark = span(f, 12, 38);
-  const word = span(f, 22, 46);
-  const tag = span(f, 44, 64);
-  const meta = span(f, 60, 80);
-  const fine = span(f, 76, 96);
+  const mark = span(f, 10, 34);
+  const word = span(f, 18, 40);
+  const tag = span(f, 36, 54);
+  const meta = span(f, 48, 66);
+  const fine = span(f, 58, 76);
   return (
     <CrescentWipe p={wipe} cx={260} cy={930}>
       <Ground>
@@ -84,20 +86,20 @@ export function EndCard() {
           <Headline
             palette={LIGHT}
             size={58}
-            style={{ marginTop: 36, opacity: tag, transform: `translateY(${(1 - tag) * 14}px)` }}
+            style={{ marginTop: 30, opacity: tag, transform: `translateY(${(1 - tag) * 14}px)` }}
           >
             A calm place for your cycle.
           </Headline>
           <div
             style={{
-              marginTop: 34,
+              marginTop: 28,
               display: 'flex',
               gap: 18,
               alignItems: 'center',
               fontFamily: F.sans,
-              fontSize: 22,
+              fontSize: 25,
               fontWeight: 500,
-              letterSpacing: 0.4,
+              letterSpacing: 0.3,
               color: LIGHT.muted,
               opacity: meta,
             }}
@@ -111,11 +113,11 @@ export function EndCard() {
           <div
             style={{
               position: 'absolute',
-              bottom: 64,
+              bottom: 60,
               fontFamily: F.sans,
-              fontSize: 18,
+              fontSize: 22,
               color: LIGHT.muted,
-              opacity: fine * 0.9,
+              opacity: fine,
             }}
           >
             Cykla records data and calculates estimates. Not a diagnosis. Not a method of contraception.
