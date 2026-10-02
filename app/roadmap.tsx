@@ -24,7 +24,10 @@ export default function RoadmapScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t.roadmap.close}
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace('/(tabs)/settings');
+          }}
           style={[styles.close, { borderColor: theme.colors.border }]}
         >
           <Ionicons name="close" size={24} color={theme.colors.text} />
