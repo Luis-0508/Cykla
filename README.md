@@ -13,7 +13,7 @@
   <a href="#privacy-model">Privacy</a>&nbsp;&nbsp;&nbsp;
   <a href="#getting-started">Getting started</a>&nbsp;&nbsp;&nbsp;
   <a href="#architecture">Architecture</a>&nbsp;&nbsp;&nbsp;
-  <a href="ROADMAP.md">Roadmap</a>
+  <a href="docs/ROADMAP.md">Roadmap</a>
 </p>
 
 <picture>
@@ -198,8 +198,8 @@ cross-origin isolation headers that Expo SQLite needs on the web. The web build 
 a development preview: notifications and the biometric app lock require a mobile
 device.
 
-On Windows, `start-web.bat` launches the web preview and `start-ios.bat` starts
-Expo for a physical iPhone with Expo Go.
+On Windows, [`scripts/windows/start-web.bat`](scripts/windows/start-web.bat) launches the web preview and
+[`scripts/windows/start-ios.bat`](scripts/windows/start-ios.bat) starts Expo for a physical iPhone with Expo Go.
 
 ### Scripts
 
@@ -246,7 +246,7 @@ their German column names for format stability.
 
 ## Roadmap
 
-Planned work is tracked in [ROADMAP.md](ROADMAP.md). In short:
+Planned work is tracked in [docs/ROADMAP.md](docs/ROADMAP.md). In short:
 
 - **0.2 – Hardening:** encrypted local database and backup strategy, component and
   end-to-end tests, screen-reader and Dynamic Type review
