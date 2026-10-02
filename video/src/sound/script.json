@@ -1,0 +1,10 @@
+[
+  { "id": "01-know", "scene": "grammar", "frame": 2, "text": "Some things you know, others you can only estimate." },
+  { "id": "02-visible", "scene": "firstRun", "frame": 14, "text": "Cykla keeps the difference visible." },
+  { "id": "03-until", "scene": "record", "frame": 8, "text": "Until you record a day, it stays an estimate." },
+  { "id": "04-record", "scene": "record", "frame": 108, "text": "Record what actually happened, when it happened." },
+  { "id": "05-range", "scene": "estimates", "frame": 4, "text": "Over time, your records help Cykla calculate a range, and show its confidence." },
+  { "id": "06-explained", "scene": "explain", "frame": 38, "text": "And every estimate can be explained." },
+  { "id": "07-device", "scene": "yours", "frame": -8, "text": "Your data stays on your device, yours to export or delete." },
+  { "id": "08-cykla", "scene": "end", "frame": 38, "text": "Cykla. A calm place for your cycle." }
+]
