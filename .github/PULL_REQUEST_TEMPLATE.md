@@ -9,9 +9,10 @@
 - [ ] Typecheck, lint and format pass
 - [ ] Relevant tests pass (regressions covered)
 - [ ] UI changes checked in light and dark mode; README screenshots refreshed if affected
+- [ ] New user-visible copy added to every locale in `src/i18n/locales/`
 
 ## Data impact
 
 - Privacy / sensitive health data: none / describe
 - Recorded vs. calculated data: none / describe
-- Database migration: none / describe upgrade and rollback testing
+- Database migration: none / describe upgrade and failed-migration testing
