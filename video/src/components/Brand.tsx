@@ -172,8 +172,8 @@ export function Eyebrow({ children, color, style }: { children: ReactNode; color
       style={{
         fontFamily: F.sans,
         fontWeight: 600,
-        fontSize: 17,
-        letterSpacing: 3,
+        fontSize: 21,
+        letterSpacing: 3.2,
         textTransform: 'uppercase',
         color,
         ...style,

@@ -1,6 +1,8 @@
 # Cykla launch video — storyboard
 
-1920×1080 · 30 fps · 41.4 s · silent (typography carries the story).
+1920×1080 · 30 fps · 38.9 s · two cuts: sound design only, and the same with a
+narrator. Typography still carries the story; sound only marks the moments that
+change meaning (see [Sound](#sound) and [Narration](#narration)).
 
 ## Concept: filled and dashed
 
@@ -51,13 +53,60 @@ safe days or medical certainty.
 
 | # | Time | Scene | On screen | Type |
 |---|------|-------|-----------|------|
-| 1 | 0:00–0:05.6 | **Grammar** | On paper: a filled period-red dot appears, then a dashed ring draws itself beside it. Both glide together and resolve into the Cykla mark; wordmark rises. | "Recorded." · *"Estimated."* · "Two different things. Cykla keeps them apart." |
-| 2 | 0:05.2–0:08.8 | **First run** | Phone rises with the real onboarding welcome ("A calm place for your cycle"); tap *Continue without an account*. | "No account." / "Your cycle data stays on this device. Nothing to sign up for." |
-| 3 | 0:08.5–0:18.5 | **You record** | Today, Oct 5: card says ESTIMATE · Medium confidence · "in about 25 days". Tap *Log day* → daily editor ("Recorded, not calculated") → *Light*, pain 2, *Calm* → *Save entry* → back on Today, the card now reads RECORDED · Day 5. Push-in on the card flip. | "You record." / "Nothing becomes a record until you enter it. Until then, Cykla calls it an estimate." → *"From estimate to record."* |
-| 4 | 0:18.1–0:24.8 | **Cykla estimates** | Calendar, October: filled days 1–5, teal wash 11–17, dashed ring 27 Oct–2 Nov. Halos drawn on the real cells (positions exported by the capture), with a legend beside the phone. | "Cykla estimates." / "A range with a confidence level — never a promised day." Footnote: "Calendar data cannot determine fertility." |
-| 5 | 0:23.5–0:32.3 | **Night · explains itself** | Crescent wipe turns the same calendar dark, then the real explanation screen scrolls; on the left the recorded period days become a timeline: 29 · 27 · 30 · 28 · 29 days → dashed projection ≈ 29 → dashed range Oct 27 – Nov 2. | "Every *estimate* explains itself." / "6 recorded starts · 5 complete cycles" · "Medium confidence" |
-| 6 | 0:31.9–0:36.9 | **Yours** | Dark "You & privacy", scrolled to *Your data*: Export JSON / CSV, *Delete all local data*. | "Yours to export. Yours to delete." / "No account, no ads, no analytics SDK. Health data is not transmitted." |
-| 7 | 0:35.7–0:41.4 | **End card** | Reverse crescent wipe back to paper. Mark, wordmark, tagline. | "Cykla" · "A calm place for your cycle." · "Offline-first · No account · Open source · AGPL-3.0" · fine print: "Cykla records data and calculates estimates. Not a diagnosis. Not a method of contraception." |
+| 1 | 0:00–0:04.5 | **Grammar** | On paper: a filled period-red dot appears, then a dashed ring draws itself beside it. Both glide together and resolve into the Cykla mark; wordmark rises. | "Recorded." · *"Estimated."* · "Two different things. Cykla keeps them apart." |
+| 2 | 0:04.1–0:07.7 | **First run** | Phone rises with the real onboarding welcome ("A calm place for your cycle"); tap *Continue without an account*. | "No account." / "Your cycle data stays on this device. Nothing to sign up for." |
+| 3 | 0:07.4–0:17.4 | **You record** | Today, Oct 5: card says ESTIMATE · Medium confidence · "in about 25 days". Tap *Log day* → daily editor ("Recorded, not calculated") → *Light*, pain 2, *Calm* → *Save entry* → back on Today, the card now reads RECORDED · Day 5. Push-in on the card flip. | "You record." / "Nothing becomes a record until you enter it. Until then, Cykla calls it an estimate." → *"From estimate to record."* |
+| 4 | 0:17.1–0:23.7 | **Cykla estimates** | Calendar, October: filled days 1–5, teal wash 11–17, dashed ring 27 Oct–2 Nov. Halos drawn on the real cells (positions exported by the capture), with a legend beside the phone. | "Cykla estimates." / "A range with a confidence level — never a promised day." Footnote: "Calendar data cannot determine fertility." |
+| 5 | 0:22.5–0:30.8 | **Night · explains itself** | Crescent wipe turns the same calendar dark, then the real explanation screen scrolls; on the left the recorded period days become a timeline: 29 · 27 · 30 · 28 · 29 days → dashed projection ≈ 29 → dashed range Oct 27 – Nov 2. | "Every *estimate* explains itself." / "6 recorded starts · 5 complete cycles" · "Medium confidence" |
+| 6 | 0:30.5–0:35.1 | **Yours** | Dark "You & privacy", scrolled to *Your data*: Export JSON / CSV, *Delete all local data*. | "Yours to export. Yours to delete." / "No account, no ads, no analytics SDK. Health data is not transmitted." |
+| 7 | 0:33.9–0:38.9 | **End card** | Reverse crescent wipe back to paper. Mark, wordmark, tagline. | "Cykla" · "A calm place for your cycle." · "Offline-first · No account · Open source · AGPL-3.0" · fine print: "Cykla records data and calculates estimates. Not a diagnosis. Not a method of contraception." |
+
+## Sound
+
+Procedural, generated by `scripts/sound.mjs` (no third-party audio). Two
+timbres mirror the visual grammar: a soft **felt** tone (mallet-like, quick
+decay) for things that were recorded, and a **breath** tone (filtered air
+around a slow, slightly beating sine) for estimates. Everything is in D major
+pentatonic, low in level, with silence between cues. There is no music bed.
+
+| Time | Cue | Sound |
+| --- | --- | --- |
+| 0:00.2 | Filled dot | felt D4 |
+| 0:00.9 | Dashed ring draws | breath A4, swelling with the stroke |
+| 0:03.0 | Dot and ring become the mark | felt D4 + A4, a little air |
+| 0:06.3 | *Continue without an account* | soft tap |
+| 0:08.9 | *Log day* | soft tap |
+| 0:14.7 | *Save entry*, then the card reads RECORDED | soft tap, then a rising fourth (A4 → D5, felt) |
+| 0:18.2 / 0:19.5 | Recorded days / prediction window halos | felt F♯4 / breath B4 |
+| 0:22.5 | Crescent wipe into night | air sweeping right → left, low D under it |
+| 0:25.7 | Recorded starts land on the timeline | six muted felt notes, one per start |
+| 0:28.2 | Dashed projection and range | air rising along the arc, landing on breath E5 |
+| 0:33.9 | Crescent wipe back to day | air sweeping left → right |
+| 0:34.7 | End card resolves | open D chord, rings out; all audio fades over the last 0.8 s |
+
+The editor taps (Light, pain, mood) and "Yours" have no sound at all.
+
+## Narration
+
+Female narrator, generated locally (see the README). Lines sit between the key
+moments: nothing is spoken over the mark resolving, the flip to RECORDED, the
+two crescent wipes or the end card's mark. Effects duck by about 6 dB under the
+voice. Cue points live in `src/sound/script.json`; times below are line starts.
+
+| Time | Line | On screen |
+| --- | --- | --- |
+| 0:00.1 | "Some things you know, others you can only estimate." | Recorded. / *Estimated.* |
+| 0:04.6 | "Cykla keeps the difference visible." | first run |
+| 0:07.7 | "Until you record a day, it stays an estimate." | Today card says ESTIMATE |
+| 0:11.0 | "Record what actually happened, when it happened." | daily editor |
+| — | *(silence: save, the card flips to RECORDED)* | 0:13.6–0:17.2 |
+| 0:17.2 | "Over time, your records help Cykla calculate a range, and show its confidence." | calendar halos |
+| — | *(silence: crescent wipe)* | |
+| 0:23.7 | "And every estimate can be explained." | Every *estimate* explains itself. |
+| — | *(silence: timeline, projection, range)* | 0:25.8–0:30.2 |
+| 0:30.2 | "Your data stays on your device, yours to export or delete." | Yours |
+| — | *(silence: crescent back to day, mark)* | |
+| 0:35.2 | "Cykla. A calm place for your cycle." | end card tagline |
 
 ## Capture plan
 

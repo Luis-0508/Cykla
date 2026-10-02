@@ -19,10 +19,13 @@ const pick = (prefix: string) =>
     .filter(([key]) => key.startsWith(prefix))
     .map(([, box]) => box);
 
+/** Scene frames where the halos start; the sound layer follows the first two. */
+export const ESTIMATE_CUES = { period: 34, window: 74, fertile: 114 };
+
 const GROUPS = {
-  period: { cells: pick('period'), start: 34 },
-  window: { cells: pick('window'), start: 74 },
-  fertile: { cells: pick('fertile'), start: 114 },
+  period: { cells: pick('period'), start: ESTIMATE_CUES.period },
+  window: { cells: pick('window'), start: ESTIMATE_CUES.window },
+  fertile: { cells: pick('fertile'), start: ESTIMATE_CUES.fertile },
 };
 
 export function Estimates() {
@@ -65,11 +68,11 @@ export function Estimates() {
         style={{
           position: 'absolute',
           left: 172,
-          top: 948,
-          width: 640,
+          top: 930,
+          width: 700,
           fontFamily: F.sans,
-          fontSize: 19,
-          lineHeight: 1.45,
+          fontSize: 23,
+          lineHeight: 1.4,
           color: LIGHT.muted,
           opacity: span(f, 130, 150) * leave,
         }}
@@ -126,8 +129,8 @@ function Legend({ at, icon, title, children }: { at: number; icon: ReactNode; ti
     >
       <div style={{ width: 32, display: 'flex', justifyContent: 'center' }}>{icon}</div>
       <div>
-        <div style={{ fontFamily: F.sans, fontWeight: 600, fontSize: 27, color: LIGHT.text }}>{title}</div>
-        <div style={{ fontFamily: F.sans, fontSize: 21, color: LIGHT.muted, marginTop: 4 }}>{children}</div>
+        <div style={{ fontFamily: F.sans, fontWeight: 600, fontSize: 28, color: LIGHT.text }}>{title}</div>
+        <div style={{ fontFamily: F.sans, fontSize: 24, color: LIGHT.muted, marginTop: 4 }}>{children}</div>
       </div>
     </div>
   );
