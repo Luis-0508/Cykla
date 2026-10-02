@@ -1,14 +1,17 @@
 # App findings from the video work
 
-While exploring and capturing Cykla for the trailer, I noticed the issues
-below. None of them blocked the video, so the app is unchanged. Each one should
-be handled in its own change.
+These issues were noticed while exploring and capturing Cykla for the
+[launch video](README.md). None of them blocked the video, so the app was left
+unchanged. Each one should be handled in its own change.
+
+Status: all five were re-checked against `master` on 2026-10-02 and are still
+open.
 
 1. **Low contrast on recorded period days in dark mode.** `MonthCalendar`
    draws the day number in `#FFFFFF` on `theme.colors.period`. In the dark
-   theme that colour is `#F08AA1`, a contrast ratio of about 2.4:1. That fails
+   theme that color is `#F08AA1`, a contrast ratio of about 2.4:1. That fails
    WCAG AA for text (4.5:1) and even the 3:1 large-text threshold. In light
-   mode (`#9D3F56`) the ratio is 6.4:1. A dark text colour such as the dark
+   mode (`#9D3F56`) the ratio is 6.4:1. A dark text color such as the dark
    theme's background would fix it in dark mode.
    (`src/components/MonthCalendar.tsx`)
 
@@ -24,7 +27,7 @@ be handled in its own change.
    the selected day as the 6th of 11 tiles but does not scroll to it. On a
    390 pt wide screen, the selected (today) tile sits half outside the right
    edge on first render. The capture scrolls the strip as a user would; the
-   app could centre the selected tile on mount.
+   app could center the selected tile on mount.
    (`src/components/DayStrip.tsx`)
 
 4. **The calendar month title wraps at phone width.** At 390 pt, "October 2026"

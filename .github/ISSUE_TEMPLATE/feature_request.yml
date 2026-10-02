@@ -4,7 +4,7 @@ labels: [enhancement]
 body:
   - type: markdown
     attributes:
-      value: Check ROADMAP.md first, including the "Not Planned" section. Do not include personal health information.
+      value: Check the [roadmap](https://github.com/Luis-0508/Cykla/blob/master/docs/ROADMAP.md) first, including the "Not planned" section. Do not include personal health information.
   - type: textarea
     id: problem
     attributes:

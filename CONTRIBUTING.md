@@ -1,16 +1,19 @@
 # Contributing to Cykla
 
-Thank you for your interest. Cykla processes particularly sensitive health data, so
-small, reviewable changes and data-minimizing decisions take priority.
+Thank you for your interest. Cykla processes particularly sensitive health data,
+so small, reviewable changes and data-minimizing decisions take priority.
 
-## Local Development
+## Local development
+
+Setup, requirements and the full script list are in the
+[README](README.md#getting-started).
 
 ```bash
 npm ci
 npm start
 ```
 
-Before opening a pull request, run:
+Before opening a pull request, run the same checks as the CI **Quality** job:
 
 ```bash
 npm run typecheck
@@ -22,34 +25,45 @@ npm run doctor
 npm run build:smoke
 ```
 
-Work on a feature branch, commit focused changes, and open a PR to `master`.
-Review the diff and passing Actions before a squash merge; no external reviewer
-is required for solo development. Do not commit local exports, databases, secrets
-or `.env` files. See [GitHub setup](docs/GITHUB_SETUP.md).
+The launch video in [`video/`](video/README.md) is a separate npm project with its
+own tooling; the root checks do not cover it.
 
-Use Node 24.12+ within Node 24; CI uses `.node-version`. Keep Expo/native packages
-compatible with Expo SDK 57 and run Doctor after updates. Add migrations rather than
-editing released schema steps. Add user-visible copy to every catalog in
-`src/i18n/locales/` with meaningful keys and parameterized messages (use functions
-for counts so each language can apply its own plural rules). `de.ts` defines the
-shape; other languages are type-checked against it. No i18n library is needed; to
-add a language, follow the note in `src/i18n/i18n.ts`.
+## Workflow
+
+Work on a feature branch, commit focused changes, and open a pull request to
+`master`. Review the diff and wait for passing Actions before a squash merge; no
+external reviewer is required for solo development. Do not commit local exports,
+databases, secrets or `.env` files. Repository settings are described in
+[docs/GITHUB_SETUP.md](docs/GITHUB_SETUP.md).
+
+## Project conventions
+
+- **Node and Expo:** use Node 24.12 or newer within Node 24; CI reads
+  [`.node-version`](.node-version). Keep Expo and native packages compatible with
+  Expo SDK 57 and run `npm run doctor` after updates.
+- **Database:** add a new versioned migration instead of editing a released one.
+  See [docs/DATABASE.md](docs/DATABASE.md).
+- **Translations:** add user-visible copy to every catalog in
+  `src/i18n/locales/` with meaningful keys and parameterized messages (use
+  functions for counts so each language can apply its own plural rules). `de.ts`
+  defines the shape; other languages are type-checked against it. No i18n library
+  is needed; to add a language, follow the note in `src/i18n/i18n.ts`.
 
 ## Principles
 
-- Never include real health data in logs, telemetry, error reports, or test fixtures.
+- Never include real health data in logs, telemetry, error reports or test fixtures.
 - Do not add network transmission without a prior architecture and privacy review.
 - Keep recorded and calculated data strictly separate.
 - Change prediction logic only as pure functions in `src/domain/`.
 - Every prediction change requires tests and a clear explanation in the UI.
 - Use neutral wording in visible text; never present estimates as certainty.
-- Do not copy brands, text, screenshots, illustrations, or layouts from existing
+- Do not copy brands, text, screenshots, illustrations or layouts from existing
   apps.
-- Verify touch targets, screen-reader labels, contrast, and dynamic font sizes.
+- Verify touch targets, screen-reader labels, contrast and dynamic font sizes.
 
-## Commit and Pull Request Content
+## Pull request content
 
-Describe:
+The [pull request template](.github/PULL_REQUEST_TEMPLATE.md) asks for:
 
 1. the problem being solved,
 2. the privacy impact,
@@ -60,7 +74,7 @@ Describe:
 Use only synthetic data in screenshots and tests. Medical statements require expert
 review before publication.
 
-## Documentation Screenshots
+## Documentation screenshots
 
 README images live in `docs/images/`: the hero composites (`hero-light.png`,
 `hero-dark.png`), single screens in `docs/images/screenshots/`, and the

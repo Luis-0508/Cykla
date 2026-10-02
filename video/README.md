@@ -8,11 +8,13 @@ two cuts that share one picture, one music bed and one sound design:
   voice
 - `out/cykla-trailer-narrated.mp4` (`CyklaTrailerNarrated`): the same, plus a
   narrator; music and effects duck under the voice
+
 It is a separate npm project: the app does not depend on it, and the root
 typecheck, lint and format scripts ignore `video/`.
 
-See [STORYBOARD.md](STORYBOARD.md) for the concept, shot list, sound cues and
-narration timings.
+See [STORYBOARD.md](STORYBOARD.md) for the concept, shot list, music, sound cues
+and narration timings. App issues noticed while making the video are collected in
+[APP_FINDINGS.md](APP_FINDINGS.md).
 
 ## Concept in one paragraph
 
@@ -48,7 +50,7 @@ to daylight for the end card. Upright type stands for recorded facts and
 5. **Compose** (`src/`): Remotion scenes place the frame sequences in a phone
    body, add camera moves, touch ripples, typography and motion graphics, and
    draw highlights on the exact cell positions measured during capture.
-6. **Sound** (`scripts/sound.mjs`): every effect is synthesised in plain Node
+6. **Sound** (`scripts/sound.mjs`): every effect is synthesized in plain Node
    (sine partials, filtered noise, a small reverb, seeded noise) into
    `public/sfx/`. Same bytes on every run; no third-party audio.
 7. **Music** (`scripts/music.mjs`): one continuous, procedural score composed
@@ -89,11 +91,12 @@ prediction window of Oct 27 – Nov 2 and a possible fertile window of Oct 11–
 Run these in `video/`:
 
 ```bash
-npm install
+npm ci
+npm run typecheck      # TypeScript check for the video project
 npm run build:app      # export the Cykla web build to .app/
 npm run capture        # seed profiles (first run) and capture all shots
 npm run studio         # preview and scrub in Remotion Studio
-npm run audio          # synthesise effects and music → public/sfx/, public/music/
+npm run audio          # synthesize effects and music → public/sfx/, public/music/
 npm run sfx            # effects only
 npm run music          # music bed only
 npm run voice          # optional: regenerate the narration → public/voice/
@@ -118,8 +121,8 @@ timestamps; `python scripts/sheet.py` tiles `out/frames/` into contact sheets.
 
 `.app/`, `.profiles/`, `public/captures/` (about 190 MB of frames),
 `public/sfx/`, `public/music/`, `.voice/` and `out/` are generated and
-gitignored; the render scripts run `npm run audio` first. The composition imports the capture metadata, so run
-`npm run capture` before Studio or a render.
+gitignored; the render scripts run `npm run audio` first. The composition
+imports the capture metadata, so run `npm run capture` before Studio or a render.
 
 ## Layout
 
@@ -140,7 +143,7 @@ src/Trailer.tsx         Picture plus the sound layer
 src/sound/              Cue sheet, music anchors, narration script and timing, mix and ducking
 src/scenes/             Grammar, Phones (first run, record), Estimates, Explain, Closing
 src/components/         Phone, Capture (+ touches), Brand (mark, rings, type), CrescentWipe, Copy
-src/theme.ts            Colours from the app, fonts, easing, phone placement
+src/theme.ts            Colors from the app, fonts, easing, phone placement
 ```
 
 Capture timings in `scripts/capture.mjs` and scene timings in `src/scenes` are
@@ -155,21 +158,21 @@ that no line runs into the silent moments listed in STORYBOARD.md.
 
 ## Sound and voice licensing
 
-- **Effects and music:** original, composed and synthesised for this
+- **Effects and music:** original, composed and synthesized for this
   trailer by `scripts/sound.mjs` and `scripts/music.mjs` (shared code in
   `scripts/dsp.mjs`); no samples, loops, presets or third-party recordings.
-  Covered by the repository's licence like the rest of the code.
+  Covered by the repository's license like the rest of the code.
 - **Narration:** synthetic speech from Kokoro-82M (model weights Apache-2.0,
   by hexgrad), run locally with kokoro-onnx (MIT). Apache-2.0 places no
   restriction on generated audio, and no API or service terms apply. The
   phonemizer used by kokoro-onnx relies on espeak-ng (GPL-3.0) as a
   generation-time tool; nothing from it is distributed with the video. The
   voice is synthetic, not a recording of a person: disclose that where
-  AI-generated voices must be labelled.
+  AI-generated voices must be labeled.
 
 ## Adapting to a vertical cut
 
 Every phone scene is built as a text column (`components/Copy.tsx`) plus a
 `Phone` placed by `PHONE` in `src/theme.ts`. A 1080×1920 version mostly needs a
-second set of positions (phone centred, copy above it) and a second
+second set of positions (phone centered, copy above it) and a second
 `Composition`; the captures and scene timings can be reused unchanged.
