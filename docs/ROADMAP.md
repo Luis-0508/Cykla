@@ -3,6 +3,10 @@
 Cykla is an early MVP. The current state is summarized under
 [Project status](../README.md#project-status) in the README.
 
+The app shows the same roadmap under **You → Roadmap**. Its structure lives in
+`src/config/roadmap.ts` and its text in the `roadmap` section of
+`src/i18n/locales/`; update them together with this file.
+
 ## 0.1 – Local MVP
 
 - onboarding and goal selection
