@@ -102,6 +102,13 @@ tested functions.
 2. More recent cycles receive a weight of `0.85 ^ age`.
 3. Clear outliers stay in the data but receive an additional lower weight.
    Manually excluded cycles are ignored.
+   A cycle of about a multiple (2x, 3x, …) of the usual length may hide a period that
+   was not logged. The usual length comes from recorded normal-length cycles, or the
+   typical length from onboarding, never from such gaps. If normal cycles clearly
+   outnumber the gaps, the gaps are left out as missed entries. Otherwise both
+   readings stay possible: confidence is low and the window runs from one usual cycle
+   to the long recorded length. Days logged without bleeding around every place where
+   a skipped period would have started confirm a long cycle.
 4. The weighted mean sets the expected start; the sample variation sets the width
    of the visible window, which is never narrower than ±3 days (±5 with fewer than
    three complete cycles, ±7 with none).
@@ -110,6 +117,9 @@ tested functions.
 6. A day-level fertile window is shown only with at least three complete cycles of
    24–38 days, non-low confidence, and not directly after recorded bleeding. A
    hidden window never means that days are infertile.
+7. Once the whole window has passed without a new period start, the estimate is
+   marked as later than expected instead of being moved forward, and the app asks
+   for a new period entry.
 
 All calculations use local calendar dates (`YYYY-MM-DD`), so travel or time-zone
 changes cannot move a recorded day to a different date.

@@ -6,17 +6,28 @@ type PredictionInput = {
   excludedCycleStarts?: string[];
   fallbackCycleLength?: number;
   fallbackPeriodLength?: number;
+  // Days with an entry but without bleeding that counts for estimates (see `observedDaysWithoutBleeding`).
+  observedDays?: string[];
   // The device's local calendar day; marks an estimate whose window has passed as overdue.
   today?: string;
+};
+
+type CycleOptions = {
+  fallbackCycleLength?: number;
+  observedDays?: string[];
 };
 
 // Lengths outside this range usually mean missing or extra records, not a cycle.
 const MIN_CYCLE_LENGTH = 15;
 const MAX_CYCLE_LENGTH = 90;
 const DEFAULT_CYCLE_LENGTH = 28;
-// A cycle at least this many times the usual length most likely spans a period that
-// was not recorded (two cycles are about 2x). Single long cycles below it still count.
+// From this multiple of the usual length on, a cycle may span a period that was not
+// recorded (two cycles are about 2x). Shorter long cycles always count as recorded.
 const MISSED_PERIOD_RATIO = 1.6;
+// How far k cycles may drift from k times the usual length and still look like k cycles.
+const MULTIPLE_TOLERANCE = 0.15;
+// A logged period lasts more than two days, so it cannot hide in two unlogged days.
+const MAX_UNLOGGED_RUN = 2;
 
 export function isPlausibleCycleLength(length: number): boolean {
   return length >= MIN_CYCLE_LENGTH && length <= MAX_CYCLE_LENGTH;
@@ -30,6 +41,14 @@ export function bleedingDaysForEstimates(entries: Pick<DailyEntry, 'date' | 'flo
   return entries
     .filter((entry) => entry.flow !== 'none' && entry.flow !== 'spotting')
     .map((entry) => entry.date);
+}
+
+/** Days with a saved entry but no bleeding that counts for estimates. */
+export function observedDaysWithoutBleeding(
+  entries: Pick<DailyEntry, 'date' | 'flow'>[],
+): string[] {
+  const bleeding = new Set(bleedingDaysForEstimates(entries));
+  return entries.filter((entry) => !bleeding.has(entry.date)).map((entry) => entry.date);
 }
 
 /** A single undocumented day inside a bleeding episode does not start a new period. */
@@ -46,16 +65,52 @@ function countsTowardsLength(cycle: Cycle): boolean {
 
 /**
  * Cycles that count towards averages: complete, plausible, not excluded by the user
- * and not likely to contain an unrecorded period.
+ * and not likely to contain an unrecorded period. Ambiguous cycles still count.
  */
 export function isUsableCycle(cycle: Cycle): boolean {
   return countsTowardsLength(cycle) && !cycle.likelyMissedPeriod;
 }
 
+/**
+ * The usual cycle length that gaps are compared with: the median of the recorded
+ * cycles shorter than 1.6 times the typical length from onboarding, or that typical
+ * length itself. Long gaps never feed into it, so several gaps cannot raise the
+ * reference for each other.
+ */
+function baseCycleLength(lengths: number[], typicalLength: number): number {
+  const normal = lengths.filter((length) => length < typicalLength * MISSED_PERIOD_RATIO);
+  return normal.length ? median(normal) : typicalLength;
+}
+
+// k > 1 when `length` is about k cycles of `base`, otherwise 1.
+function cycleMultiple(length: number, base: number): number {
+  if (length < base * MISSED_PERIOD_RATIO) return 1;
+  const multiple = Math.round(length / base);
+  const tolerance = Math.max(4, MULTIPLE_TOLERANCE * multiple * base);
+  return Math.abs(length - multiple * base) <= tolerance ? multiple : 1;
+}
+
+/**
+ * True when the user logged days around every place where a skipped period would
+ * have started, without recorded bleeding: then the gap is one long cycle.
+ */
+function gapWasObserved(cycle: Cycle, multiple: number, base: number, observed: Set<string>) {
+  const halfWidth = Math.max(3, Math.round(base * MULTIPLE_TOLERANCE));
+  for (let index = 1; index < multiple; index++) {
+    const expected = addDays(cycle.startDate, Math.round((index * cycle.lengthDays!) / multiple));
+    let unlogged = 0;
+    for (let offset = -halfWidth; offset <= halfWidth; offset++) {
+      unlogged = observed.has(addDays(expected, offset)) ? 0 : unlogged + 1;
+      if (unlogged > MAX_UNLOGGED_RUN) return false;
+    }
+  }
+  return true;
+}
+
 export function deriveCycles(
   periodStarts: string[],
   excludedStarts: string[] = [],
-  fallbackCycleLength = DEFAULT_CYCLE_LENGTH,
+  { fallbackCycleLength = DEFAULT_CYCLE_LENGTH, observedDays = [] }: CycleOptions = {},
 ): Cycle[] {
   const sorted = [...new Set(periodStarts)].sort(compareDates);
   const cycles = sorted.map((startDate, index): Cycle => {
@@ -66,18 +121,34 @@ export function deriveCycles(
       lengthDays: nextStartDate ? differenceInDays(nextStartDate, startDate) : null,
       excluded: excludedStarts.includes(startDate),
       likelyMissedPeriod: false,
+      possibleMissedPeriod: false,
     };
   });
-  // Compare each cycle with the others (leave-one-out) so a gap cannot hide itself by
-  // pulling the reference up. With little history the typical length from onboarding helps.
-  return cycles.map((cycle, index) => {
-    if (!countsTowardsLength(cycle)) return cycle;
-    const others = cycles
-      .filter((other, otherIndex) => otherIndex !== index && countsTowardsLength(other))
-      .map((other) => other.lengthDays!);
-    const reference = median(others.length >= 2 ? others : [...others, fallbackCycleLength]);
-    return { ...cycle, likelyMissedPeriod: cycle.lengthDays! >= reference * MISSED_PERIOD_RATIO };
-  });
+  const counted = cycles.filter(countsTowardsLength);
+  const lengths = counted.map((cycle) => cycle.lengthDays!);
+  const base = baseCycleLength(lengths, fallbackCycleLength);
+  const observed = new Set(observedDays);
+  const suspicious = new Map(
+    counted
+      .map((cycle) => [cycle, cycleMultiple(cycle.lengthDays!, base)] as const)
+      .filter(
+        ([cycle, multiple]) => multiple > 1 && !gapWasObserved(cycle, multiple, base, observed),
+      ),
+  );
+  // A gap is only treated as a missed entry when recorded cycles of the usual length
+  // clearly outnumber such gaps. Otherwise long cycles and missed entries are equally
+  // likely, and the estimate has to cover both instead of choosing one.
+  const normalCount = lengths.filter((length) => length < base * MISSED_PERIOD_RATIO).length;
+  const missedEntriesExplainGaps = normalCount >= 2 && normalCount > suspicious.size;
+  return cycles.map((cycle) =>
+    suspicious.has(cycle)
+      ? {
+          ...cycle,
+          likelyMissedPeriod: missedEntriesExplainGaps,
+          possibleMissedPeriod: !missedEntriesExplainGaps,
+        }
+      : cycle,
+  );
 }
 
 function standardDeviation(values: number[], mean: number): number {
@@ -94,14 +165,32 @@ function median(values: number[]): number {
   return (sorted[midpoint - 1]! + sorted[midpoint]!) / 2;
 }
 
+// Few cycles cannot justify a narrow window; even stable cycles keep ±3 days.
+function windowSpread(lengths: number[], variation = standardDeviation(lengths, mean(lengths))) {
+  if (lengths.length === 0) return 7;
+  if (lengths.length < 3) return Math.max(5, Math.ceil(variation));
+  return Math.max(3, Math.ceil(variation * 1.5));
+}
+
+function mean(values: number[]): number {
+  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+}
+
 export function calculatePrediction(input: PredictionInput): Prediction | null {
   const starts = derivePeriodStarts(input.periodDays);
   if (starts.length === 0) return null;
 
   const fallbackCycleLength = input.fallbackCycleLength ?? DEFAULT_CYCLE_LENGTH;
   const fallbackPeriodLength = input.fallbackPeriodLength ?? 5;
-  const cycles = deriveCycles(starts, input.excludedCycleStarts, fallbackCycleLength);
-  const lengths = cycles.filter(isUsableCycle).map((cycle) => cycle.lengthDays!);
+  const cycles = deriveCycles(starts, input.excludedCycleStarts, {
+    fallbackCycleLength,
+    observedDays: input.observedDays,
+  });
+  // The same lengths `deriveCycles` derived the usual length from.
+  const countedLengths = cycles.filter(countsTowardsLength).map((cycle) => cycle.lengthDays!);
+  const usable = cycles.filter(isUsableCycle);
+  const lengths = usable.map((cycle) => cycle.lengthDays!);
+  const uncertainHistory = usable.some((cycle) => cycle.possibleMissedPeriod);
   const center = lengths.length ? median(lengths) : fallbackCycleLength;
 
   let weightedSum = 0;
@@ -118,18 +207,30 @@ export function calculatePrediction(input: PredictionInput): Prediction | null {
   const average = lengths.length ? weightedSum / totalWeight : fallbackCycleLength;
   const variation = standardDeviation(lengths, average);
   const roundedAverage = Math.round(average);
-  // Few cycles cannot justify a narrow window; even stable cycles keep ±3 days.
-  const spread =
-    lengths.length === 0
-      ? 7
-      : lengths.length < 3
-        ? Math.max(5, Math.ceil(variation))
-        : Math.max(3, Math.ceil(variation * 1.5));
+  // Long cycles and missed entries are two readings, not scatter around one length,
+  // so an uncertain window takes its margin from the cycles without that doubt.
+  const spread = uncertainHistory
+    ? windowSpread(usable.filter((cycle) => !cycle.possibleMissedPeriod).map((c) => c.lengthDays!))
+    : windowSpread(lengths, variation);
   const latestStart = starts.at(-1)!;
-  const expectedStart = addDays(latestStart, roundedAverage);
+  // With an uncertain history the next period may come after one usual cycle (entries
+  // were missed) or after the long recorded cycles. The window spans both and starts
+  // with the earlier one, so no long period-free time is promised.
+  const expectedStart = addDays(
+    latestStart,
+    uncertainHistory
+      ? Math.round(baseCycleLength(countedLengths, fallbackCycleLength))
+      : roundedAverage,
+  );
+  const windowEnd = addDays(
+    uncertainHistory ? addDays(latestStart, roundedAverage) : expectedStart,
+    spread,
+  );
 
+  // An uncertain history never earns more than low confidence.
   let confidence: Prediction['confidence'] = 'low';
-  if (lengths.length >= 6 && variation <= 3) confidence = 'high';
+  if (uncertainHistory) confidence = 'low';
+  else if (lengths.length >= 6 && variation <= 3) confidence = 'high';
   else if (lengths.length >= 3 && variation <= 7) confidence = 'medium';
 
   // Calendar-only fertility dates are unreliable with little, short, long or
@@ -141,7 +242,6 @@ export function calculatePrediction(input: PredictionInput): Prediction | null {
   const showFertileWindow =
     confidence !== 'low' && lengths.length >= 3 && !irregularHistory && !tooCloseToBleeding;
   const estimatedOvulation = showFertileWindow ? addDays(expectedStart, -14) : null;
-  const windowEnd = addDays(expectedStart, spread);
   return {
     expectedStart,
     windowStart: addDays(expectedStart, -spread),
@@ -154,6 +254,7 @@ export function calculatePrediction(input: PredictionInput): Prediction | null {
     variationDays: Math.round(variation * 10) / 10,
     confidence,
     completeCycleCount: lengths.length,
+    uncertainHistory,
     // No newer start is recorded although the whole window has passed. The estimate is
     // not rolled forward: a late period, a missed entry or a pregnancy look the same here.
     overdue: input.today !== undefined && compareDates(input.today, windowEnd) > 0,

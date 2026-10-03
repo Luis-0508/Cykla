@@ -1,13 +1,23 @@
-import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { addDays, parseDateOnly, todayDate } from '@/domain/dateOnly';
 import type { DailyEntry } from '@/domain/models';
 import { useI18n } from '@/i18n/I18nProvider';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
+import { SCREEN_GUTTER } from '@/components/ui/AppScreen';
 import { Typography } from '@/components/ui/Typography';
 
 const DAY_WIDTH = 58;
 const DAYS_BEFORE = 5;
+
+// Layout effects run before paint; without a DOM (server rendering) fall back to useEffect.
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+
+/** Scroll offset that centres the selected (middle) day in a strip of the given width. */
+export function selectedDayOffset(viewportWidth: number): number {
+  const center = DAYS_BEFORE * (DAY_WIDTH + spacing.sm) + DAY_WIDTH / 2;
+  return Math.max(0, Math.round(center - viewportWidth / 2));
+}
 
 type DayStripProps = {
   selectedDate: string;
@@ -23,14 +33,16 @@ export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
   );
   const entryMap = new Map(entries.map((entry) => [entry.date, entry]));
   const scrollRef = useRef<ScrollView>(null);
-  const [viewportWidth, setViewportWidth] = useState(0);
   // The selected day sits in the middle of the strip, which starts off-screen on narrow
-  // phones. Centre it whenever the selection or the available width changes.
-  useEffect(() => {
-    if (viewportWidth === 0) return;
-    const center = DAYS_BEFORE * (DAY_WIDTH + spacing.sm) + DAY_WIDTH / 2;
-    scrollRef.current?.scrollTo({ x: Math.max(0, center - viewportWidth / 2), animated: false });
-  }, [selectedDate, viewportWidth]);
+  // phones. The offset must be known before the first frame, which comes before
+  // onLayout: until measured, the strip spans the window inside the screen gutter.
+  const windowWidth = useWindowDimensions().width;
+  const [measuredWidth, setMeasuredWidth] = useState<number | null>(null);
+  const offsetX = selectedDayOffset(measuredWidth ?? windowWidth - 2 * SCREEN_GUTTER);
+  // contentOffset positions native views at mount; web ignores it, so scroll before paint.
+  useIsomorphicLayoutEffect(() => {
+    scrollRef.current?.scrollTo({ x: offsetX, animated: false });
+  }, [selectedDate, offsetX]);
   return (
     <View>
       <Typography variant="caption" muted style={styles.monthLabel}>
@@ -38,7 +50,8 @@ export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
       </Typography>
       <ScrollView
         ref={scrollRef}
-        onLayout={(event) => setViewportWidth(event.nativeEvent.layout.width)}
+        contentOffset={{ x: offsetX, y: 0 }}
+        onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}

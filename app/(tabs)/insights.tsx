@@ -91,7 +91,11 @@ export default function InsightsScreen() {
                   shortDate(prediction.windowEnd),
                 )}
               </Typography>
-              <Typography muted>{t.estimate.explanation(prediction.completeCycleCount)}</Typography>
+              <Typography muted>
+                {prediction.uncertainHistory
+                  ? t.estimate.uncertainBody
+                  : t.estimate.explanation(prediction.completeCycleCount)}
+              </Typography>
             </>
           )}
           <Button
@@ -131,9 +135,13 @@ export default function InsightsScreen() {
                       ? t.common.dayCount(cycle.lengthDays)
                       : t.insights.currentCycle}
                   </Typography>
-                  {cycle.likelyMissedPeriod && !cycle.excluded ? (
+                  {cycle.excluded ? null : cycle.likelyMissedPeriod ? (
                     <Typography variant="caption" muted>
                       {t.insights.likelyMissedPeriod}
+                    </Typography>
+                  ) : cycle.possibleMissedPeriod ? (
+                    <Typography variant="caption" muted>
+                      {t.insights.possibleMissedPeriod}
                     </Typography>
                   ) : null}
                 </View>

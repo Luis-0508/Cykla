@@ -8,6 +8,9 @@ import { saveDailyEntry } from '@/database/repository';
 import { addDays } from '@/domain/dateOnly';
 import { createI18n } from '@/i18n/i18n';
 import { useUiStore } from '@/store/uiStore';
+import { selectedDayOffset } from '@/components/DayStrip';
+import { SCREEN_GUTTER } from '@/components/ui/AppScreen';
+import PredictionScreen from '../app/prediction';
 import TodayScreen from '../app/(tabs)/index';
 import CalendarScreen from '../app/(tabs)/calendar';
 import InsightsScreen from '../app/(tabs)/insights';
@@ -125,7 +128,8 @@ describe('screens with real SQLite data', () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
       });
       assertion();
-    }, 5_000);
+      // Below vitest's 5 s test timeout, so a failure still reports and cleans up.
+    }, 3_000);
   }
   const texts = () =>
     screen.root
@@ -150,13 +154,18 @@ describe('screens with real SQLite data', () => {
     Object.assign({}, ...[node.props.style].flat(Infinity).filter(Boolean));
 
   describe('Today', () => {
-    it('counts to the next estimate after a month without a recorded period', async () => {
+    it('shows a wide range instead of an 80-day countdown after missing months', async () => {
       await recordPeriods(test.db, '2026-06-01', '2026-08-24');
       setToday('2026-08-30');
       await mount(TodayScreen);
       // Before the fix the 84-day gap was used as the cycle length: "in about 78 days".
-      await until(() => expect(texts()).toContain(t.today.aboutInDays(22)));
-      expect(texts().some((text) => text.includes('78'))).toBe(false);
+      const short = (date: string) => i18n.formatDate(date, { day: 'numeric', month: 'short' });
+      await until(() =>
+        expect(findText(t.estimate.range(short('2026-09-14'), short('2026-11-23')))).toHaveLength(
+          1,
+        ),
+      );
+      expect(texts().some((text) => text.startsWith('ungefähr'))).toBe(false);
     });
 
     it('asks for a new entry instead of counting when the estimate is stale', async () => {
@@ -188,6 +197,67 @@ describe('screens with real SQLite data', () => {
     expect(findText('28')).toHaveLength(1);
     expect(findText(t.insights.fromCycles(2))).toHaveLength(1);
     expect(findText(t.estimate.explanation(2))).toHaveLength(1);
+  });
+
+  describe('Estimate explanation', () => {
+    it('does not present an expired window as a current, confident estimate', async () => {
+      // Six steady cycles would earn high confidence if the window were still current.
+      await recordPeriods(
+        test.db,
+        ...Array.from({ length: 7 }, (_, index) => addDays('2026-01-01', index * 28)),
+      );
+      setToday('2026-10-03');
+      await mount(PredictionScreen);
+      await until(() => expect(findText(t.estimate.overdueTitle)).toHaveLength(1));
+      for (const level of ['low', 'medium', 'high'] as const) {
+        expect(findText(t.confidence[level])).toHaveLength(0);
+      }
+      expect(texts().some((text) => text.startsWith('Der rechnerische Mittelpunkt'))).toBe(false);
+      // The fertile range of the expired window is not shown as current either.
+      expect(findText(t.prediction.fertileUnavailable)).toHaveLength(1);
+    });
+
+    it('explains an uncertain history instead of a precise midpoint', async () => {
+      await recordPeriods(test.db, '2026-01-01', '2026-02-26', '2026-04-23');
+      setToday('2026-04-28');
+      await mount(PredictionScreen);
+      await until(() => expect(findText(t.estimate.uncertainBody)).toHaveLength(1));
+      expect(findText(t.confidence.low)).toHaveLength(1);
+      expect(texts().some((text) => text.startsWith('Der rechnerische Mittelpunkt'))).toBe(false);
+    });
+  });
+
+  it('shows a wide range on Today for repeated gaps instead of a 56-day countdown', async () => {
+    await recordPeriods(test.db, '2026-01-01', '2026-02-26', '2026-04-23');
+    setToday('2026-04-28');
+    await mount(TodayScreen);
+    await until(() => expect(findText(t.estimate.uncertainBody)).toHaveLength(1));
+    const short = (date: string) => i18n.formatDate(date, { day: 'numeric', month: 'short' });
+    expect(findText(t.estimate.range(short('2026-05-14'), short('2026-06-25')))).toHaveLength(1);
+    expect(texts().some((text) => text.startsWith('ungefähr'))).toBe(false);
+  });
+
+  describe('Day strip', () => {
+    it.each([320, 375, 390, 430])(
+      'starts with the selected day centred on a %i pt phone, before any layout event',
+      async (width) => {
+        environment.width = width;
+        setToday('2026-08-30');
+        await mount(TodayScreen);
+        await until(() => expect(buttons(i18n.formatDate('2026-08-30'))).toHaveLength(1));
+        const strip = screen.root.find(
+          (node) => String(node.type) === 'ScrollView' && node.props.horizontal,
+        );
+        const viewport = width - 2 * SCREEN_GUTTER;
+        const offset = selectedDayOffset(viewport);
+        // Present on the very first render: no onLayout has been delivered here.
+        expect(strip.props.contentOffset).toEqual({ x: offset, y: 0 });
+        const left = 5 * (58 + 8) - offset;
+        expect(left).toBeGreaterThanOrEqual(0);
+        expect(left + 58).toBeLessThanOrEqual(viewport);
+        expect(Math.abs(left + 29 - viewport / 2)).toBeLessThanOrEqual(1);
+      },
+    );
   });
 
   describe('Calendar layout', () => {

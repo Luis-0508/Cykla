@@ -10,6 +10,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { spacing, useCyklaTheme } from '@/theme/theme';
 
+// Horizontal padding of screen content; full-width children are this much narrower.
+export const SCREEN_GUTTER = spacing.lg;
+
 type AppScreenProps = PropsWithChildren<{
   header?: ReactNode;
   scroll?: boolean;
@@ -63,7 +66,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: SCREEN_GUTTER,
     paddingBottom: 120,
   },
 });

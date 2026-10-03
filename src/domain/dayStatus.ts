@@ -9,6 +9,8 @@ export type DayStatus =
   | { kind: 'pastCycle'; cycleDay: number | null }
   // The estimated window has passed without a newer recorded start.
   | { kind: 'overdue'; windowEnd: string }
+  // Long cycles or missed entries: only the wide window is shown, never a day count.
+  | { kind: 'uncertain'; windowStart: string; windowEnd: string }
   // Days from the selected day to the estimated midpoint; 0 means around that day.
   | { kind: 'countdown'; days: number }
   // Past the midpoint but still inside the estimated window.
@@ -35,6 +37,13 @@ export function describeDayStatus(
   }
   if (!prediction) return { kind: 'none' };
   if (prediction.overdue) return { kind: 'overdue', windowEnd: prediction.windowEnd };
+  if (prediction.uncertainHistory && compareDates(date, prediction.windowEnd) <= 0) {
+    return {
+      kind: 'uncertain',
+      windowStart: prediction.windowStart,
+      windowEnd: prediction.windowEnd,
+    };
+  }
   const days = differenceInDays(prediction.expectedStart, date);
   if (days >= 0) return { kind: 'countdown', days };
   if (compareDates(date, prediction.windowEnd) <= 0) {

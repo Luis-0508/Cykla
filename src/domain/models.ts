@@ -30,9 +30,12 @@ export type Cycle = {
   nextStartDate: string | null;
   lengthDays: number | null;
   excluded: boolean;
-  // About twice the usual length or more: most likely a period was not recorded.
-  // Stays visible but is left out of averages, like an excluded cycle.
+  // About a multiple of the usual length while normal cycles clearly dominate: most
+  // likely a period was not recorded. Stays visible but is left out of averages.
   likelyMissedPeriod: boolean;
+  // About a multiple of the usual length without such dominance: a long cycle or a
+  // missed entry. Still counted, but the estimate is marked as uncertain.
+  possibleMissedPeriod: boolean;
 };
 
 export type Prediction = {
@@ -48,6 +51,8 @@ export type Prediction = {
   variationDays: number;
   confidence: Confidence;
   completeCycleCount: number;
+  // Some cycles may be long cycles or missed entries; the window covers both readings.
+  uncertainHistory: boolean;
   // The whole window lies before today and no newer period start is recorded.
   overdue: boolean;
 };

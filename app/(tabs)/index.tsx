@@ -34,7 +34,7 @@ export default function TodayScreen() {
 
   const statusTitle = hasFlow
     ? t.today.recordedPeriod
-    : status.kind === 'countdown' || status.kind === 'overdue'
+    : status.kind === 'countdown' || status.kind === 'overdue' || status.kind === 'uncertain'
       ? t.today.nextPeriod
       : t.today.yourCycle;
   const statusValue = hasFlow
@@ -47,22 +47,29 @@ export default function TodayScreen() {
         : t.today.aboutInDays(status.days)
       : status.kind === 'inWindow'
         ? t.today.estimatedFrom(formatDate(status.windowStart, { day: 'numeric', month: 'short' }))
-        : status.kind === 'overdue'
-          ? t.today.laterThanEstimated
-          : status.kind === 'pastCycle'
-            ? status.cycleDay
-              ? t.today.cycleDay(status.cycleDay)
-              : t.common.notRecorded
-            : t.today.noEstimate;
+        : status.kind === 'uncertain'
+          ? t.estimate.range(
+              formatDate(status.windowStart, { day: 'numeric', month: 'short' }),
+              formatDate(status.windowEnd, { day: 'numeric', month: 'short' }),
+            )
+          : status.kind === 'overdue'
+            ? t.today.laterThanEstimated
+            : status.kind === 'pastCycle'
+              ? status.cycleDay
+                ? t.today.cycleDay(status.cycleDay)
+                : t.common.notRecorded
+              : t.today.noEstimate;
   const statusBody = hasFlow
     ? t.today.fromEntry
     : status.kind === 'overdue'
       ? t.estimate.overdueBody(formatDate(status.windowEnd, { day: 'numeric', month: 'long' }))
       : status.kind === 'pastCycle'
         ? t.today.pastDayBody
-        : prediction
-          ? t.estimate.explanation(prediction.completeCycleCount)
-          : t.today.noEstimateBody;
+        : status.kind === 'uncertain'
+          ? t.estimate.uncertainBody
+          : prediction
+            ? t.estimate.explanation(prediction.completeCycleCount)
+            : t.today.noEstimateBody;
   // A confidence level only belongs to a current estimate.
   const showConfidence =
     prediction != null && !hasFlow && status.kind !== 'overdue' && status.kind !== 'pastCycle';

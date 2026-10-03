@@ -111,6 +111,8 @@ export const de = {
     range: (start: string, end: string) => `${start} – ${end}`,
     rangeWords: (start: string, end: string) => `${start} bis ${end}`,
     overdueTitle: 'Später als geschätzt',
+    uncertainBody:
+      'Einige Zyklen sind etwa ein Vielfaches deiner üblichen Zykluslänge. Das können lange Zyklen oder fehlende Periodeneinträge sein, deshalb deckt der Zeitraum beides ab und die Konfidenz bleibt niedrig. Trage fehlende Perioden nach oder dokumentiere auch Tage ohne Blutung.',
     overdueBody: (date: string) =>
       `Der geschätzte Zeitraum endete am ${date}, und seitdem ist kein Periodenbeginn dokumentiert. Cykla rechnet deshalb nicht einfach weiter. Trage den Beginn deiner Periode ein, auch nachträglich, damit eine neue Schätzung entsteht.`,
   },
@@ -222,6 +224,8 @@ export const de = {
     currentCycle: 'Aktueller Zyklus',
     likelyMissedPeriod:
       'Etwa doppelt so lang wie üblich: Wahrscheinlich fehlt ein Periodeneintrag. Zählt nicht zur Schätzung.',
+    possibleMissedPeriod:
+      'Etwa ein Vielfaches der üblichen Länge: ein langer Zyklus oder ein fehlender Eintrag. Die Schätzung berücksichtigt beides.',
     include: 'Einbeziehen',
     exclude: 'Ausschließen',
     cycleLengthLabel: (days: number) => `Zykluslänge ${days} ${plural(days, 'Tag', 'Tage')}`,
@@ -244,7 +248,7 @@ export const de = {
       plural(count, 'vollständiger, einbezogener Zyklus', 'vollständige, einbezogene Zyklen'),
     averageTitle: '2. Gewichteter Durchschnitt',
     averageBody:
-      'Neuere Zykluslängen erhalten mit dem Faktor 0,85 etwas mehr Gewicht. Deutliche Ausreißer bleiben sichtbar, zählen aber schwächer. Zyklen, die etwa doppelt so lang wie üblich sind, enthalten wahrscheinlich eine nicht eingetragene Periode und zählen nicht mit.',
+      'Neuere Zykluslängen erhalten mit dem Faktor 0,85 etwas mehr Gewicht. Deutliche Ausreißer bleiben sichtbar, zählen aber schwächer. Zyklen von etwa einem Vielfachen der üblichen Länge können eine nicht eingetragene Periode enthalten. Überwiegen normale Zyklen deutlich, zählen sie nicht mit; sonst wird der Zeitraum breiter und die Konfidenz niedrig. Eingetragene Tage ohne Blutung in der Lücke bestätigen einen langen Zyklus.',
     averageMetric: (days: number) => `${plural(days, 'Tag', 'Tage')} als gewichtete Zykluslänge`,
     spreadTitle: '3. Unsicherheit statt exaktem Tag',
     spreadBody:

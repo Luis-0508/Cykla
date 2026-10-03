@@ -109,6 +109,8 @@ export const en: Messages = {
     range: (start, end) => `${start} – ${end}`,
     rangeWords: (start, end) => `${start} to ${end}`,
     overdueTitle: 'Later than estimated',
+    uncertainBody:
+      'Some cycles are about a multiple of your usual cycle length. They may be long cycles or missing period entries, so the window covers both and confidence stays low. Log missing periods or also record days without bleeding.',
     overdueBody: (date) =>
       `The estimated window ended on ${date} and no period start has been recorded since, so Cykla does not simply keep counting. Log the start of your period, even afterwards, to get a new estimate.`,
   },
@@ -215,6 +217,8 @@ export const en: Messages = {
     currentCycle: 'Current cycle',
     likelyMissedPeriod:
       'About twice the usual length, so a period entry is probably missing. Not used for the estimate.',
+    possibleMissedPeriod:
+      'About a multiple of the usual length: a long cycle or a missing entry. The estimate allows for both.',
     include: 'Include',
     exclude: 'Exclude',
     cycleLengthLabel: (days) => `Cycle length ${days} ${plural(days, 'day', 'days')}`,
@@ -236,7 +240,7 @@ export const en: Messages = {
     startsMetric: (count) => plural(count, 'complete cycle included', 'complete cycles included'),
     averageTitle: '2. Weighted average',
     averageBody:
-      'More recent cycle lengths get slightly more weight, using a factor of 0.85. Clear outliers stay visible but count less. Cycles about twice the usual length probably contain an unlogged period and are not counted.',
+      'More recent cycle lengths get slightly more weight, using a factor of 0.85. Clear outliers stay visible but count less. Cycles of about a multiple of the usual length may contain an unlogged period. If normal cycles clearly dominate, they are not counted; otherwise the window widens and confidence stays low. Days logged without bleeding inside the gap confirm a long cycle.',
     averageMetric: (days) => `${plural(days, 'day', 'days')} as the weighted cycle length`,
     spreadTitle: '3. A range, not an exact day',
     spreadBody:

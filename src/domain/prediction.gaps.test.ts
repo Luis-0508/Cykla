@@ -36,10 +36,15 @@ describe('missed period entries', () => {
   });
 
   it('never shows an 80-day countdown just because one month is missing', () => {
-    // Only two recorded periods 84 days apart: three cycles of the usual 28 days.
+    // Only two recorded periods 84 days apart: three usual cycles or one long cycle.
     const days = periods('2026-06-01', '2026-08-24');
     const status = countdown(days, '2026-08-28', 28);
-    expect(status).toEqual({ kind: 'countdown', days: 24 });
+    // The window opens one usual cycle after the last period and reaches the long reading.
+    expect(status).toEqual({
+      kind: 'uncertain',
+      windowStart: '2026-09-14',
+      windowEnd: '2026-11-23',
+    });
   });
 
   it('handles several missed periods in one history', () => {
@@ -66,13 +71,15 @@ describe('missed period entries', () => {
     expect(prediction.averageCycleLength).toBe(40);
   });
 
-  it('learns long cycles once they repeat', () => {
+  it('keeps repeated long cycles but marks them uncertain without other evidence', () => {
     const prediction = calculatePrediction({
       periodDays: periods('2026-01-01', '2026-03-01', '2026-04-29', '2026-06-27'),
       fallbackCycleLength: 28,
     })!;
     expect(prediction.completeCycleCount).toBe(3);
     expect(prediction.averageCycleLength).toBe(59);
+    expect(prediction.uncertainHistory).toBe(true);
+    expect(prediction.confidence).toBe('low');
   });
 
   it('ignores manually excluded cycles when judging a gap', () => {
