@@ -180,3 +180,66 @@ describe('stored settings boundaries', () => {
     ).toEqual(parseSettings({}));
   });
 });
+
+describe('backup restore with SQLite', () => {
+  let test: ReturnType<typeof createTestDatabase>;
+  beforeEach(async () => {
+    test = createTestDatabase();
+    await initializeDatabase(test.db);
+  });
+  afterEach(() => test.close());
+  it('restores a backup and keeps device preferences', async () => {
+    await repository.saveDailyEntry(test.db, input);
+    await repository.toggleCycleExclusion(test.db, '2025-12-01', true);
+    await repository.setSetting(test.db, 'theme', 'dark');
+    await repository.setSetting(test.db, 'language', 'en');
+    await repository.setSetting(test.db, 'dailyReminderEnabled', true);
+    const restored = {
+      ...input,
+      date: '2026-02-01',
+      flow: 'light' as const,
+      notes: 'Synthetisch',
+      updatedAt: '2026-02-01T10:00:00.000Z',
+      symptoms: [{ id: 'backup-1', date: '2026-02-01', code: 'cramps', intensity: 2 }],
+    };
+    await repository.restoreBackup(test.db, {
+      version: 2,
+      settings: { goal: 'conceive', typicalCycleLength: 31, typicalPeriodLength: 4 },
+      entries: [restored],
+      excludedCycleStarts: ['2026-01-01'],
+    });
+    expect(await repository.getAllEntries(test.db)).toEqual([restored]);
+    expect(await repository.getExcludedCycleStarts(test.db)).toEqual(['2026-01-01']);
+    expect(await repository.getSettings(test.db)).toEqual({
+      onboardingCompleted: true,
+      goal: 'conceive',
+      typicalCycleLength: 31,
+      typicalPeriodLength: 4,
+      theme: 'dark',
+      language: 'en',
+      dailyReminderEnabled: true,
+    });
+  });
+  it('rolls back a failed restore and keeps the previous data', async () => {
+    await repository.saveDailyEntry(test.db, input);
+    await repository.toggleCycleExclusion(test.db, '2025-12-01', true);
+    const before = await repository.getAllEntries(test.db);
+    const symptom = { id: 'same-id', date: '2026-02-01', code: 'cramps', intensity: 1 };
+    const broken = {
+      ...input,
+      date: '2026-02-01',
+      updatedAt: '2026-02-01T10:00:00.000Z',
+      symptoms: [symptom, symptom],
+    };
+    await expect(
+      repository.restoreBackup(test.db, {
+        version: 2,
+        settings: { goal: 'track', typicalCycleLength: 28, typicalPeriodLength: 5 },
+        entries: [broken],
+        excludedCycleStarts: [],
+      }),
+    ).rejects.toThrow();
+    expect(await repository.getAllEntries(test.db)).toEqual(before);
+    expect(await repository.getExcludedCycleStarts(test.db)).toEqual(['2025-12-01']);
+  });
+});

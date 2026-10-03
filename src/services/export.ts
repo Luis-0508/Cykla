@@ -52,11 +52,12 @@ async function saveAndShare(
 export async function exportJson(
   entries: DailyEntry[],
   settings: AppSettings,
+  excludedCycleStarts: string[],
   dialogTitle?: string,
 ): Promise<string> {
   return saveAndShare(
     `cykla-export-${new Date().toISOString().slice(0, 10)}.json`,
-    entriesToJson(entries, settings),
+    entriesToJson(entries, settings, excludedCycleStarts),
     'application/json',
     dialogTitle,
   );

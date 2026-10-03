@@ -8,7 +8,15 @@ import { Card } from '@/components/ui/Card';
 import { ChoiceChip } from '@/components/ui/ChoiceChip';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Typography } from '@/components/ui/Typography';
-import { useEntries, useResetData, useSettings, useUpdateSetting } from '@/hooks/useCyklaData';
+import type { BackupData } from '@/database/repository';
+import {
+  useEntries,
+  useExcludedCycles,
+  useResetData,
+  useRestoreBackup,
+  useSettings,
+  useUpdateSetting,
+} from '@/hooks/useCyklaData';
 import { LANGUAGES, SUPPORTED_LANGUAGES, type LanguagePreference } from '@/i18n/i18n';
 import { useI18n } from '@/i18n/I18nProvider';
 import {
@@ -17,7 +25,9 @@ import {
   isAppLockEnabled,
   setAppLockEnabled,
 } from '@/services/appLock';
+import { BackupError } from '@/services/backup';
 import { exportCsv, exportJson } from '@/services/export';
+import { chooseBackup } from '@/services/import';
 import { disableDailyReminder, enableDailyReminder } from '@/services/notifications';
 import { type ThemeMode, useUiStore } from '@/store/uiStore';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
@@ -42,6 +52,8 @@ export default function SettingsScreen() {
   ];
   const settingsQuery = useSettings();
   const entriesQuery = useEntries();
+  const exclusionsQuery = useExcludedCycles();
+  const restoreData = useRestoreBackup();
   const updateSetting = useUpdateSetting();
   const resetData = useResetData();
   const themeMode = useUiStore((state) => state.themeMode);
@@ -104,16 +116,73 @@ export default function SettingsScreen() {
 
   const runExport = async (format: 'json' | 'csv') => {
     if (!settings) return;
+    // A backup without the loaded exclusions would silently drop them on restore.
+    if (format === 'json' && !exclusionsQuery.data) {
+      Alert.alert(t.settings.exportFailed, t.settings.exportError);
+      return;
+    }
     setBusy(format);
     try {
       if (format === 'json')
-        await exportJson(entriesQuery.data ?? [], settings, t.settings.shareExport);
+        await exportJson(
+          entriesQuery.data ?? [],
+          settings,
+          exclusionsQuery.data ?? [],
+          t.settings.shareExport,
+        );
       else await exportCsv(entriesQuery.data ?? [], t.settings.shareExport);
     } catch {
       Alert.alert(t.settings.exportFailed, t.settings.exportError);
     } finally {
       setBusy(null);
     }
+  };
+
+  // Busy stays set until the confirmation is answered; Alert.alert does not block.
+  const runImport = async () => {
+    setBusy('import');
+    let backup: BackupData | null;
+    try {
+      backup = await chooseBackup();
+    } catch (error) {
+      setBusy(null);
+      Alert.alert(
+        t.settings.importFailed,
+        error instanceof BackupError
+          ? t.settings.backupError[error.code]
+          : t.settings.importReadError,
+      );
+      return;
+    }
+    if (!backup) {
+      setBusy(null);
+      return;
+    }
+    const confirmed = backup;
+    Alert.alert(
+      t.settings.importConfirmTitle,
+      [
+        t.settings.importConfirmBody(confirmed.entries.length),
+        confirmed.version === 1 ? t.settings.importLegacyNote : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+      [
+        { text: t.common.cancel, style: 'cancel', onPress: () => setBusy(null) },
+        {
+          text: t.settings.importConfirm,
+          style: 'destructive',
+          onPress: () => {
+            void restoreData
+              .mutateAsync(confirmed)
+              .then(() => Alert.alert(t.settings.importDoneTitle, t.settings.importDoneBody))
+              .catch(() => Alert.alert(t.settings.importFailed, t.settings.importUnchanged))
+              .finally(() => setBusy(null));
+          },
+        },
+      ],
+      { cancelable: true, onDismiss: () => setBusy(null) },
+    );
   };
 
   const confirmReset = () => {
@@ -268,6 +337,20 @@ export default function SettingsScreen() {
           />
         </View>
       </View>
+      {Platform.OS !== 'web' ? (
+        <Card style={styles.privacyCard}>
+          <Typography variant="heading">{t.settings.importTitle}</Typography>
+          <Typography muted>{t.settings.importBody}</Typography>
+          <Button
+            label={t.settings.importButton}
+            variant="secondary"
+            icon="download-outline"
+            disabled={busy !== null}
+            loading={busy === 'import'}
+            onPress={() => void runImport()}
+          />
+        </Card>
+      ) : null}
       <Card tone="primary" style={styles.privacyCard}>
         <View style={styles.privacyHead}>
           <Ionicons name="shield-checkmark-outline" size={27} color={theme.colors.primary} />

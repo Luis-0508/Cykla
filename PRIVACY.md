@@ -29,13 +29,19 @@ exported.
 - Exports are generated locally. They can be transferred to a destination selected
   by the user only through the system share dialog.
 
-## Export
+## Export and Restore
 
-JSON exports contain recorded daily data and basic settings (goal, typical cycle
-length and typical period length). CSV exports contain a flat table of recorded
-daily data. Potential spreadsheet formulas are neutralized when CSV files are
-generated. Export files may contain sensitive health data and should be stored
-securely.
+JSON exports (format version 2) contain recorded daily data, manually excluded
+cycles and basic settings (goal, typical cycle length and typical period length).
+CSV exports contain a flat table of recorded daily data. Potential spreadsheet
+formulas are neutralized when CSV files are generated. Export files may contain
+sensitive health data and should be stored securely.
+
+In the mobile app, a JSON export can be restored from a file the user picks. The
+file is read locally and fully validated before anything changes; after explicit
+confirmation it replaces all entries and exclusions in one database transaction.
+Device preferences (appearance, language, reminder, app lock) are not taken from
+the file. Nothing is uploaded.
 
 Mobile exports are created in a dedicated cache directory. Preparation failures
 remove partial files immediately. After sharing starts, Android and unknown native

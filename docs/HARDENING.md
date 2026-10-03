@@ -59,9 +59,13 @@ Use only invented data on actual iOS and Android devices:
    promise settles and cleanup at the next cold start. On iOS verify cleanup after
    native completion. Foregrounding must not remove files; no timeout is treated
    as proof of recipient completion.
-3. Upgrade a synthetic v1 database and reinstall cleanly on Expo SQLite and web
+3. Restore a synthetic JSON v2 and v1 export from Files/Drive-style pickers;
+   cancel the picker and the confirmation; try invalid, oversized and edited files.
+   Verify existing data stays unchanged on every failure and that theme, language,
+   reminder and app lock survive a successful restore.
+4. Upgrade a synthetic v1 database and reinstall cleanly on Expo SQLite and web
    WASM; the Node SQLite tests verify SQL semantics but not platform integration.
-4. Test web downloads and SQLite with the existing cross-origin headers; export
+5. Test web downloads and SQLite with the existing cross-origin headers; export
    compilation alone does not prove browser runtime behavior.
 
 The app-switcher protection is a JavaScript AppState gate, not a native screenshot

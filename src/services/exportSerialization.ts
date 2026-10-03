@@ -39,14 +39,16 @@ export function entriesToCsv(entries: DailyEntry[]): string {
   return [header.map(csvCell).join(','), ...rows].join('\n');
 }
 
+// Version 2 adds manually excluded cycles; version 1 files remain importable.
 export function entriesToJson(
   entries: DailyEntry[],
   settings: AppSettings,
+  excludedCycleStarts: string[],
   now = new Date(),
 ): string {
   const payload = {
     format: 'cykla-export',
-    version: 1,
+    version: 2,
     exportedAt: now.toISOString(),
     notice: 'Enthält dokumentierte Daten. Prognosen werden nicht exportiert oder gespeichert.',
     settings: {
@@ -55,6 +57,7 @@ export function entriesToJson(
       typicalPeriodLength: settings.typicalPeriodLength,
     },
     entries,
+    excludedCycleStarts,
   };
   return JSON.stringify(payload, null, 2);
 }
