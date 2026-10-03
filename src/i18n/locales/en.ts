@@ -108,6 +108,11 @@ export const en: Messages = {
         : `This estimate uses ${completeCycles} complete cycles. Recent cycles count a little more; unusual ones a little less.`,
     range: (start, end) => `${start} – ${end}`,
     rangeWords: (start, end) => `${start} to ${end}`,
+    overdueTitle: 'Later than estimated',
+    uncertainBody:
+      'Some cycles are about a multiple of your usual cycle length. They may be long cycles or missing period entries, so the window covers both and confidence stays low. Log missing periods or also record days without bleeding.',
+    overdueBody: (date) =>
+      `The estimated window ended on ${date} and no period start has been recorded since, so Cykla does not simply keep counting. Log the start of your period, even afterwards, to get a new estimate.`,
   },
   today: {
     loading: 'Loading your overview …',
@@ -124,6 +129,9 @@ export const en: Messages = {
     aboutToday: 'around today',
     aboutInDays: (days) => `in about ${days} ${plural(days, 'day', 'days')}`,
     estimatedFrom: (date) => `estimated from ${date}`,
+    laterThanEstimated: 'later than estimated',
+    pastDayBody:
+      'A later period is already recorded for this day, so Cykla shows the cycle day instead of an estimate.',
     noEstimate: 'No estimate yet',
     fromEntry: 'This comes from your entry.',
     noEstimateBody: 'Once a period start is recorded, a careful estimate will appear here.',
@@ -207,6 +215,10 @@ export const en: Messages = {
     noHistory: 'No cycle history yet.',
     cycleStart: (date) => `Started ${date}`,
     currentCycle: 'Current cycle',
+    likelyMissedPeriod:
+      'About twice the usual length, so a period entry is probably missing. Not used for the estimate.',
+    possibleMissedPeriod:
+      'About a multiple of the usual length: a long cycle or a missing entry. The estimate allows for both.',
     include: 'Include',
     exclude: 'Exclude',
     cycleLengthLabel: (days) => `Cycle length ${days} ${plural(days, 'day', 'days')}`,
@@ -228,7 +240,7 @@ export const en: Messages = {
     startsMetric: (count) => plural(count, 'complete cycle included', 'complete cycles included'),
     averageTitle: '2. Weighted average',
     averageBody:
-      'More recent cycle lengths get slightly more weight, using a factor of 0.85. Clear outliers stay visible but count less.',
+      'More recent cycle lengths get slightly more weight, using a factor of 0.85. Clear outliers stay visible but count less. Cycles of about a multiple of the usual length may contain an unlogged period. If normal cycles clearly dominate, they are not counted; otherwise the window widens and confidence stays low. Days logged without bleeding inside the gap confirm a long cycle.',
     averageMetric: (days) => `${plural(days, 'day', 'days')} as the weighted cycle length`,
     spreadTitle: '3. A range, not an exact day',
     spreadBody:
@@ -246,7 +258,7 @@ export const en: Messages = {
     disclaimerBody:
       '“High confidence” does not mean certainty. Pregnancy, illness, stress, medication and other factors can change cycles.',
     footer: (cycles) =>
-      `Model version 1.1 · ${cycles} ${plural(cycles, 'cycle', 'cycles')} detected · calculated on this device only`,
+      `Model version 1.2 · ${cycles} ${plural(cycles, 'cycle', 'cycles')} detected · calculated on this device only`,
   },
   dayEditor: {
     loadError: 'Your daily data could not be loaded. Please try again before editing.',
@@ -273,6 +285,7 @@ export const en: Messages = {
     save: 'Save entry',
     deleteDay: 'Delete this day’s data',
     saveError: 'The entry could not be saved. Your existing data has not been changed.',
+    deleteError: 'The entry could not be deleted. Please try again.',
   },
   onboarding: {
     welcomeTitle: 'A calm place for your cycle',

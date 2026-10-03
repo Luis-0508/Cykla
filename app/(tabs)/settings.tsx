@@ -116,8 +116,9 @@ export default function SettingsScreen() {
 
   const runExport = async (format: 'json' | 'csv') => {
     if (!settings) return;
-    // A backup without the loaded exclusions would silently drop them on restore.
-    if (format === 'json' && !exclusionsQuery.data) {
+    // An export of entries that failed to load would look like an empty diary, and a
+    // backup without the loaded exclusions would silently drop them on restore.
+    if (!entriesQuery.data || (format === 'json' && !exclusionsQuery.data)) {
       Alert.alert(t.settings.exportFailed, t.settings.exportError);
       return;
     }
@@ -125,12 +126,12 @@ export default function SettingsScreen() {
     try {
       if (format === 'json')
         await exportJson(
-          entriesQuery.data ?? [],
+          entriesQuery.data,
           settings,
           exclusionsQuery.data ?? [],
           t.settings.shareExport,
         );
-      else await exportCsv(entriesQuery.data ?? [], t.settings.shareExport);
+      else await exportCsv(entriesQuery.data, t.settings.shareExport);
     } catch {
       Alert.alert(t.settings.exportFailed, t.settings.exportError);
     } finally {

@@ -23,7 +23,10 @@ export default function PredictionScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t.prediction.close}
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace('/(tabs)');
+          }}
           style={[styles.close, { borderColor: theme.colors.border }]}
         >
           <Ionicons name="close" size={24} color={theme.colors.text} />
@@ -38,19 +41,34 @@ export default function PredictionScreen() {
 
       {prediction ? (
         <>
-          <Card tone="primary" style={styles.hero}>
-            <ConfidenceBadge confidence={prediction.confidence} />
-            <Typography variant="caption">{t.prediction.windowEyebrow}</Typography>
-            <Typography variant="title">
-              {t.estimate.rangeWords(
-                formatDate(prediction.windowStart, { day: 'numeric', month: 'long' }),
-                formatDate(prediction.windowEnd, { day: 'numeric', month: 'long' }),
-              )}
-            </Typography>
-            <Typography muted>
-              {t.prediction.midpoint(formatDate(prediction.expectedStart))}
-            </Typography>
-          </Card>
+          {prediction.overdue ? (
+            // An expired window is history, not a current estimate: no confidence, no range headline.
+            <Card tone="accent" style={styles.hero}>
+              <Typography variant="caption">{t.prediction.windowEyebrow}</Typography>
+              <Typography variant="title">{t.estimate.overdueTitle}</Typography>
+              <Typography muted>
+                {t.estimate.overdueBody(
+                  formatDate(prediction.windowEnd, { day: 'numeric', month: 'long' }),
+                )}
+              </Typography>
+            </Card>
+          ) : (
+            <Card tone="primary" style={styles.hero}>
+              <ConfidenceBadge confidence={prediction.confidence} />
+              <Typography variant="caption">{t.prediction.windowEyebrow}</Typography>
+              <Typography variant="title">
+                {t.estimate.rangeWords(
+                  formatDate(prediction.windowStart, { day: 'numeric', month: 'long' }),
+                  formatDate(prediction.windowEnd, { day: 'numeric', month: 'long' }),
+                )}
+              </Typography>
+              <Typography muted>
+                {prediction.uncertainHistory
+                  ? t.estimate.uncertainBody
+                  : t.prediction.midpoint(formatDate(prediction.expectedStart))}
+              </Typography>
+            </Card>
+          )}
 
           <Card style={styles.section}>
             <Typography variant="heading">{t.prediction.startsTitle}</Typography>
@@ -86,7 +104,7 @@ export default function PredictionScreen() {
           <Card tone="fertile" style={styles.section}>
             <Typography variant="heading">{t.prediction.fertileTitle}</Typography>
             <Typography>
-              {prediction.fertileWindowStart && prediction.fertileWindowEnd
+              {!prediction.overdue && prediction.fertileWindowStart && prediction.fertileWindowEnd
                 ? t.estimate.rangeWords(
                     formatDate(prediction.fertileWindowStart, { day: 'numeric', month: 'short' }),
                     formatDate(prediction.fertileWindowEnd, { day: 'numeric', month: 'short' }),

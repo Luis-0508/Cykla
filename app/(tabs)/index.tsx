@@ -11,6 +11,7 @@ import { ErrorState, LoadingState } from '@/components/ui/States';
 import { Typography } from '@/components/ui/Typography';
 import { DayStrip } from '@/components/DayStrip';
 import { differenceInDays, todayDate } from '@/domain/dateOnly';
+import { describeDayStatus } from '@/domain/dayStatus';
 import { usePrediction } from '@/hooks/usePrediction';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useUiStore } from '@/store/uiStore';
@@ -26,29 +27,52 @@ export default function TodayScreen() {
   const hasFlow = selectedEntry != null && selectedEntry.flow !== 'none';
   const latestStart = [...starts].reverse().find((date) => date <= selectedDate);
   const cycleDay = latestStart ? differenceInDays(selectedDate, latestStart) + 1 : null;
-  const daysUntil = prediction ? differenceInDays(prediction.expectedStart, selectedDate) : null;
+  const status = describeDayStatus(selectedDate, starts, prediction);
 
   if (isLoading) return <LoadingState label={t.today.loading} />;
   if (error) return <ErrorState message={t.today.error} />;
 
   const statusTitle = hasFlow
     ? t.today.recordedPeriod
-    : daysUntil !== null && daysUntil >= 0
+    : status.kind === 'countdown' || status.kind === 'overdue' || status.kind === 'uncertain'
       ? t.today.nextPeriod
       : t.today.yourCycle;
   const statusValue = hasFlow
     ? cycleDay
       ? t.today.cycleDay(cycleDay)
       : t.flow[selectedEntry.flow]
-    : daysUntil === 0
-      ? t.today.aboutToday
-      : daysUntil !== null && daysUntil > 0
-        ? t.today.aboutInDays(daysUntil)
-        : prediction
-          ? t.today.estimatedFrom(
-              formatDate(prediction.windowStart, { day: 'numeric', month: 'short' }),
+    : status.kind === 'countdown'
+      ? status.days === 0
+        ? t.today.aboutToday
+        : t.today.aboutInDays(status.days)
+      : status.kind === 'inWindow'
+        ? t.today.estimatedFrom(formatDate(status.windowStart, { day: 'numeric', month: 'short' }))
+        : status.kind === 'uncertain'
+          ? t.estimate.range(
+              formatDate(status.windowStart, { day: 'numeric', month: 'short' }),
+              formatDate(status.windowEnd, { day: 'numeric', month: 'short' }),
             )
-          : t.today.noEstimate;
+          : status.kind === 'overdue'
+            ? t.today.laterThanEstimated
+            : status.kind === 'pastCycle'
+              ? status.cycleDay
+                ? t.today.cycleDay(status.cycleDay)
+                : t.common.notRecorded
+              : t.today.noEstimate;
+  const statusBody = hasFlow
+    ? t.today.fromEntry
+    : status.kind === 'overdue'
+      ? t.estimate.overdueBody(formatDate(status.windowEnd, { day: 'numeric', month: 'long' }))
+      : status.kind === 'pastCycle'
+        ? t.today.pastDayBody
+        : status.kind === 'uncertain'
+          ? t.estimate.uncertainBody
+          : prediction
+            ? t.estimate.explanation(prediction.completeCycleCount)
+            : t.today.noEstimateBody;
+  // A confidence level only belongs to a current estimate.
+  const showConfidence =
+    prediction != null && !hasFlow && status.kind !== 'overdue' && status.kind !== 'pastCycle';
 
   return (
     <AppScreen contentContainerStyle={styles.screen}>
@@ -81,7 +105,7 @@ export default function TodayScreen() {
           <Typography variant="caption" style={{ color: theme.colors.primary }}>
             {hasFlow ? t.today.eyebrowRecorded : t.today.eyebrowEstimate}
           </Typography>
-          {prediction && !hasFlow ? <ConfidenceBadge confidence={prediction.confidence} /> : null}
+          {showConfidence ? <ConfidenceBadge confidence={prediction.confidence} /> : null}
         </View>
         <View>
           <Typography variant="heading">{statusTitle}</Typography>
@@ -89,13 +113,7 @@ export default function TodayScreen() {
             {statusValue}
           </Typography>
         </View>
-        <Typography muted>
-          {hasFlow
-            ? t.today.fromEntry
-            : prediction
-              ? t.estimate.explanation(prediction.completeCycleCount)
-              : t.today.noEstimateBody}
-        </Typography>
+        <Typography muted>{statusBody}</Typography>
         <View style={styles.actionRow}>
           <View style={styles.action}>
             <Button
@@ -206,6 +224,7 @@ const styles = StyleSheet.create({
   },
   eyebrowRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: spacing.md,

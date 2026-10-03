@@ -4,17 +4,22 @@ import {
   calculatePrediction,
   deriveCycles,
   derivePeriodStarts,
+  observedDaysWithoutBleeding,
 } from '@/domain/prediction';
 import { useEntries, useExcludedCycles, useSettings } from '@/hooks/useCyklaData';
+import { useLocalToday } from '@/hooks/useLocalToday';
 
 export function usePrediction() {
   const entriesQuery = useEntries();
   const settingsQuery = useSettings();
   const exclusionsQuery = useExcludedCycles();
+  // Changes at local midnight and on resume, so an open screen notices an overdue window.
+  const today = useLocalToday();
 
   const derived = useMemo(() => {
     const entries = entriesQuery.data ?? [];
     const periodDays = bleedingDaysForEstimates(entries);
+    const observedDays = observedDaysWithoutBleeding(entries);
     const starts = derivePeriodStarts(periodDays);
     const excludedStarts = exclusionsQuery.data ?? [];
     const settings = settingsQuery.data;
@@ -22,15 +27,20 @@ export function usePrediction() {
       entries,
       periodDays,
       starts,
-      cycles: deriveCycles(starts, excludedStarts),
+      cycles: deriveCycles(starts, excludedStarts, {
+        fallbackCycleLength: settings?.typicalCycleLength,
+        observedDays,
+      }),
       prediction: calculatePrediction({
         periodDays,
         excludedCycleStarts: excludedStarts,
         fallbackCycleLength: settings?.typicalCycleLength,
         fallbackPeriodLength: settings?.typicalPeriodLength,
+        observedDays,
+        today,
       }),
     };
-  }, [entriesQuery.data, exclusionsQuery.data, settingsQuery.data]);
+  }, [entriesQuery.data, exclusionsQuery.data, settingsQuery.data, today]);
 
   return {
     ...derived,

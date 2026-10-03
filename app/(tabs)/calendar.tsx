@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { AppScreen } from '@/components/ui/AppScreen';
@@ -11,11 +11,13 @@ import { MonthCalendar } from '@/components/MonthCalendar';
 import { addMonths, startOfMonth, todayDate } from '@/domain/dateOnly';
 import { usePrediction } from '@/hooks/usePrediction';
 import { useI18n } from '@/i18n/I18nProvider';
-import { radii, spacing, useCyklaTheme } from '@/theme/theme';
+import { radii, spacing, useCyklaTheme, WIDE_LAYOUT_MIN_WIDTH } from '@/theme/theme';
 
 export default function CalendarScreen() {
   const theme = useCyklaTheme();
   const { t, formatDate } = useI18n();
+  // On phones the month name needs the width; the arrows keep their labels for screen readers.
+  const showNavLabels = useWindowDimensions().width >= WIDE_LAYOUT_MIN_WIDTH;
   const [month, setMonth] = useState(startOfMonth(todayDate()));
   const [selectedDate, setSelectedDate] = useState(todayDate());
   const { entries, prediction, isLoading, error } = usePrediction();
@@ -40,6 +42,7 @@ export default function CalendarScreen() {
             label={t.calendar.previous}
             variant="ghost"
             icon="chevron-back"
+            iconOnly={!showNavLabels}
             accessibilityHint={t.calendar.previousMonth}
             onPress={() => setMonth(addMonths(month, -1))}
           />
@@ -50,6 +53,7 @@ export default function CalendarScreen() {
             label={t.calendar.next}
             variant="ghost"
             icon="chevron-forward"
+            iconOnly={!showNavLabels}
             accessibilityHint={t.calendar.nextMonth}
             onPress={() => setMonth(addMonths(month, 1))}
           />
@@ -66,7 +70,9 @@ export default function CalendarScreen() {
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: theme.colors.period }]} />
-          <Typography variant="caption">{t.calendar.legendPeriod}</Typography>
+          <Typography variant="caption" style={styles.legendLabel}>
+            {t.calendar.legendPeriod}
+          </Typography>
         </View>
         <View style={styles.legendItem}>
           <View
@@ -75,15 +81,23 @@ export default function CalendarScreen() {
               { borderColor: theme.colors.period, borderWidth: 2, borderStyle: 'dashed' },
             ]}
           />
-          <Typography variant="caption">{t.calendar.legendPrediction}</Typography>
+          <Typography variant="caption" style={styles.legendLabel}>
+            {t.calendar.legendPrediction}
+          </Typography>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: theme.colors.fertileSoft }]} />
-          <Typography variant="caption">{t.calendar.legendFertile}</Typography>
+          <Typography variant="caption" style={styles.legendLabel}>
+            {t.calendar.legendFertile}
+          </Typography>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.tinyDot, { backgroundColor: theme.colors.accent }]} />
-          <Typography variant="caption">{t.calendar.legendSymptom}</Typography>
+          <View style={styles.legendSwatch}>
+            <View style={[styles.tinyDot, { backgroundColor: theme.colors.accent }]} />
+          </View>
+          <Typography variant="caption" style={styles.legendLabel}>
+            {t.calendar.legendSymptom}
+          </Typography>
         </View>
       </View>
 
@@ -92,7 +106,7 @@ export default function CalendarScreen() {
         style={styles.dayCard}
       >
         <View style={styles.dayCardHeader}>
-          <View>
+          <View style={styles.dayCardTitle}>
             <Typography variant="caption" muted>
               {t.calendar.selectedDay}
             </Typography>
@@ -100,7 +114,9 @@ export default function CalendarScreen() {
           </View>
           {entry ? (
             <View style={[styles.savedBadge, { backgroundColor: theme.colors.accentSoft }]}>
-              <Typography variant="caption">{t.calendar.hasEntry}</Typography>
+              <Typography variant="caption" style={styles.savedBadgeText}>
+                {t.calendar.hasEntry}
+              </Typography>
             </View>
           ) : null}
         </View>
@@ -170,6 +186,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.md,
   },
+  // Two columns while they fit; each label wraps inside its own column.
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -177,30 +194,47 @@ const styles = StyleSheet.create({
     minWidth: '46%',
     flex: 1,
   },
+  legendLabel: {
+    flexShrink: 1,
+  },
   legendDot: {
     width: 20,
     height: 20,
+    flexShrink: 0,
     borderRadius: radii.pill,
+  },
+  legendSwatch: {
+    width: 20,
+    flexShrink: 0,
+    alignItems: 'center',
   },
   tinyDot: {
     width: 7,
     height: 7,
     borderRadius: radii.pill,
-    marginHorizontal: 6,
   },
   dayCard: {
     gap: spacing.lg,
   },
+  // The badge moves below the date when both do not fit on one line.
   dayCardHeader: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.md,
   },
+  dayCardTitle: {
+    flexShrink: 1,
+  },
   savedBadge: {
+    flexShrink: 1,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: radii.pill,
+  },
+  savedBadgeText: {
+    flexShrink: 1,
   },
   note: {
     marginTop: spacing.sm,

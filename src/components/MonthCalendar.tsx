@@ -137,9 +137,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // A seventh of a 320 pt screen is narrower than 39 pt; shrink instead of overlapping.
   dayCircle: {
-    width: 39,
-    height: 39,
+    width: '100%',
+    maxWidth: 39,
+    aspectRatio: 1,
     borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',

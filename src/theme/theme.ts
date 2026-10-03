@@ -58,6 +58,9 @@ export const spacing = {
   xxxl: 44,
 } as const;
 
+// Width from which text labels fit beside compact controls (tablets, desktop web).
+export const WIDE_LAYOUT_MIN_WIDTH = 600;
+
 export const radii = {
   sm: 10,
   md: 16,

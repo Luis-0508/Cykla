@@ -11,6 +11,8 @@ type ButtonProps = {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   icon?: keyof typeof Ionicons.glyphMap;
   accessibilityHint?: string;
+  // Shows only the icon; the label stays the accessibility label.
+  iconOnly?: boolean;
 };
 
 export function Button({
@@ -21,6 +23,7 @@ export function Button({
   variant = 'primary',
   icon,
   accessibilityHint,
+  iconOnly = false,
 }: ButtonProps) {
   const theme = useCyklaTheme();
   const primary = variant === 'primary';
@@ -42,6 +45,7 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
+        iconOnly && styles.iconOnly,
         {
           backgroundColor,
           borderColor: variant === 'secondary' ? theme.colors.border : backgroundColor,
@@ -53,10 +57,12 @@ export function Button({
         <ActivityIndicator color={color} />
       ) : (
         <View style={styles.content}>
-          {icon ? <Ionicons name={icon} color={color} size={19} /> : null}
-          <Typography variant="label" style={{ color }}>
-            {label}
-          </Typography>
+          {icon ? <Ionicons name={icon} color={color} size={iconOnly ? 24 : 19} /> : null}
+          {iconOnly ? null : (
+            <Typography variant="label" style={[styles.label, { color }]}>
+              {label}
+            </Typography>
+          )}
         </View>
       )}
     </Pressable>
@@ -72,10 +78,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconOnly: {
+    minWidth: 52,
+    paddingHorizontal: spacing.sm,
+  },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
+  },
+  // Long translations wrap inside the button instead of overflowing it.
+  label: {
+    flexShrink: 1,
+    textAlign: 'center',
   },
 });

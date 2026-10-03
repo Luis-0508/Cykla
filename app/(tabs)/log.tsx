@@ -1,10 +1,11 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { AppScreen } from '@/components/ui/AppScreen';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { ErrorState, LoadingState } from '@/components/ui/States';
 import { Typography } from '@/components/ui/Typography';
 import { DayStrip } from '@/components/DayStrip';
 import { useEntries } from '@/hooks/useCyklaData';
@@ -67,6 +68,13 @@ export default function LogScreen() {
   const entriesQuery = useEntries();
   const entries = entriesQuery.data ?? [];
   const entry = entries.find((value) => value.date === selectedDate);
+  const openEditor = () => router.push(`/day/${selectedDate}`);
+
+  // Without the saved entries an existing day would be offered as a new one.
+  if (entriesQuery.isPending) return <LoadingState />;
+  if (entriesQuery.isError) {
+    return <ErrorState message={t.today.error} onRetry={() => void entriesQuery.refetch()} />;
+  }
 
   return (
     <AppScreen contentContainerStyle={styles.screen}>
@@ -89,7 +97,7 @@ export default function LogScreen() {
         <Button
           label={entry ? t.entry.open : t.log.start}
           icon="create-outline"
-          onPress={() => router.push(`/day/${selectedDate}`)}
+          onPress={openEditor}
         />
       </Card>
 
@@ -98,22 +106,31 @@ export default function LogScreen() {
         {categories(t).map((category) => {
           const color = theme.colors[category.color];
           return (
-            <Card key={category.key} style={styles.categoryCard}>
-              <View style={[styles.categoryIcon, { backgroundColor: `${color}22` }]}>
-                <Ionicons
-                  name={category.icon as keyof typeof Ionicons.glyphMap}
-                  size={23}
-                  color={color}
-                />
-              </View>
-              <View style={styles.categoryText}>
-                <Typography variant="label">{category.title}</Typography>
-                <Typography variant="caption" muted>
-                  {category.body}
-                </Typography>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
-            </Card>
+            <Pressable
+              key={category.key}
+              accessibilityRole="button"
+              accessibilityLabel={category.title}
+              accessibilityHint={category.body}
+              onPress={openEditor}
+              style={({ pressed }) => ({ opacity: pressed ? 0.78 : 1 })}
+            >
+              <Card style={styles.categoryCard}>
+                <View style={[styles.categoryIcon, { backgroundColor: `${color}22` }]}>
+                  <Ionicons
+                    name={category.icon as keyof typeof Ionicons.glyphMap}
+                    size={23}
+                    color={color}
+                  />
+                </View>
+                <View style={styles.categoryText}>
+                  <Typography variant="label">{category.title}</Typography>
+                  <Typography variant="caption" muted>
+                    {category.body}
+                  </Typography>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
+              </Card>
+            </Pressable>
           );
         })}
       </View>
