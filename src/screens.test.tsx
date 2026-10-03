@@ -22,6 +22,7 @@ const environment = vi.hoisted(() => ({
   date: '2026-08-24',
   canGoBack: true,
   alerts: [] as { text?: string; onPress?: () => void }[][],
+  appState: new Set<(state: string) => void>(),
 }));
 vi.mock('expo-sqlite', () => ({ useSQLiteContext: () => environment.db }));
 vi.mock('react-native', () => ({
@@ -36,6 +37,12 @@ vi.mock('react-native', () => ({
   StyleSheet: { create: (styles: unknown) => styles, hairlineWidth: 1 },
   useColorScheme: () => 'dark',
   useWindowDimensions: () => ({ width: environment.width, height: 800, fontScale: 1, scale: 3 }),
+  AppState: {
+    addEventListener: (_type: string, listener: (state: string) => void) => {
+      environment.appState.add(listener);
+      return { remove: () => environment.appState.delete(listener) };
+    },
+  },
   Alert: {
     alert: (_title: string, _body: string, buttons: { text?: string; onPress?: () => void }[]) =>
       environment.alerts.push(buttons),
@@ -200,6 +207,20 @@ describe('screens with real SQLite data', () => {
   });
 
   describe('Estimate explanation', () => {
+    it('turns overdue when an open screen resumes on the next day', async () => {
+      await recordPeriods(test.db, '2026-01-01', '2026-01-29', '2026-02-26', '2026-03-26');
+      // Three steady cycles: 2026-04-23 ±3 days, so the window ends on 2026-04-26.
+      setToday('2026-04-26');
+      await mount(PredictionScreen);
+      await until(() => expect(findText(t.confidence.medium)).toHaveLength(1));
+      expect(findText(t.estimate.overdueTitle)).toHaveLength(0);
+      // Backgrounded overnight, then brought back without remounting.
+      vi.setSystemTime(new Date(2026, 3, 27, 8));
+      await act(async () => environment.appState.forEach((listener) => listener('active')));
+      await until(() => expect(findText(t.estimate.overdueTitle)).toHaveLength(1));
+      expect(findText(t.confidence.medium)).toHaveLength(0);
+    });
+
     it('does not present an expired window as a current, confident estimate', async () => {
       // Six steady cycles would earn high confidence if the window were still current.
       await recordPeriods(

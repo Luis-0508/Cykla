@@ -172,6 +172,10 @@ function windowSpread(lengths: number[], variation = standardDeviation(lengths, 
   return Math.max(3, Math.ceil(variation * 1.5));
 }
 
+function laterDate(a: string, b: string): string {
+  return compareDates(a, b) >= 0 ? a : b;
+}
+
 function mean(values: number[]): number {
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 }
@@ -216,14 +220,26 @@ export function calculatePrediction(input: PredictionInput): Prediction | null {
   // With an uncertain history the next period may come after one usual cycle (entries
   // were missed) or after the long recorded cycles. The window spans both and starts
   // with the earlier one, so no long period-free time is promised.
-  const expectedStart = addDays(
-    latestStart,
-    uncertainHistory
-      ? Math.round(baseCycleLength(countedLengths, fallbackCycleLength))
-      : roundedAverage,
+  const lastBleedingDay = [...new Set(input.periodDays)].sort(compareDates).at(-1)!;
+  // As in `derivePeriodStarts`, a new period needs more than two days without bleeding,
+  // so no estimate may fall into the current bleeding episode, however wide the spread.
+  const earliestNextStart = addDays(lastBleedingDay, 3);
+  const expectedStart = laterDate(
+    addDays(
+      latestStart,
+      uncertainHistory
+        ? Math.round(baseCycleLength(countedLengths, fallbackCycleLength))
+        : roundedAverage,
+    ),
+    earliestNextStart,
   );
+  const windowStart = laterDate(addDays(expectedStart, -spread), earliestNextStart);
+  // The usual-length anchor is a median and the long reading a recency-weighted mean;
+  // recent short cycles can put the latter first, so end after whichever comes later.
   const windowEnd = addDays(
-    uncertainHistory ? addDays(latestStart, roundedAverage) : expectedStart,
+    uncertainHistory
+      ? laterDate(addDays(latestStart, roundedAverage), expectedStart)
+      : expectedStart,
     spread,
   );
 
@@ -237,14 +253,13 @@ export function calculatePrediction(input: PredictionInput): Prediction | null {
   // irregular history, or when they would start right after recorded bleeding.
   // Hiding them never means that a day is infertile or safe.
   const irregularHistory = lengths.some((length) => length < 24 || length > 38);
-  const lastBleedingDay = [...new Set(input.periodDays)].sort(compareDates).at(-1)!;
   const tooCloseToBleeding = differenceInDays(addDays(expectedStart, -19), lastBleedingDay) <= 2;
   const showFertileWindow =
     confidence !== 'low' && lengths.length >= 3 && !irregularHistory && !tooCloseToBleeding;
   const estimatedOvulation = showFertileWindow ? addDays(expectedStart, -14) : null;
   return {
     expectedStart,
-    windowStart: addDays(expectedStart, -spread),
+    windowStart,
     windowEnd,
     expectedPeriodEnd: addDays(expectedStart, Math.max(1, fallbackPeriodLength) - 1),
     fertileWindowStart: estimatedOvulation ? addDays(estimatedOvulation, -5) : null,

@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { todayDate } from '@/domain/dateOnly';
 import {
   bleedingDaysForEstimates,
   calculatePrediction,
@@ -8,13 +7,14 @@ import {
   observedDaysWithoutBleeding,
 } from '@/domain/prediction';
 import { useEntries, useExcludedCycles, useSettings } from '@/hooks/useCyklaData';
+import { useLocalToday } from '@/hooks/useLocalToday';
 
 export function usePrediction() {
   const entriesQuery = useEntries();
   const settingsQuery = useSettings();
   const exclusionsQuery = useExcludedCycles();
-  // A string, so the memo below only recalculates when the local day changes.
-  const today = todayDate();
+  // Changes at local midnight and on resume, so an open screen notices an overdue window.
+  const today = useLocalToday();
 
   const derived = useMemo(() => {
     const entries = entriesQuery.data ?? [];

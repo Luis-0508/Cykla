@@ -200,3 +200,63 @@ describe('screens agree about uncertain histories', () => {
     expect(describeDayStatus(late, derivePeriodStarts(periodDays), overdue).kind).toBe('overdue');
   });
 });
+
+describe('window ordering', () => {
+  function expectOrdered(periodDays: string[], prediction: ReturnType<typeof calculatePrediction>) {
+    const lastBleeding = [...periodDays].sort().at(-1)!;
+    expect(prediction!.windowStart > lastBleeding).toBe(true);
+    expect(prediction!.windowStart <= prediction!.expectedStart).toBe(true);
+    expect(prediction!.expectedStart <= prediction!.windowEnd).toBe(true);
+    expect(prediction!.expectedStart <= prediction!.expectedPeriodEnd).toBe(true);
+  }
+
+  it('never ends an uncertain window before the usual-cycle anchor', () => {
+    // Review counterexample: the median of normal cycles is 40, but the recency-weighted
+    // mean is pulled to about 28 by the newest 25-day cycles. Before: window ended at +36.
+    const lengths = [...Array(100).fill(80), ...Array(90).fill(40), ...Array(10).fill(25)];
+    const { periodDays, last } = history(lengths);
+    const prediction = calculatePrediction({ periodDays, fallbackCycleLength: 28 })!;
+    expect(prediction.uncertainHistory).toBe(true);
+    expect(differenceInDays(prediction.expectedStart, last)).toBe(40);
+    expect(differenceInDays(prediction.windowEnd, prediction.expectedStart)).toBeGreaterThan(0);
+    expectOrdered(periodDays, prediction);
+  });
+
+  it('never opens the window inside the current period for irregular histories', () => {
+    // Before: a ±25-day spread opened the window 15 days before the latest period start.
+    const { periodDays, last } = history([56, 24, 24, 44]);
+    const prediction = calculatePrediction({ periodDays, fallbackCycleLength: 25 })!;
+    expect(prediction.windowStart).toBe(addDays(last, 4 + 3));
+    expectOrdered(periodDays, prediction);
+  });
+
+  it('moves the expected start behind an unusually long bleeding episode', () => {
+    const { periodDays, last } = history([16, 16, 16]);
+    const bleeding = Array.from({ length: 18 }, (_, day) => addDays(last, day));
+    const days = [...periodDays, ...bleeding];
+    const prediction = calculatePrediction({ periodDays: days })!;
+    expect(prediction.expectedStart).toBe(addDays(last, 17 + 3));
+    expectOrdered(days, prediction);
+  });
+
+  it('keeps every estimate ordered across many generated histories', () => {
+    let seed = 20261003;
+    const random = () => (seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31;
+    for (let run = 0; run < 3000; run++) {
+      const typical = 20 + Math.floor(random() * 41);
+      const mixed = random() < 0.5;
+      const lengths = Array.from({ length: 1 + Math.floor(random() * 8) }, () => {
+        if (!mixed) return 15 + Math.floor(random() * 76);
+        const multiple = random() < 0.5 ? 1 : 2 + Math.floor(random() * 2);
+        const value = Math.round(multiple * typical * (0.6 + random() * 0.6));
+        return Math.min(90, Math.max(15, value));
+      });
+      const { periodDays, last } = history(lengths);
+      const extraBleeding = Array.from({ length: Math.floor(random() * 15) }, (_, day) =>
+        addDays(last, day),
+      );
+      const days = [...periodDays, ...extraBleeding];
+      expectOrdered(days, calculatePrediction({ periodDays: days, fallbackCycleLength: typical }));
+    }
+  });
+});
