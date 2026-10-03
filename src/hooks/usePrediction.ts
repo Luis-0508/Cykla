@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { todayDate } from '@/domain/dateOnly';
 import {
   bleedingDaysForEstimates,
   calculatePrediction,
@@ -11,6 +12,8 @@ export function usePrediction() {
   const entriesQuery = useEntries();
   const settingsQuery = useSettings();
   const exclusionsQuery = useExcludedCycles();
+  // A string, so the memo below only recalculates when the local day changes.
+  const today = todayDate();
 
   const derived = useMemo(() => {
     const entries = entriesQuery.data ?? [];
@@ -22,15 +25,16 @@ export function usePrediction() {
       entries,
       periodDays,
       starts,
-      cycles: deriveCycles(starts, excludedStarts),
+      cycles: deriveCycles(starts, excludedStarts, settings?.typicalCycleLength),
       prediction: calculatePrediction({
         periodDays,
         excludedCycleStarts: excludedStarts,
         fallbackCycleLength: settings?.typicalCycleLength,
         fallbackPeriodLength: settings?.typicalPeriodLength,
+        today,
       }),
     };
-  }, [entriesQuery.data, exclusionsQuery.data, settingsQuery.data]);
+  }, [entriesQuery.data, exclusionsQuery.data, settingsQuery.data, today]);
 
   return {
     ...derived,

@@ -41,6 +41,12 @@ const moods: { value: Mood; icon: keyof typeof Ionicons.glyphMap }[] = [
   { value: 'stressed', icon: 'speedometer-outline' },
 ];
 
+// Opened directly (web reload, link) the modal has no screen to go back to.
+function closeEditor() {
+  if (router.canGoBack()) router.back();
+  else router.replace('/(tabs)');
+}
+
 const symptoms = [
   'cramps',
   'headache',
@@ -122,7 +128,7 @@ export default function DayEditorScreen() {
     return (
       <AppScreen>
         <Typography variant="title">{t.dayEditor.invalidDate}</Typography>
-        <Button label={t.common.close} onPress={() => router.back()} />
+        <Button label={t.common.close} onPress={closeEditor} />
       </AppScreen>
     );
   }
@@ -130,7 +136,7 @@ export default function DayEditorScreen() {
     return (
       <AppScreen>
         <ErrorState message={t.dayEditor.loadError} onRetry={() => void entryQuery.refetch()} />
-        <Button label={t.common.close} onPress={() => router.back()} />
+        <Button label={t.common.close} onPress={closeEditor} />
       </AppScreen>
     );
   }
@@ -166,12 +172,17 @@ function DayEntryForm({ date: validDate, entry }: { date: string; entry: DailyEn
   const notes = useWatch({ control, name: 'notes' });
 
   const onSubmit = handleSubmit(async (values) => {
-    await saveEntry.mutateAsync({
-      date: validDate,
-      ...values,
-      symptoms: values.symptoms.map((code) => ({ code, intensity: 1 })),
-    });
-    router.back();
+    try {
+      await saveEntry.mutateAsync({
+        date: validDate,
+        ...values,
+        symptoms: values.symptoms.map((code) => ({ code, intensity: 1 })),
+      });
+    } catch {
+      // Shown below via saveEntry.error; the form keeps the unsaved input.
+      return;
+    }
+    closeEditor();
   });
 
   const confirmDelete = () => {
@@ -181,7 +192,7 @@ function DayEntryForm({ date: validDate, entry }: { date: string; entry: DailyEn
         text: t.common.delete,
         style: 'destructive',
         onPress: () => {
-          void deleteEntry.mutateAsync(validDate).then(() => router.back());
+          deleteEntry.mutate(validDate, { onSuccess: closeEditor });
         },
       },
     ]);
@@ -193,7 +204,7 @@ function DayEntryForm({ date: validDate, entry }: { date: string; entry: DailyEn
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t.dayEditor.close}
-          onPress={() => router.back()}
+          onPress={closeEditor}
           style={[styles.close, { borderColor: theme.colors.border }]}
         >
           <Ionicons name="close" size={24} color={theme.colors.text} />
@@ -413,6 +424,9 @@ function DayEntryForm({ date: validDate, entry }: { date: string; entry: DailyEn
       ) : null}
       {saveEntry.error ? (
         <Typography style={{ color: theme.colors.danger }}>{t.dayEditor.saveError}</Typography>
+      ) : null}
+      {deleteEntry.error ? (
+        <Typography style={{ color: theme.colors.danger }}>{t.dayEditor.deleteError}</Typography>
       ) : null}
     </AppScreen>
   );

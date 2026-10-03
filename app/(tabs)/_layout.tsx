@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BRAND } from '@/config/branding';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useCyklaTheme } from '@/theme/theme';
@@ -15,6 +16,8 @@ const icons = {
 export default function TabLayout() {
   const theme = useCyklaTheme();
   const { t } = useI18n();
+  // A fixed height would place the labels inside the home indicator area.
+  const bottomPadding = Math.max(10, useSafeAreaInsets().bottom);
   return (
     <Tabs
       screenOptions={({ route }) => ({
@@ -24,9 +27,9 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.border,
-          height: 78,
+          height: 68 + bottomPadding,
           paddingTop: 8,
-          paddingBottom: 10,
+          paddingBottom: bottomPadding,
         },
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
         sceneStyle: { backgroundColor: theme.colors.background },

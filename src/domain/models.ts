@@ -30,6 +30,9 @@ export type Cycle = {
   nextStartDate: string | null;
   lengthDays: number | null;
   excluded: boolean;
+  // About twice the usual length or more: most likely a period was not recorded.
+  // Stays visible but is left out of averages, like an excluded cycle.
+  likelyMissedPeriod: boolean;
 };
 
 export type Prediction = {
@@ -45,6 +48,8 @@ export type Prediction = {
   variationDays: number;
   confidence: Confidence;
   completeCycleCount: number;
+  // The whole window lies before today and no newer period start is recorded.
+  overdue: boolean;
 };
 
 export type AppSettings = {

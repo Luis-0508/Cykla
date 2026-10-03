@@ -110,6 +110,9 @@ export const de = {
         : `Die Schätzung nutzt ${completeCycles} vollständige Zyklen. Neuere Zyklen zählen etwas stärker; auffällige Abweichungen etwas schwächer.`,
     range: (start: string, end: string) => `${start} – ${end}`,
     rangeWords: (start: string, end: string) => `${start} bis ${end}`,
+    overdueTitle: 'Später als geschätzt',
+    overdueBody: (date: string) =>
+      `Der geschätzte Zeitraum endete am ${date}, und seitdem ist kein Periodenbeginn dokumentiert. Cykla rechnet deshalb nicht einfach weiter. Trage den Beginn deiner Periode ein, auch nachträglich, damit eine neue Schätzung entsteht.`,
   },
   today: {
     loading: 'Dein Überblick wird geladen …',
@@ -126,6 +129,9 @@ export const de = {
     aboutToday: 'ungefähr heute',
     aboutInDays: (days: number) => `ungefähr in ${days} ${plural(days, 'Tag', 'Tagen')}`,
     estimatedFrom: (date: string) => `geschätzt ab ${date}`,
+    laterThanEstimated: 'später als geschätzt',
+    pastDayBody:
+      'Für diesen Tag ist bereits eine spätere Periode dokumentiert. Cykla zeigt deshalb den Zyklustag statt einer Schätzung.',
     noEstimate: 'Noch keine Schätzung',
     fromEntry: 'Diese Angabe stammt aus deinem Eintrag.',
     noEstimateBody:
@@ -214,6 +220,8 @@ export const de = {
     noHistory: 'Noch kein Zyklusverlauf vorhanden.',
     cycleStart: (date: string) => `Start ${date}`,
     currentCycle: 'Aktueller Zyklus',
+    likelyMissedPeriod:
+      'Etwa doppelt so lang wie üblich: Wahrscheinlich fehlt ein Periodeneintrag. Zählt nicht zur Schätzung.',
     include: 'Einbeziehen',
     exclude: 'Ausschließen',
     cycleLengthLabel: (days: number) => `Zykluslänge ${days} ${plural(days, 'Tag', 'Tage')}`,
@@ -236,7 +244,7 @@ export const de = {
       plural(count, 'vollständiger, einbezogener Zyklus', 'vollständige, einbezogene Zyklen'),
     averageTitle: '2. Gewichteter Durchschnitt',
     averageBody:
-      'Neuere Zykluslängen erhalten mit dem Faktor 0,85 etwas mehr Gewicht. Deutliche Ausreißer bleiben sichtbar, zählen aber schwächer.',
+      'Neuere Zykluslängen erhalten mit dem Faktor 0,85 etwas mehr Gewicht. Deutliche Ausreißer bleiben sichtbar, zählen aber schwächer. Zyklen, die etwa doppelt so lang wie üblich sind, enthalten wahrscheinlich eine nicht eingetragene Periode und zählen nicht mit.',
     averageMetric: (days: number) => `${plural(days, 'Tag', 'Tage')} als gewichtete Zykluslänge`,
     spreadTitle: '3. Unsicherheit statt exaktem Tag',
     spreadBody:
@@ -254,7 +262,7 @@ export const de = {
     disclaimerBody:
       '„Hohe Konfidenz“ bedeutet nicht Gewissheit. Schwangerschaft, Erkrankungen, Stress, Medikamente und weitere Faktoren können Zyklen verändern.',
     footer: (cycles: number) =>
-      `Modellversion 1.1 · ${cycles} ${plural(cycles, 'erkannter Zyklus', 'erkannte Zyklen')} · Berechnung ausschließlich lokal`,
+      `Modellversion 1.2 · ${cycles} ${plural(cycles, 'erkannter Zyklus', 'erkannte Zyklen')} · Berechnung ausschließlich lokal`,
   },
   dayEditor: {
     loadError:
@@ -283,6 +291,7 @@ export const de = {
     deleteDay: 'Tagesdaten löschen',
     saveError:
       'Der Eintrag konnte nicht gespeichert werden. Deine bisherigen Daten wurden nicht verändert.',
+    deleteError: 'Der Eintrag konnte nicht gelöscht werden. Bitte versuche es erneut.',
   },
   onboarding: {
     welcomeTitle: 'Ein ruhiger Ort für deinen Zyklus',

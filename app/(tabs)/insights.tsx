@@ -72,12 +72,28 @@ export default function InsightsScreen() {
         <Card tone="primary" style={styles.predictionCard}>
           <View style={styles.predictionHeader}>
             <Typography variant="heading">{t.insights.currentPrediction}</Typography>
-            <ConfidenceBadge confidence={prediction.confidence} />
+            {prediction.overdue ? null : <ConfidenceBadge confidence={prediction.confidence} />}
           </View>
-          <Typography variant="title">
-            {t.estimate.range(shortDate(prediction.windowStart), shortDate(prediction.windowEnd))}
-          </Typography>
-          <Typography muted>{t.estimate.explanation(prediction.completeCycleCount)}</Typography>
+          {prediction.overdue ? (
+            <>
+              <Typography variant="title">{t.estimate.overdueTitle}</Typography>
+              <Typography muted>
+                {t.estimate.overdueBody(
+                  formatDate(prediction.windowEnd, { day: 'numeric', month: 'long' }),
+                )}
+              </Typography>
+            </>
+          ) : (
+            <>
+              <Typography variant="title">
+                {t.estimate.range(
+                  shortDate(prediction.windowStart),
+                  shortDate(prediction.windowEnd),
+                )}
+              </Typography>
+              <Typography muted>{t.estimate.explanation(prediction.completeCycleCount)}</Typography>
+            </>
+          )}
           <Button
             label={t.insights.understand}
             variant="secondary"
@@ -106,7 +122,7 @@ export default function InsightsScreen() {
           {[...cycles].reverse().map((cycle) => (
             <Card key={cycle.startDate} style={cycle.excluded ? styles.excludedCard : undefined}>
               <View style={styles.cycleHeader}>
-                <View>
+                <View style={styles.cycleText}>
                   <Typography variant="label">
                     {t.insights.cycleStart(shortDate(cycle.startDate))}
                   </Typography>
@@ -115,6 +131,11 @@ export default function InsightsScreen() {
                       ? t.common.dayCount(cycle.lengthDays)
                       : t.insights.currentCycle}
                   </Typography>
+                  {cycle.likelyMissedPeriod && !cycle.excluded ? (
+                    <Typography variant="caption" muted>
+                      {t.insights.likelyMissedPeriod}
+                    </Typography>
+                  ) : null}
                 </View>
                 {cycle.lengthDays ? (
                   <Button
@@ -138,9 +159,10 @@ export default function InsightsScreen() {
                     style={[
                       styles.bar,
                       {
-                        backgroundColor: cycle.excluded
-                          ? theme.colors.textMuted
-                          : theme.colors.primary,
+                        backgroundColor:
+                          cycle.excluded || cycle.likelyMissedPeriod
+                            ? theme.colors.textMuted
+                            : theme.colors.primary,
                         width: `${Math.max(12, (cycle.lengthDays / maximumLength) * 100)}%`,
                       },
                     ]}
@@ -207,6 +229,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.md,
+  },
+  cycleText: {
+    flex: 1,
   },
   barTrack: {
     height: 9,

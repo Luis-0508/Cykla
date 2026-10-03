@@ -1,9 +1,13 @@
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { addDays, parseDateOnly, todayDate } from '@/domain/dateOnly';
 import type { DailyEntry } from '@/domain/models';
 import { useI18n } from '@/i18n/I18nProvider';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 import { Typography } from '@/components/ui/Typography';
+
+const DAY_WIDTH = 58;
+const DAYS_BEFORE = 5;
 
 type DayStripProps = {
   selectedDate: string;
@@ -14,14 +18,27 @@ type DayStripProps = {
 export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
   const theme = useCyklaTheme();
   const { t, formatDate } = useI18n();
-  const days = Array.from({ length: 11 }, (_, index) => addDays(selectedDate, index - 5));
+  const days = Array.from({ length: DAYS_BEFORE * 2 + 1 }, (_, index) =>
+    addDays(selectedDate, index - DAYS_BEFORE),
+  );
   const entryMap = new Map(entries.map((entry) => [entry.date, entry]));
+  const scrollRef = useRef<ScrollView>(null);
+  const [viewportWidth, setViewportWidth] = useState(0);
+  // The selected day sits in the middle of the strip, which starts off-screen on narrow
+  // phones. Centre it whenever the selection or the available width changes.
+  useEffect(() => {
+    if (viewportWidth === 0) return;
+    const center = DAYS_BEFORE * (DAY_WIDTH + spacing.sm) + DAY_WIDTH / 2;
+    scrollRef.current?.scrollTo({ x: Math.max(0, center - viewportWidth / 2), animated: false });
+  }, [selectedDate, viewportWidth]);
   return (
     <View>
       <Typography variant="caption" muted style={styles.monthLabel}>
         {formatDate(selectedDate, { month: 'long', year: 'numeric' })}
       </Typography>
       <ScrollView
+        ref={scrollRef}
+        onLayout={(event) => setViewportWidth(event.nativeEvent.layout.width)}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
@@ -99,7 +116,7 @@ const styles = StyleSheet.create({
     paddingRight: spacing.lg,
   },
   day: {
-    width: 58,
+    width: DAY_WIDTH,
     minHeight: 76,
     paddingVertical: spacing.sm,
     borderRadius: radii.md,

@@ -44,7 +44,7 @@ export function ChoiceChip({
       ) : null}
       <Typography
         variant={compact ? 'caption' : 'label'}
-        style={selected ? { color: theme.colors.primary } : undefined}
+        style={[styles.label, selected ? { color: theme.colors.primary } : undefined]}
       >
         {label}
       </Typography>
@@ -63,6 +63,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
+  },
+  label: {
+    flexShrink: 1,
   },
   compact: {
     minHeight: 38,

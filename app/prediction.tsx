@@ -23,7 +23,10 @@ export default function PredictionScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t.prediction.close}
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace('/(tabs)');
+          }}
           style={[styles.close, { borderColor: theme.colors.border }]}
         >
           <Ionicons name="close" size={24} color={theme.colors.text} />
@@ -50,6 +53,13 @@ export default function PredictionScreen() {
             <Typography muted>
               {t.prediction.midpoint(formatDate(prediction.expectedStart))}
             </Typography>
+            {prediction.overdue ? (
+              <Typography>
+                {t.estimate.overdueBody(
+                  formatDate(prediction.windowEnd, { day: 'numeric', month: 'long' }),
+                )}
+              </Typography>
+            ) : null}
           </Card>
 
           <Card style={styles.section}>

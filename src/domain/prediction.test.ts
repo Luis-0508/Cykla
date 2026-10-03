@@ -61,12 +61,13 @@ describe('calculatePrediction', () => {
   });
 
   it('downweights an obvious outlier instead of deleting it', () => {
+    // One genuinely long 42-day cycle among 28-day cycles.
     const prediction = calculatePrediction({
-      periodDays: ['2026-01-01', '2026-01-29', '2026-02-26', '2026-04-26', '2026-05-24'],
+      periodDays: ['2026-01-01', '2026-01-29', '2026-02-26', '2026-04-09', '2026-05-07'],
     });
     expect(prediction?.completeCycleCount).toBe(4);
-    expect(prediction!.averageCycleLength).toBeLessThan(36);
-    expect(prediction!.variationDays).toBeGreaterThan(10);
+    expect(prediction!.averageCycleLength).toBeLessThan(32);
+    expect(prediction!.variationDays).toBeGreaterThan(5);
   });
 
   it('honors manually excluded cycles', () => {
