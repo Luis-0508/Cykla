@@ -22,7 +22,7 @@ export default function TodayScreen() {
   const { t, formatDate, formatNumber } = useI18n();
   const selectedDate = useUiStore((state) => state.selectedDate);
   const setSelectedDate = useUiStore((state) => state.setSelectedDate);
-  const { entries, starts, prediction, ambiguousHistory, isLoading, error } = usePrediction();
+  const { entries, starts, prediction, predictionState, isLoading, error } = usePrediction();
   const selectedEntry = entries.find((entry) => entry.date === selectedDate);
   const hasFlow = selectedEntry != null && selectedEntry.flow !== 'none';
   const latestStart = [...starts].reverse().find((date) => date <= selectedDate);
@@ -68,10 +68,10 @@ export default function TodayScreen() {
         : status.kind === 'uncertain'
           ? t.estimate.uncertainBody
           : prediction
-            ? t.estimate.explanation(prediction.completeCycleCount)
-            : ambiguousHistory
-              ? t.estimate.ambiguousBody
-              : t.today.noEstimateBody;
+            ? predictionState === 'provisional'
+              ? t.estimate.provisionalBody
+              : t.estimate.explanation(prediction.completeCycleCount)
+            : t.today.noEstimateBody;
   // A confidence level only belongs to a current estimate.
   const showConfidence =
     prediction != null && !hasFlow && status.kind !== 'overdue' && status.kind !== 'pastCycle';
@@ -105,7 +105,11 @@ export default function TodayScreen() {
       <Card tone="primary" style={styles.statusCard}>
         <View style={styles.eyebrowRow}>
           <Typography variant="caption" style={{ color: theme.colors.primary }}>
-            {hasFlow ? t.today.eyebrowRecorded : t.today.eyebrowEstimate}
+            {hasFlow
+              ? t.today.eyebrowRecorded
+              : predictionState === 'provisional'
+                ? t.estimate.provisionalTitle
+                : t.today.eyebrowEstimate}
           </Typography>
           {showConfidence ? <ConfidenceBadge confidence={prediction.confidence} /> : null}
         </View>

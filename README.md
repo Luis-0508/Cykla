@@ -108,8 +108,11 @@ tested functions.
    outnumber the gaps, the gaps are left out as missed entries. Otherwise both
    readings stay possible: confidence is low and the window runs from one usual cycle
    to the long recorded length. If every usable complete interval is ambiguous, the
-   app withholds date estimates and explains that there is no reliable recorded
-   cycle anchor yet; Trends retains the recorded interval statistics. Days logged
+   app instead shows a provisional estimate using the onboarding typical length
+   and the initial ±7-day margin from the latest recorded start. These intervals
+   do not set its personalized length; Trends retains the recorded statistics.
+   The shared domain result distinguishes personalized, provisional and absent
+   estimates. Days logged
    without bleeding around every place where
    a skipped period would have started confirm a long cycle.
 4. The weighted mean sets the expected start; the sample variation sets the width

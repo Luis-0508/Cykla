@@ -167,15 +167,16 @@ describe('screens with real SQLite data', () => {
     Object.assign({}, ...[node.props.style].flat(Infinity).filter(Boolean));
 
   describe('Today', () => {
-    it('withholds a range and countdown when the only interval may span missed periods', async () => {
+    it('uses a provisional countdown instead of learning from a possible missed-period gap', async () => {
       await recordPeriods(test.db, '2026-06-01', '2026-08-24');
       setToday('2026-08-30');
       await mount(TodayScreen);
       // Before the fix the 84-day gap was used as the cycle length: "in about 78 days".
       const short = (date: string) => i18n.formatDate(date, { day: 'numeric', month: 'short' });
-      await until(() => expect(findText(t.estimate.ambiguousBody)).toHaveLength(1));
+      await until(() => expect(findText(t.estimate.provisionalBody)).toHaveLength(1));
       expect(findText(t.estimate.range(short('2026-09-14'), short('2026-11-23')))).toHaveLength(0);
-      expect(texts().some((text) => text.startsWith('ungefähr'))).toBe(false);
+      expect(findText(t.today.aboutInDays(22))).toHaveLength(1);
+      expect(findText(t.estimate.provisionalTitle)).toHaveLength(1);
     });
 
     it('asks for a new entry instead of counting when the estimate is stale', async () => {
@@ -241,41 +242,84 @@ describe('screens with real SQLite data', () => {
       expect(findText(t.prediction.fertileUnavailable)).toHaveLength(1);
     });
 
-    it('explains an uncertain history instead of a precise midpoint', async () => {
+    it('explains the provisional source rather than a personalized midpoint', async () => {
       await recordPeriods(test.db, '2026-01-01', '2026-02-26', '2026-04-23');
       setToday('2026-04-28');
       await mount(PredictionScreen);
-      await until(() => expect(findText(t.estimate.ambiguousBody)).toHaveLength(1));
-      expect(findText(t.confidence.low)).toHaveLength(0);
+      await until(() => expect(findText(t.estimate.provisionalBody)).toHaveLength(1));
+      expect(findText(t.confidence.low)).toHaveLength(1);
+      expect(findText(t.estimate.provisionalTitle)).toHaveLength(1);
+      expect(findText(t.prediction.typicalTitle)).toHaveLength(1);
+      expect(findText('±7')).toHaveLength(1);
+      expect(findText(t.prediction.fertileUnavailable)).toHaveLength(1);
       expect(texts().some((text) => text.startsWith('Der rechnerische Mittelpunkt'))).toBe(false);
     });
   });
 
-  it('withholds dates on Today when repeated gaps have no reliable cycle anchor', async () => {
+  it('uses the typical length on Today when repeated gaps have no reliable cycle anchor', async () => {
     await recordPeriods(test.db, '2026-01-01', '2026-02-26', '2026-04-23');
     setToday('2026-04-28');
     await mount(TodayScreen);
-    await until(() => expect(findText(t.estimate.ambiguousBody)).toHaveLength(1));
+    await until(() => expect(findText(t.estimate.provisionalBody)).toHaveLength(1));
     const short = (date: string) => i18n.formatDate(date, { day: 'numeric', month: 'short' });
     expect(findText(t.estimate.range(short('2026-05-14'), short('2026-06-25')))).toHaveLength(0);
-    expect(texts().some((text) => text.startsWith('ungefähr'))).toBe(false);
+    expect(findText(t.today.aboutInDays(23))).toHaveLength(1);
   });
 
   it.each([TodayScreen, InsightsScreen, PredictionScreen, CalendarScreen])(
-    'withholds the 78-day alternative window consistently in %s',
+    'shows a provisional estimate instead of the 78-day alternative window in %s',
     async (component) => {
       await recordPeriods(test.db, '2026-07-15', '2026-10-01');
       setToday('2026-10-06');
       await mount(component);
-      await until(() => expect(findText(t.estimate.ambiguousBody)).toHaveLength(1));
-      expect(findText(t.confidence.low)).toHaveLength(0);
+      await until(() => expect(findText(t.estimate.provisionalBody)).toHaveLength(1));
+      expect(findText(t.estimate.provisionalTitle)).toHaveLength(1);
+      expect(findText(t.confidence.low)).toHaveLength(component === CalendarScreen ? 0 : 1);
       expect(texts().some((text) => text.includes('25. Dez'))).toBe(false);
       if (component === InsightsScreen) {
         expect(findText('78')).toHaveLength(1);
         expect(findText('78–78')).toHaveLength(1);
+        expect(findText(t.estimate.range('22. Okt.', '5. Nov.'))).toHaveLength(1);
+      }
+      if (component === CalendarScreen) {
+        expect(
+          buttons(`${i18n.formatDate('2026-10-22')}, ${t.calendar.a11yPrediction}`),
+        ).toHaveLength(1);
+        expect(
+          buttons(`${i18n.formatDate('2026-11-06')}, ${t.calendar.a11yPrediction}`),
+        ).toHaveLength(0);
       }
     },
   );
+
+  it.each([i18n, english])('labels provisional estimates in both catalogs (%j)', async (locale) => {
+    activeI18n = locale;
+    await recordPeriods(test.db, '2026-07-15', '2026-10-01');
+    setToday('2026-10-06');
+    await mount(PredictionScreen);
+    await until(() => expect(findText(locale.t.estimate.provisionalTitle)).toHaveLength(1));
+    expect(findText(locale.t.estimate.provisionalBody)).toHaveLength(1);
+    expect(findText(locale.t.prediction.typicalTitle)).toHaveLength(1);
+    expect(findText(locale.t.confidence.low)).toHaveLength(1);
+  });
+
+  it('keeps no estimate when no period start is recorded', async () => {
+    setToday('2026-10-06');
+    await mount(PredictionScreen);
+    await until(() => expect(findText(t.prediction.notEnoughTitle)).toHaveLength(1));
+    expect(findText(t.estimate.provisionalTitle)).toHaveLength(0);
+    expect(findText(t.confidence.low)).toHaveLength(0);
+  });
+
+  it('marks the provisional window overdue after its own end rather than the old long range', async () => {
+    await recordPeriods(test.db, '2026-07-15', '2026-10-01');
+    setToday('2026-11-06');
+    await mount(TodayScreen);
+    await until(() => expect(findText(t.today.laterThanEstimated)).toHaveLength(1));
+    expect(findText(t.estimate.overdueBody('5. November'))).toHaveLength(1);
+    expect(findText(t.confidence.low)).toHaveLength(0);
+    expect(texts().some((text) => text.startsWith('ungefähr'))).toBe(false);
+  });
 
   describe.each(['light', 'dark'] as const)('round day markers in %s mode', (themeMode) => {
     it.each([375, 390, 393, 430, 768])('preserves every state at %i pt', async (width) => {

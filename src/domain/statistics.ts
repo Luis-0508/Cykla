@@ -11,7 +11,8 @@ export type CycleStats = {
 };
 
 export function calculateCycleStats(cycles: Cycle[], entries: DailyEntry[]): CycleStats {
-  // The same cycles as the prediction, so Trends and estimates cannot disagree.
+  // Recorded intervals remain statistics even when they only support a provisional
+  // onboarding estimate rather than a personalized prediction length.
   const lengths = cycles.filter(isUsableCycle).map((cycle) => cycle.lengthDays!);
   return {
     usableCycles: lengths.length,

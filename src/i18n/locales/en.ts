@@ -100,8 +100,9 @@ export const en: Messages = {
     edit: 'Edit entry',
   },
   estimate: {
-    ambiguousBody:
-      'The recorded intervals may be long cycles or missing period entries. There is no reliable complete cycle yet to support a date range. Add missing periods or also log days without bleeding.',
+    provisionalTitle: 'Provisional estimate',
+    provisionalBody:
+      'There are not enough unambiguous cycles for a personalized prediction yet. For now, this estimate is based on the typical cycle length you provided. Recorded intervals remain in your cycle history.',
     explanation: (completeCycles) =>
       completeCycles < 3
         ? completeCycles === 1
@@ -220,7 +221,7 @@ export const en: Messages = {
     likelyMissedPeriod:
       'About twice the usual length, so a period entry is probably missing. Not used for the estimate.',
     possibleMissedPeriod:
-      'About a multiple of the usual length: a long cycle or a missing entry. Without a reliable complete cycle, no date range is estimated.',
+      'About a multiple of the usual length: a long cycle or a missing entry. This interval alone is insufficient for a personalized prediction.',
     include: 'Include',
     exclude: 'Exclude',
     cycleLengthLabel: (days) => `Cycle length ${days} ${plural(days, 'day', 'days')}`,
@@ -229,6 +230,14 @@ export const en: Messages = {
       'Changes can be normal. If symptoms are severe, new or persistent, you should seek medical advice.',
   },
   prediction: {
+    typicalBody:
+      'This provisional estimate uses the typical cycle length you provided. Recorded ambiguous intervals remain in your history, but do not determine this length.',
+    typicalTitle: '2. Your typical cycle length',
+    typicalMetric: (days) => `${plural(days, 'day', 'days')} as the provided typical cycle length`,
+    provisionalSpreadBody:
+      'Without enough unambiguous cycles, the provisional estimate uses the wider initial window around your typical cycle length. This window is not a personalized prediction.',
+    provisionalStartsMetric: 'unambiguous complete cycles supporting a personal estimate',
+    provisionalSpreadMetric: 'days of provisional margin',
     loading: 'Loading calculation …',
     error: 'The calculation could not be loaded.',
     close: 'Close explanation',

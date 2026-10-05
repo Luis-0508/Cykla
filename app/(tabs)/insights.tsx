@@ -17,7 +17,7 @@ export default function InsightsScreen() {
   const theme = useCyklaTheme();
   const { t, formatDate } = useI18n();
   const shortDate = (date: string) => formatDate(date, { day: 'numeric', month: 'short' });
-  const { entries, cycles, prediction, ambiguousHistory, isLoading, error } = usePrediction();
+  const { entries, cycles, prediction, predictionState, isLoading, error } = usePrediction();
   const toggleExclusion = useToggleCycleExclusion();
   const stats = calculateCycleStats(cycles, entries);
   const maximumLength = Math.max(1, ...cycles.map((cycle) => cycle.lengthDays ?? 0));
@@ -71,7 +71,11 @@ export default function InsightsScreen() {
       {prediction ? (
         <Card tone="primary" style={styles.predictionCard}>
           <View style={styles.predictionHeader}>
-            <Typography variant="heading">{t.insights.currentPrediction}</Typography>
+            <Typography variant="heading">
+              {predictionState === 'provisional'
+                ? t.estimate.provisionalTitle
+                : t.insights.currentPrediction}
+            </Typography>
             {prediction.overdue ? null : <ConfidenceBadge confidence={prediction.confidence} />}
           </View>
           {prediction.overdue ? (
@@ -92,9 +96,11 @@ export default function InsightsScreen() {
                 )}
               </Typography>
               <Typography muted>
-                {prediction.uncertainHistory
-                  ? t.estimate.uncertainBody
-                  : t.estimate.explanation(prediction.completeCycleCount)}
+                {predictionState === 'provisional'
+                  ? t.estimate.provisionalBody
+                  : prediction.uncertainHistory
+                    ? t.estimate.uncertainBody
+                    : t.estimate.explanation(prediction.completeCycleCount)}
               </Typography>
             </>
           )}
@@ -108,7 +114,7 @@ export default function InsightsScreen() {
         <Card>
           <Typography variant="heading">{t.insights.noPrediction}</Typography>
           <Typography muted style={styles.cardCopy}>
-            {ambiguousHistory ? t.estimate.ambiguousBody : t.insights.noPredictionBody}
+            {t.insights.noPredictionBody}
           </Typography>
         </Card>
       )}
