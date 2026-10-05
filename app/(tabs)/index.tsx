@@ -22,7 +22,7 @@ export default function TodayScreen() {
   const { t, formatDate, formatNumber } = useI18n();
   const selectedDate = useUiStore((state) => state.selectedDate);
   const setSelectedDate = useUiStore((state) => state.setSelectedDate);
-  const { entries, starts, prediction, isLoading, error } = usePrediction();
+  const { entries, starts, prediction, ambiguousHistory, isLoading, error } = usePrediction();
   const selectedEntry = entries.find((entry) => entry.date === selectedDate);
   const hasFlow = selectedEntry != null && selectedEntry.flow !== 'none';
   const latestStart = [...starts].reverse().find((date) => date <= selectedDate);
@@ -69,7 +69,9 @@ export default function TodayScreen() {
           ? t.estimate.uncertainBody
           : prediction
             ? t.estimate.explanation(prediction.completeCycleCount)
-            : t.today.noEstimateBody;
+            : ambiguousHistory
+              ? t.estimate.ambiguousBody
+              : t.today.noEstimateBody;
   // A confidence level only belongs to a current estimate.
   const showConfidence =
     prediction != null && !hasFlow && status.kind !== 'overdue' && status.kind !== 'pastCycle';

@@ -107,7 +107,10 @@ tested functions.
    typical length from onboarding, never from such gaps. If normal cycles clearly
    outnumber the gaps, the gaps are left out as missed entries. Otherwise both
    readings stay possible: confidence is low and the window runs from one usual cycle
-   to the long recorded length. Days logged without bleeding around every place where
+   to the long recorded length. If every usable complete interval is ambiguous, the
+   app withholds date estimates and explains that there is no reliable recorded
+   cycle anchor yet; Trends retains the recorded interval statistics. Days logged
+   without bleeding around every place where
    a skipped period would have started confirm a long cycle.
 4. The weighted mean sets the expected start; the sample variation sets the width
    of the visible window, which is never narrower than ±3 days (±5 with fewer than

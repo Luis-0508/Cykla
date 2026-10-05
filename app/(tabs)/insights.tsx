@@ -17,7 +17,7 @@ export default function InsightsScreen() {
   const theme = useCyklaTheme();
   const { t, formatDate } = useI18n();
   const shortDate = (date: string) => formatDate(date, { day: 'numeric', month: 'short' });
-  const { entries, cycles, prediction, isLoading, error } = usePrediction();
+  const { entries, cycles, prediction, ambiguousHistory, isLoading, error } = usePrediction();
   const toggleExclusion = useToggleCycleExclusion();
   const stats = calculateCycleStats(cycles, entries);
   const maximumLength = Math.max(1, ...cycles.map((cycle) => cycle.lengthDays ?? 0));
@@ -108,7 +108,7 @@ export default function InsightsScreen() {
         <Card>
           <Typography variant="heading">{t.insights.noPrediction}</Typography>
           <Typography muted style={styles.cardCopy}>
-            {t.insights.noPredictionBody}
+            {ambiguousHistory ? t.estimate.ambiguousBody : t.insights.noPredictionBody}
           </Typography>
         </Card>
       )}

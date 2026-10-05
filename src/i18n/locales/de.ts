@@ -102,6 +102,8 @@ export const de = {
     edit: 'Eintrag bearbeiten',
   },
   estimate: {
+    ambiguousBody:
+      'Die dokumentierten Abstände können lange Zyklen oder fehlende Periodeneinträge sein. Bisher fehlt ein verlässlicher vollständiger Zyklus als Grundlage für einen Zeitraum. Trage fehlende Perioden nach oder dokumentiere auch Tage ohne Blutung.',
     explanation: (completeCycles: number) =>
       completeCycles < 3
         ? completeCycles === 1
@@ -225,7 +227,7 @@ export const de = {
     likelyMissedPeriod:
       'Etwa doppelt so lang wie üblich: Wahrscheinlich fehlt ein Periodeneintrag. Zählt nicht zur Schätzung.',
     possibleMissedPeriod:
-      'Etwa ein Vielfaches der üblichen Länge: ein langer Zyklus oder ein fehlender Eintrag. Die Schätzung berücksichtigt beides.',
+      'Etwa ein Vielfaches der üblichen Länge: ein langer Zyklus oder ein fehlender Eintrag. Ohne verlässlichen vollständigen Zyklus wird kein Zeitraum geschätzt.',
     include: 'Einbeziehen',
     exclude: 'Ausschließen',
     cycleLengthLabel: (days: number) => `Zykluslänge ${days} ${plural(days, 'Tag', 'Tage')}`,

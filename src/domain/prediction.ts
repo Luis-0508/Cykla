@@ -72,6 +72,16 @@ export function isUsableCycle(cycle: Cycle): boolean {
 }
 
 /**
+ * Ambiguous intervals remain recorded statistics, but cannot establish a personal
+ * prediction by themselves. The onboarding fallback cannot resolve whether a
+ * period was missed. Keep the internal alternative readings for model inspection.
+ */
+export function hasOnlyAmbiguousHistory(cycles: Cycle[]): boolean {
+  const usable = cycles.filter(isUsableCycle);
+  return usable.length > 0 && usable.every((cycle) => cycle.possibleMissedPeriod);
+}
+
+/**
  * The usual cycle length that gaps are compared with: the median of the recorded
  * cycles shorter than 1.6 times the typical length from onboarding, or that typical
  * length itself. Long gaps never feed into it, so several gaps cannot raise the

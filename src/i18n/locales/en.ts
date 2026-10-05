@@ -100,6 +100,8 @@ export const en: Messages = {
     edit: 'Edit entry',
   },
   estimate: {
+    ambiguousBody:
+      'The recorded intervals may be long cycles or missing period entries. There is no reliable complete cycle yet to support a date range. Add missing periods or also log days without bleeding.',
     explanation: (completeCycles) =>
       completeCycles < 3
         ? completeCycles === 1
@@ -218,7 +220,7 @@ export const en: Messages = {
     likelyMissedPeriod:
       'About twice the usual length, so a period entry is probably missing. Not used for the estimate.',
     possibleMissedPeriod:
-      'About a multiple of the usual length: a long cycle or a missing entry. The estimate allows for both.',
+      'About a multiple of the usual length: a long cycle or a missing entry. Without a reliable complete cycle, no date range is estimated.',
     include: 'Include',
     exclude: 'Exclude',
     cycleLengthLabel: (days) => `Cycle length ${days} ${plural(days, 'day', 'days')}`,

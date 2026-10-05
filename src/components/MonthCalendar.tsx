@@ -150,17 +150,18 @@ const styles = StyleSheet.create({
   cellWide: {
     minHeight: 52,
   },
-  // A seventh of a 320 pt screen is narrower than 36 pt; shrink instead of overlapping.
+  // Explicit equal dimensions avoid percentage/aspect-ratio stretching in native Yoga.
+  // The marker is separate from the larger touchable flex column.
   dayCircle: {
-    width: '100%',
-    maxWidth: 36,
-    aspectRatio: 1,
+    width: 36,
+    height: 36,
     borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dayCircleWide: {
-    maxWidth: 42,
+    width: 42,
+    height: 42,
   },
   dot: {
     width: 4,

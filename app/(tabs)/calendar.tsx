@@ -20,7 +20,7 @@ export default function CalendarScreen() {
   const wide = useWindowDimensions().width >= WIDE_LAYOUT_MIN_WIDTH;
   const [month, setMonth] = useState(startOfMonth(todayDate()));
   const [selectedDate, setSelectedDate] = useState(todayDate());
-  const { entries, prediction, isLoading, error } = usePrediction();
+  const { entries, prediction, ambiguousHistory, isLoading, error } = usePrediction();
   const entry = entries.find((value) => value.date === selectedDate);
 
   // One item per row on phones, so long translations wrap beside their own symbol.
@@ -150,6 +150,11 @@ export default function CalendarScreen() {
         />
       </Card>
 
+      {ambiguousHistory ? (
+        <Card>
+          <Typography muted>{t.estimate.ambiguousBody}</Typography>
+        </Card>
+      ) : null}
       {prediction ? (
         <Card tone="fertile">
           <Typography variant="label">{t.calendar.noteTitle}</Typography>

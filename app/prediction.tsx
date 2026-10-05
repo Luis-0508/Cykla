@@ -13,7 +13,7 @@ import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 export default function PredictionScreen() {
   const theme = useCyklaTheme();
   const { t, formatDate, formatNumber } = useI18n();
-  const { prediction, cycles, isLoading, error } = usePrediction();
+  const { prediction, cycles, ambiguousHistory, isLoading, error } = usePrediction();
   if (isLoading) return <LoadingState label={t.prediction.loading} />;
   if (error) return <ErrorState message={t.prediction.error} />;
 
@@ -118,7 +118,7 @@ export default function PredictionScreen() {
         <Card>
           <Typography variant="heading">{t.prediction.notEnoughTitle}</Typography>
           <Typography muted style={styles.cardCopy}>
-            {t.prediction.notEnoughBody}
+            {ambiguousHistory ? t.estimate.ambiguousBody : t.prediction.notEnoughBody}
           </Typography>
         </Card>
       )}

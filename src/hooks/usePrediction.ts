@@ -4,6 +4,7 @@ import {
   calculatePrediction,
   deriveCycles,
   derivePeriodStarts,
+  hasOnlyAmbiguousHistory,
   observedDaysWithoutBleeding,
 } from '@/domain/prediction';
 import { useEntries, useExcludedCycles, useSettings } from '@/hooks/useCyklaData';
@@ -23,22 +24,27 @@ export function usePrediction() {
     const starts = derivePeriodStarts(periodDays);
     const excludedStarts = exclusionsQuery.data ?? [];
     const settings = settingsQuery.data;
+    const cycles = deriveCycles(starts, excludedStarts, {
+      fallbackCycleLength: settings?.typicalCycleLength,
+      observedDays,
+    });
+    const ambiguousHistory = hasOnlyAmbiguousHistory(cycles);
     return {
       entries,
       periodDays,
       starts,
-      cycles: deriveCycles(starts, excludedStarts, {
-        fallbackCycleLength: settings?.typicalCycleLength,
-        observedDays,
-      }),
-      prediction: calculatePrediction({
-        periodDays,
-        excludedCycleStarts: excludedStarts,
-        fallbackCycleLength: settings?.typicalCycleLength,
-        fallbackPeriodLength: settings?.typicalPeriodLength,
-        observedDays,
-        today,
-      }),
+      cycles,
+      ambiguousHistory,
+      prediction: ambiguousHistory
+        ? null
+        : calculatePrediction({
+            periodDays,
+            excludedCycleStarts: excludedStarts,
+            fallbackCycleLength: settings?.typicalCycleLength,
+            fallbackPeriodLength: settings?.typicalPeriodLength,
+            observedDays,
+            today,
+          }),
     };
   }, [entriesQuery.data, exclusionsQuery.data, settingsQuery.data, today]);
 
