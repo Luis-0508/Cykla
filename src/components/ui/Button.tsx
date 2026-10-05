@@ -78,8 +78,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Still a 44 pt touch target, without the height reserved for wrapping labels.
   iconOnly: {
-    minWidth: 52,
+    minWidth: 44,
+    minHeight: 44,
     paddingHorizontal: spacing.sm,
   },
   content: {

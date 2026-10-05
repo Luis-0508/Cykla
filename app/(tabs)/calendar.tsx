@@ -17,17 +17,44 @@ export default function CalendarScreen() {
   const theme = useCyklaTheme();
   const { t, formatDate } = useI18n();
   // On phones the month name needs the width; the arrows keep their labels for screen readers.
-  const showNavLabels = useWindowDimensions().width >= WIDE_LAYOUT_MIN_WIDTH;
+  const wide = useWindowDimensions().width >= WIDE_LAYOUT_MIN_WIDTH;
   const [month, setMonth] = useState(startOfMonth(todayDate()));
   const [selectedDate, setSelectedDate] = useState(todayDate());
   const { entries, prediction, isLoading, error } = usePrediction();
   const entry = entries.find((value) => value.date === selectedDate);
 
+  // One item per row on phones, so long translations wrap beside their own symbol.
+  const legendItems = [
+    {
+      label: t.calendar.legendPeriod,
+      swatch: <View style={[styles.legendDot, { backgroundColor: theme.colors.period }]} />,
+    },
+    {
+      label: t.calendar.legendPrediction,
+      swatch: (
+        <View
+          style={[
+            styles.legendDot,
+            { borderColor: theme.colors.period, borderWidth: 2, borderStyle: 'dashed' },
+          ]}
+        />
+      ),
+    },
+    {
+      label: t.calendar.legendFertile,
+      swatch: <View style={[styles.legendDot, { backgroundColor: theme.colors.fertileSoft }]} />,
+    },
+    {
+      label: t.calendar.legendSymptom,
+      swatch: <View style={[styles.tinyDot, { backgroundColor: theme.colors.accent }]} />,
+    },
+  ];
+
   if (isLoading) return <LoadingState label={t.calendar.loading} />;
   if (error) return <ErrorState message={t.calendar.error} />;
 
   return (
-    <AppScreen contentContainerStyle={styles.screen}>
+    <AppScreen contentContainerStyle={[styles.screen, wide && styles.screenWide]}>
       <View style={styles.titleRow}>
         <View style={styles.titleText}>
           <Typography variant="title">{t.calendar.title}</Typography>
@@ -42,7 +69,7 @@ export default function CalendarScreen() {
             label={t.calendar.previous}
             variant="ghost"
             icon="chevron-back"
-            iconOnly={!showNavLabels}
+            iconOnly={!wide}
             accessibilityHint={t.calendar.previousMonth}
             onPress={() => setMonth(addMonths(month, -1))}
           />
@@ -53,7 +80,7 @@ export default function CalendarScreen() {
             label={t.calendar.next}
             variant="ghost"
             icon="chevron-forward"
-            iconOnly={!showNavLabels}
+            iconOnly={!wide}
             accessibilityHint={t.calendar.nextMonth}
             onPress={() => setMonth(addMonths(month, 1))}
           />
@@ -68,37 +95,21 @@ export default function CalendarScreen() {
       </Card>
 
       <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: theme.colors.period }]} />
-          <Typography variant="caption" style={styles.legendLabel}>
-            {t.calendar.legendPeriod}
-          </Typography>
-        </View>
-        <View style={styles.legendItem}>
-          <View
-            style={[
-              styles.legendDot,
-              { borderColor: theme.colors.period, borderWidth: 2, borderStyle: 'dashed' },
-            ]}
-          />
-          <Typography variant="caption" style={styles.legendLabel}>
-            {t.calendar.legendPrediction}
-          </Typography>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: theme.colors.fertileSoft }]} />
-          <Typography variant="caption" style={styles.legendLabel}>
-            {t.calendar.legendFertile}
-          </Typography>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={styles.legendSwatch}>
-            <View style={[styles.tinyDot, { backgroundColor: theme.colors.accent }]} />
+        {(wide
+          ? [legendItems.slice(0, 2), legendItems.slice(2)]
+          : legendItems.map((item) => [item])
+        ).map((row) => (
+          <View key={row[0]!.label} testID="calendar-legend-row" style={styles.legendRow}>
+            {row.map((item) => (
+              <View key={item.label} style={styles.legendItem}>
+                <View style={styles.legendSwatch}>{item.swatch}</View>
+                <Typography variant="caption" style={styles.legendLabel}>
+                  {item.label}
+                </Typography>
+              </View>
+            ))}
           </View>
-          <Typography variant="caption" style={styles.legendLabel}>
-            {t.calendar.legendSymptom}
-          </Typography>
-        </View>
+        ))}
       </View>
 
       <Card
@@ -152,8 +163,13 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
+  // The tab bar sits below the scroll view, so the default 120 pt bottom padding is empty space.
   screen: {
     paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
+    gap: spacing.lg,
+  },
+  screenWide: {
     gap: spacing.xl,
   },
   titleRow: {
@@ -167,14 +183,14 @@ const styles = StyleSheet.create({
   },
   calendarCard: {
     paddingHorizontal: spacing.sm,
-    paddingBottom: spacing.lg,
+    paddingVertical: spacing.md,
   },
   monthHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xs,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   monthName: {
     flex: 1,
@@ -182,31 +198,37 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   legend: {
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  // Rows instead of a wrapping container: a symbol and its label never split across rows.
+  legendRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: spacing.md,
   },
-  // Two columns while they fit; each label wraps inside its own column.
   legendItem: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    minWidth: '46%',
-    flex: 1,
   },
   legendLabel: {
+    flex: 1,
     flexShrink: 1,
+    minWidth: 0,
   },
   legendDot: {
-    width: 20,
-    height: 20,
-    flexShrink: 0,
+    width: 18,
+    height: 18,
     borderRadius: radii.pill,
   },
   legendSwatch: {
-    width: 20,
+    width: 18,
+    height: 18,
     flexShrink: 0,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   tinyDot: {
     width: 7,

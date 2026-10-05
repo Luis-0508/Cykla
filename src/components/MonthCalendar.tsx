@@ -1,8 +1,8 @@
-import { Pressable, StyleSheet, View } from 'react-native';
-import { eachDay, monthGrid, parseDateOnly, startOfMonth, todayDate } from '@/domain/dateOnly';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { eachDay, monthWeeks, parseDateOnly, startOfMonth, todayDate } from '@/domain/dateOnly';
 import type { DailyEntry, Prediction } from '@/domain/models';
 import { useI18n } from '@/i18n/I18nProvider';
-import { radii, spacing, useCyklaTheme } from '@/theme/theme';
+import { radii, spacing, useCyklaTheme, WIDE_LAYOUT_MIN_WIDTH } from '@/theme/theme';
 import { Typography } from '@/components/ui/Typography';
 
 type MonthCalendarProps = {
@@ -22,6 +22,7 @@ export function MonthCalendar({
 }: MonthCalendarProps) {
   const theme = useCyklaTheme();
   const { t, formatDate } = useI18n();
+  const wide = useWindowDimensions().width >= WIDE_LAYOUT_MIN_WIDTH;
   const actual = new Set(
     entries.filter((entry) => entry.flow !== 'none').map((entry) => entry.date),
   );
@@ -38,118 +39,133 @@ export function MonthCalendar({
   );
   const currentMonth = startOfMonth(month).slice(0, 7);
 
+  // Explicit week rows of seven flex columns: a day can never wrap into the next week,
+  // unlike a wrapping grid of 1/7-width cells, which Yoga rounds into six columns on iOS.
   return (
     <View>
-      <View style={styles.weekRow}>
+      <View testID="calendar-weekdays" style={[styles.row, styles.weekdays]}>
         {t.calendar.weekdays.map((weekday) => (
-          <Typography key={weekday} variant="caption" muted style={styles.weekday}>
-            {weekday}
-          </Typography>
+          <View key={weekday} style={styles.column}>
+            <Typography variant="caption" muted style={styles.weekday}>
+              {weekday}
+            </Typography>
+          </View>
         ))}
       </View>
-      <View style={styles.grid}>
-        {monthGrid(month).map((date) => {
-          const dateValue = parseDateOnly(date);
-          const inMonth = date.slice(0, 7) === currentMonth;
-          const isActual = actual.has(date);
-          const isPredicted = !isActual && predicted.has(date);
-          const isFertile = !isActual && fertile.has(date);
-          const isSelected = selectedDate === date;
-          const accessibilityParts = [
-            formatDate(date),
-            isActual ? t.calendar.a11yPeriod : '',
-            isPredicted ? t.calendar.a11yPrediction : '',
-            isFertile ? t.calendar.a11yFertile : '',
-            symptomDays.has(date) ? t.calendar.a11ySymptoms : '',
-          ].filter(Boolean);
-          return (
-            <Pressable
-              key={date}
-              accessibilityRole="button"
-              accessibilityLabel={accessibilityParts.join(', ')}
-              onPress={() => onSelect(date)}
-              style={styles.cell}
-            >
-              <View
-                style={[
-                  styles.dayCircle,
-                  isActual && { backgroundColor: theme.colors.period },
-                  isPredicted && {
-                    borderColor: theme.colors.period,
-                    borderWidth: 2,
-                    borderStyle: 'dashed',
-                  },
-                  isFertile &&
-                    !isPredicted && {
-                      backgroundColor: theme.colors.fertileSoft,
-                    },
-                  isSelected && {
-                    borderColor: theme.colors.accent,
-                    borderWidth: 2,
-                  },
-                  date === todayDate() &&
-                    !isSelected && {
-                      borderColor: theme.colors.primary,
-                      borderWidth: 1,
-                    },
-                ]}
+      {monthWeeks(month).map((week, index) => (
+        <View key={week[0]} testID={`calendar-week-${index}`} style={styles.row}>
+          {week.map((date) => {
+            const dateValue = parseDateOnly(date);
+            const inMonth = date.slice(0, 7) === currentMonth;
+            const isActual = actual.has(date);
+            const isPredicted = !isActual && predicted.has(date);
+            const isFertile = !isActual && fertile.has(date);
+            const isSelected = selectedDate === date;
+            const accessibilityParts = [
+              formatDate(date),
+              isActual ? t.calendar.a11yPeriod : '',
+              isPredicted ? t.calendar.a11yPrediction : '',
+              isFertile ? t.calendar.a11yFertile : '',
+              symptomDays.has(date) ? t.calendar.a11ySymptoms : '',
+            ].filter(Boolean);
+            return (
+              <Pressable
+                key={date}
+                accessibilityRole="button"
+                accessibilityLabel={accessibilityParts.join(', ')}
+                onPress={() => onSelect(date)}
+                style={[styles.column, styles.cell, wide && styles.cellWide]}
               >
-                <Typography
-                  variant="label"
-                  muted={!inMonth}
-                  style={isActual ? { color: '#FFFFFF' } : undefined}
+                <View
+                  style={[
+                    styles.dayCircle,
+                    wide && styles.dayCircleWide,
+                    isActual && { backgroundColor: theme.colors.period },
+                    isPredicted && {
+                      borderColor: theme.colors.period,
+                      borderWidth: 2,
+                      borderStyle: 'dashed',
+                    },
+                    isFertile &&
+                      !isPredicted && {
+                        backgroundColor: theme.colors.fertileSoft,
+                      },
+                    isSelected && {
+                      borderColor: theme.colors.accent,
+                      borderWidth: 2,
+                    },
+                    date === todayDate() &&
+                      !isSelected && {
+                        borderColor: theme.colors.primary,
+                        borderWidth: 1,
+                      },
+                  ]}
                 >
-                  {dateValue.getUTCDate()}
-                </Typography>
-              </View>
-              <View
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: symptomDays.has(date) ? theme.colors.accent : 'transparent',
-                  },
-                ]}
-              />
-            </Pressable>
-          );
-        })}
-      </View>
+                  <Typography
+                    variant="label"
+                    muted={!inMonth}
+                    style={isActual ? { color: '#FFFFFF' } : undefined}
+                  >
+                    {dateValue.getUTCDate()}
+                  </Typography>
+                </View>
+                <View
+                  style={[
+                    styles.dot,
+                    {
+                      backgroundColor: symptomDays.has(date) ? theme.colors.accent : 'transparent',
+                    },
+                  ]}
+                />
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  weekRow: {
+  // No flexWrap: every row holds exactly its seven columns.
+  row: {
     flexDirection: 'row',
-    paddingBottom: spacing.sm,
+  },
+  weekdays: {
+    paddingBottom: spacing.xs,
+  },
+  column: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
   },
   weekday: {
-    width: `${100 / 7}%`,
     textAlign: 'center',
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
+  // 44 pt keeps the minimum touch target while six rows stay compact on phones.
   cell: {
-    width: `${100 / 7}%`,
-    minHeight: 51,
-    alignItems: 'center',
+    minHeight: 44,
     justifyContent: 'center',
   },
-  // A seventh of a 320 pt screen is narrower than 39 pt; shrink instead of overlapping.
+  cellWide: {
+    minHeight: 52,
+  },
+  // A seventh of a 320 pt screen is narrower than 36 pt; shrink instead of overlapping.
   dayCircle: {
     width: '100%',
-    maxWidth: 39,
+    maxWidth: 36,
     aspectRatio: 1,
     borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  dayCircleWide: {
+    maxWidth: 42,
+  },
   dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 5,
-    marginTop: 1,
+    width: 4,
+    height: 4,
+    borderRadius: 4,
+    marginTop: 2,
   },
 });
