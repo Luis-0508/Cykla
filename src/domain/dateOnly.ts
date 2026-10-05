@@ -90,3 +90,9 @@ export function monthGrid(date: string): string[] {
   const gridStart = addDays(formatDateOnly(first), -mondayOffset);
   return Array.from({ length: 42 }, (_, index) => addDays(gridStart, index));
 }
+
+// Six Monday-first weeks of seven days; each inner array is one calendar row.
+export function monthWeeks(date: string): string[][] {
+  const grid = monthGrid(date);
+  return Array.from({ length: 6 }, (_, week) => grid.slice(week * 7, week * 7 + 7));
+}

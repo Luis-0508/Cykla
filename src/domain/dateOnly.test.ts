@@ -6,6 +6,7 @@ import {
   eachDay,
   formatCalendarDate,
   monthGrid,
+  monthWeeks,
   parseDateOnly,
   startOfMonth,
 } from './dateOnly';
@@ -39,6 +40,32 @@ describe('calendar boundaries', () => {
     expect(grid).toHaveLength(42);
     expect(grid[0]).toBe('2026-01-26');
     expect(grid.at(-1)).toBe('2026-03-08');
+  });
+  it.each(['2026-02-01', '2026-03-15', '2026-10-01', '2027-08-31'])(
+    'splits the %s grid into six Monday-first weeks of seven days',
+    (month) => {
+      const weeks = monthWeeks(month);
+      expect(weeks).toHaveLength(6);
+      expect(weeks.flat()).toEqual(monthGrid(month));
+      for (const week of weeks) {
+        expect(week).toHaveLength(7);
+        expect(parseDateOnly(week[0]!).getUTCDay()).toBe(1);
+        expect(parseDateOnly(week[6]!).getUTCDay()).toBe(0);
+      }
+    },
+  );
+  it('places October 4 2026 on Sunday of the first week', () => {
+    const weeks = monthWeeks('2026-10-01');
+    expect(weeks[0]).toEqual([
+      '2026-09-28',
+      '2026-09-29',
+      '2026-09-30',
+      '2026-10-01',
+      '2026-10-02',
+      '2026-10-03',
+      '2026-10-04',
+    ]);
+    expect(weeks[1]![0]).toBe('2026-10-05');
   });
   it('formats calendar dates for the requested locale without time-zone drift', () => {
     expect(formatCalendarDate('2026-02-01', 'de-DE')).toBe('1. Februar 2026');

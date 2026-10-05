@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { ConfidenceBadge } from '@/components/ui/ConfidenceBadge';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { Typography } from '@/components/ui/Typography';
+import { differenceInDays } from '@/domain/dateOnly';
 import { usePrediction } from '@/hooks/usePrediction';
 import { useI18n } from '@/i18n/I18nProvider';
 import { radii, spacing, useCyklaTheme } from '@/theme/theme';
@@ -13,7 +14,7 @@ import { radii, spacing, useCyklaTheme } from '@/theme/theme';
 export default function PredictionScreen() {
   const theme = useCyklaTheme();
   const { t, formatDate, formatNumber } = useI18n();
-  const { prediction, cycles, isLoading, error } = usePrediction();
+  const { prediction, cycles, predictionState, isLoading, error } = usePrediction();
   if (isLoading) return <LoadingState label={t.prediction.loading} />;
   if (error) return <ErrorState message={t.prediction.error} />;
 
@@ -55,6 +56,9 @@ export default function PredictionScreen() {
           ) : (
             <Card tone="primary" style={styles.hero}>
               <ConfidenceBadge confidence={prediction.confidence} />
+              {predictionState === 'provisional' ? (
+                <Typography variant="heading">{t.estimate.provisionalTitle}</Typography>
+              ) : null}
               <Typography variant="caption">{t.prediction.windowEyebrow}</Typography>
               <Typography variant="title">
                 {t.estimate.rangeWords(
@@ -63,9 +67,11 @@ export default function PredictionScreen() {
                 )}
               </Typography>
               <Typography muted>
-                {prediction.uncertainHistory
-                  ? t.estimate.uncertainBody
-                  : t.prediction.midpoint(formatDate(prediction.expectedStart))}
+                {predictionState === 'provisional'
+                  ? t.estimate.provisionalBody
+                  : prediction.uncertainHistory
+                    ? t.estimate.uncertainBody
+                    : t.prediction.midpoint(formatDate(prediction.expectedStart))}
               </Typography>
             </Card>
           )}
@@ -76,28 +82,55 @@ export default function PredictionScreen() {
             <View style={styles.metricRow}>
               <Typography variant="display">{prediction.completeCycleCount}</Typography>
               <Typography muted>
-                {t.prediction.startsMetric(prediction.completeCycleCount)}
+                {predictionState === 'provisional'
+                  ? t.prediction.provisionalStartsMetric
+                  : t.prediction.startsMetric(prediction.completeCycleCount)}
               </Typography>
             </View>
           </Card>
 
           <Card style={styles.section}>
-            <Typography variant="heading">{t.prediction.averageTitle}</Typography>
-            <Typography muted>{t.prediction.averageBody}</Typography>
+            <Typography variant="heading">
+              {predictionState === 'provisional'
+                ? t.prediction.typicalTitle
+                : t.prediction.averageTitle}
+            </Typography>
+            <Typography muted>
+              {predictionState === 'provisional'
+                ? t.prediction.typicalBody
+                : t.prediction.averageBody}
+            </Typography>
             <View style={styles.metricRow}>
               <Typography variant="display">{prediction.averageCycleLength}</Typography>
               <Typography muted>
-                {t.prediction.averageMetric(prediction.averageCycleLength)}
+                {predictionState === 'provisional'
+                  ? t.prediction.typicalMetric(prediction.averageCycleLength)
+                  : t.prediction.averageMetric(prediction.averageCycleLength)}
               </Typography>
             </View>
           </Card>
 
           <Card style={styles.section}>
             <Typography variant="heading">{t.prediction.spreadTitle}</Typography>
-            <Typography muted>{t.prediction.spreadBody}</Typography>
+            <Typography muted>
+              {predictionState === 'provisional'
+                ? t.prediction.provisionalSpreadBody
+                : t.prediction.spreadBody}
+            </Typography>
             <View style={styles.metricRow}>
-              <Typography variant="display">±{formatNumber(prediction.variationDays)}</Typography>
-              <Typography muted>{t.prediction.spreadMetric}</Typography>
+              <Typography variant="display">
+                ±
+                {formatNumber(
+                  predictionState === 'provisional'
+                    ? differenceInDays(prediction.windowEnd, prediction.expectedStart)
+                    : prediction.variationDays,
+                )}
+              </Typography>
+              <Typography muted>
+                {predictionState === 'provisional'
+                  ? t.prediction.provisionalSpreadMetric
+                  : t.prediction.spreadMetric}
+              </Typography>
             </View>
           </Card>
 

@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import {
   bleedingDaysForEstimates,
-  calculatePrediction,
-  deriveCycles,
+  derivePrediction,
   derivePeriodStarts,
   observedDaysWithoutBleeding,
 } from '@/domain/prediction';
@@ -27,11 +26,7 @@ export function usePrediction() {
       entries,
       periodDays,
       starts,
-      cycles: deriveCycles(starts, excludedStarts, {
-        fallbackCycleLength: settings?.typicalCycleLength,
-        observedDays,
-      }),
-      prediction: calculatePrediction({
+      ...derivePrediction({
         periodDays,
         excludedCycleStarts: excludedStarts,
         fallbackCycleLength: settings?.typicalCycleLength,

@@ -8,6 +8,8 @@ import { saveDailyEntry } from '@/database/repository';
 import { addDays } from '@/domain/dateOnly';
 import { createI18n } from '@/i18n/i18n';
 import { useUiStore } from '@/store/uiStore';
+import { MonthCalendar } from '@/components/MonthCalendar';
+import { calculatePrediction } from '@/domain/prediction';
 import { selectedDayOffset } from '@/components/DayStrip';
 import { SCREEN_GUTTER } from '@/components/ui/AppScreen';
 import PredictionScreen from '../app/prediction';
@@ -61,7 +63,9 @@ vi.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ date: environment.date }),
 }));
 const i18n = createI18n('de', []);
-vi.mock('@/i18n/I18nProvider', () => ({ useI18n: () => i18n }));
+const english = createI18n('en', []);
+let activeI18n = i18n;
+vi.mock('@/i18n/I18nProvider', () => ({ useI18n: () => activeI18n }));
 const t = i18n.t;
 
 // Synthetic five-day periods; never real health data.
@@ -100,6 +104,8 @@ describe('screens with real SQLite data', () => {
     await initializeDatabase(test.db);
     environment.db = test.db;
     environment.width = 390;
+    useUiStore.setState({ themeMode: 'system' });
+    activeI18n = i18n;
     environment.canGoBack = true;
     environment.alerts = [];
     router.canGoBack.mockImplementation(() => environment.canGoBack);
@@ -161,18 +167,16 @@ describe('screens with real SQLite data', () => {
     Object.assign({}, ...[node.props.style].flat(Infinity).filter(Boolean));
 
   describe('Today', () => {
-    it('shows a wide range instead of an 80-day countdown after missing months', async () => {
+    it('uses a provisional countdown instead of learning from a possible missed-period gap', async () => {
       await recordPeriods(test.db, '2026-06-01', '2026-08-24');
       setToday('2026-08-30');
       await mount(TodayScreen);
       // Before the fix the 84-day gap was used as the cycle length: "in about 78 days".
       const short = (date: string) => i18n.formatDate(date, { day: 'numeric', month: 'short' });
-      await until(() =>
-        expect(findText(t.estimate.range(short('2026-09-14'), short('2026-11-23')))).toHaveLength(
-          1,
-        ),
-      );
-      expect(texts().some((text) => text.startsWith('ungefähr'))).toBe(false);
+      await until(() => expect(findText(t.estimate.provisionalBody)).toHaveLength(1));
+      expect(findText(t.estimate.range(short('2026-09-14'), short('2026-11-23')))).toHaveLength(0);
+      expect(findText(t.today.aboutInDays(22))).toHaveLength(1);
+      expect(findText(t.estimate.provisionalTitle)).toHaveLength(1);
     });
 
     it('asks for a new entry instead of counting when the estimate is stale', async () => {
@@ -238,24 +242,149 @@ describe('screens with real SQLite data', () => {
       expect(findText(t.prediction.fertileUnavailable)).toHaveLength(1);
     });
 
-    it('explains an uncertain history instead of a precise midpoint', async () => {
+    it('explains the provisional source rather than a personalized midpoint', async () => {
       await recordPeriods(test.db, '2026-01-01', '2026-02-26', '2026-04-23');
       setToday('2026-04-28');
       await mount(PredictionScreen);
-      await until(() => expect(findText(t.estimate.uncertainBody)).toHaveLength(1));
+      await until(() => expect(findText(t.estimate.provisionalBody)).toHaveLength(1));
       expect(findText(t.confidence.low)).toHaveLength(1);
+      expect(findText(t.estimate.provisionalTitle)).toHaveLength(1);
+      expect(findText(t.prediction.typicalTitle)).toHaveLength(1);
+      expect(findText('±7')).toHaveLength(1);
+      expect(findText(t.prediction.fertileUnavailable)).toHaveLength(1);
       expect(texts().some((text) => text.startsWith('Der rechnerische Mittelpunkt'))).toBe(false);
     });
   });
 
-  it('shows a wide range on Today for repeated gaps instead of a 56-day countdown', async () => {
+  it('uses the typical length on Today when repeated gaps have no reliable cycle anchor', async () => {
     await recordPeriods(test.db, '2026-01-01', '2026-02-26', '2026-04-23');
     setToday('2026-04-28');
     await mount(TodayScreen);
-    await until(() => expect(findText(t.estimate.uncertainBody)).toHaveLength(1));
+    await until(() => expect(findText(t.estimate.provisionalBody)).toHaveLength(1));
     const short = (date: string) => i18n.formatDate(date, { day: 'numeric', month: 'short' });
-    expect(findText(t.estimate.range(short('2026-05-14'), short('2026-06-25')))).toHaveLength(1);
+    expect(findText(t.estimate.range(short('2026-05-14'), short('2026-06-25')))).toHaveLength(0);
+    expect(findText(t.today.aboutInDays(23))).toHaveLength(1);
+  });
+
+  it.each([TodayScreen, InsightsScreen, PredictionScreen, CalendarScreen])(
+    'shows a provisional estimate instead of the 78-day alternative window in %s',
+    async (component) => {
+      await recordPeriods(test.db, '2026-07-15', '2026-10-01');
+      setToday('2026-10-06');
+      await mount(component);
+      await until(() => expect(findText(t.estimate.provisionalBody)).toHaveLength(1));
+      expect(findText(t.estimate.provisionalTitle)).toHaveLength(1);
+      expect(findText(t.confidence.low)).toHaveLength(component === CalendarScreen ? 0 : 1);
+      expect(texts().some((text) => text.includes('25. Dez'))).toBe(false);
+      if (component === InsightsScreen) {
+        expect(findText('78')).toHaveLength(1);
+        expect(findText('78–78')).toHaveLength(1);
+        expect(findText(t.estimate.range('22. Okt.', '5. Nov.'))).toHaveLength(1);
+      }
+      if (component === CalendarScreen) {
+        expect(
+          buttons(`${i18n.formatDate('2026-10-22')}, ${t.calendar.a11yPrediction}`),
+        ).toHaveLength(1);
+        expect(
+          buttons(`${i18n.formatDate('2026-11-06')}, ${t.calendar.a11yPrediction}`),
+        ).toHaveLength(0);
+      }
+    },
+  );
+
+  it.each([i18n, english])('labels provisional estimates in both catalogs (%j)', async (locale) => {
+    activeI18n = locale;
+    await recordPeriods(test.db, '2026-07-15', '2026-10-01');
+    setToday('2026-10-06');
+    await mount(PredictionScreen);
+    await until(() => expect(findText(locale.t.estimate.provisionalTitle)).toHaveLength(1));
+    expect(findText(locale.t.estimate.provisionalBody)).toHaveLength(1);
+    expect(findText(locale.t.prediction.typicalTitle)).toHaveLength(1);
+    expect(findText(locale.t.confidence.low)).toHaveLength(1);
+  });
+
+  it('keeps no estimate when no period start is recorded', async () => {
+    setToday('2026-10-06');
+    await mount(PredictionScreen);
+    await until(() => expect(findText(t.prediction.notEnoughTitle)).toHaveLength(1));
+    expect(findText(t.estimate.provisionalTitle)).toHaveLength(0);
+    expect(findText(t.confidence.low)).toHaveLength(0);
+  });
+
+  it('marks the provisional window overdue after its own end rather than the old long range', async () => {
+    await recordPeriods(test.db, '2026-07-15', '2026-10-01');
+    setToday('2026-11-06');
+    await mount(TodayScreen);
+    await until(() => expect(findText(t.today.laterThanEstimated)).toHaveLength(1));
+    expect(findText(t.estimate.overdueBody('5. November'))).toHaveLength(1);
+    expect(findText(t.confidence.low)).toHaveLength(0);
     expect(texts().some((text) => text.startsWith('ungefähr'))).toBe(false);
+  });
+
+  describe.each(['light', 'dark'] as const)('round day markers in %s mode', (themeMode) => {
+    it.each([375, 390, 393, 430, 768])('preserves every state at %i pt', async (width) => {
+      environment.width = width;
+      useUiStore.setState({ themeMode });
+      setToday('2026-10-05');
+      const prediction = {
+        ...calculatePrediction({ periodDays: ['2026-10-01'] })!,
+        windowStart: '2026-10-04',
+        windowEnd: '2026-10-07',
+        fertileWindowStart: '2026-10-06',
+        fertileWindowEnd: '2026-10-09',
+      };
+      const entries = ['2026-10-01', '2026-10-05'].map((date) => ({
+        date,
+        flow: 'medium' as const,
+        symptoms: [{ id: 'synthetic-headache-' + date, date, code: 'headache', intensity: 1 }],
+        updatedAt: '2026-10-01T12:00:00.000Z',
+        mood: null,
+        pain: null,
+        energy: null,
+        sleepHours: null,
+        sleepQuality: null,
+        notes: '',
+      }));
+      await mount(() =>
+        createElement(MonthCalendar, {
+          month: '2026-10-01',
+          entries,
+          prediction,
+          selectedDate: '2026-10-06',
+          onSelect: () => {},
+        }),
+      );
+      const cells = screen.root.findAll((node) => String(node.type) === 'Pressable');
+      expect(cells).toHaveLength(42);
+      for (const cell of cells) {
+        const marker = cell.children[0] as ReactTestInstance;
+        expect(flatStyle(marker)).toMatchObject({
+          width: width >= 600 ? 42 : 36,
+          height: width >= 600 ? 42 : 36,
+          borderRadius: 999,
+        });
+        expect(flatStyle(marker).aspectRatio).toBeUndefined();
+        expect(flatStyle(cell).minHeight).toBeGreaterThanOrEqual(44);
+      }
+      const markerFor = (date: string) =>
+        flatStyle(
+          cells.find((cell) =>
+            String(cell.props.accessibilityLabel).startsWith(i18n.formatDate(date)),
+          )!.children[0] as ReactTestInstance,
+        );
+      expect(markerFor('2026-10-01').backgroundColor).toBeDefined();
+      expect(markerFor('2026-10-04').borderStyle).toBe('dashed');
+      expect(markerFor('2026-10-05').borderWidth).toBe(1); // Today + recorded + symptom.
+      expect(markerFor('2026-10-06').borderWidth).toBe(2); // Selected + predicted + fertile.
+      expect(markerFor('2026-10-09').backgroundColor).toBeDefined();
+      expect(markerFor('2026-10-10').borderWidth).toBeUndefined();
+      const symptomCell = cells.find((cell) =>
+        String(cell.props.accessibilityLabel).startsWith(i18n.formatDate('2026-10-05')),
+      )!;
+      expect(flatStyle(symptomCell.children[1] as ReactTestInstance).backgroundColor).not.toBe(
+        'transparent',
+      );
+    });
   });
 
   describe('Day strip', () => {
@@ -302,6 +431,163 @@ describe('screens with real SQLite data', () => {
       await mount(CalendarScreen);
       await until(() => expect(findText(t.calendar.previous)).toHaveLength(1));
       expect(findText(t.calendar.next)).toHaveLength(1);
+    });
+
+    const weekRows = () =>
+      screen.root
+        .findAll(
+          (node) =>
+            String(node.type) === 'View' && String(node.props.testID).startsWith('calendar-week-'),
+        )
+        .sort((a, b) => String(a.props.testID).localeCompare(String(b.props.testID)));
+    const childViews = (node: ReactTestInstance) =>
+      node.children.filter((child): child is ReactTestInstance => typeof child !== 'string');
+    const plainStyle = (style: unknown) =>
+      Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
+
+    describe.each([
+      ['de', i18n],
+      ['en', english],
+    ] as const)('in %s', (_language, locale) => {
+      it.each([320, 375, 390, 393, 430, 768])(
+        'renders six rows of exactly seven columns on a %i pt screen',
+        async (width) => {
+          activeI18n = locale;
+          environment.width = width;
+          setToday('2026-10-05');
+          await mount(CalendarScreen);
+          await until(() => expect(weekRows()).toHaveLength(6));
+          for (const row of weekRows()) {
+            // Explicit rows replace a wrapping grid, which wrapped the seventh day on iOS.
+            expect(flatStyle(row).flexDirection).toBe('row');
+            expect(flatStyle(row).flexWrap).toBeUndefined();
+            const cells = childViews(row);
+            expect(cells).toHaveLength(7);
+            for (const cell of cells) {
+              expect(String(cell.type)).toBe('Pressable');
+              expect(flatStyle(cell)).toMatchObject({ flex: 1, minWidth: 0 });
+              expect(flatStyle(cell).width).toBeUndefined();
+              const marker = childViews(cell)[0]!;
+              expect(flatStyle(marker).width).toBe(width >= 600 ? 42 : 36);
+              expect(flatStyle(marker).height).toBe(flatStyle(marker).width);
+              expect(flatStyle(marker).aspectRatio).toBeUndefined();
+              expect(flatStyle(cell).minHeight).toBeGreaterThanOrEqual(44);
+            }
+          }
+          // The header uses the same seven flex columns as the date rows.
+          const header = screen.root.find((node) => node.props.testID === 'calendar-weekdays');
+          expect(flatStyle(header)).toMatchObject({ flexDirection: 'row' });
+          expect(flatStyle(header).flexWrap).toBeUndefined();
+          const columns = childViews(header);
+          expect(columns).toHaveLength(7);
+          for (const column of columns) {
+            expect(flatStyle(column)).toMatchObject({ flex: 1, minWidth: 0 });
+            expect(flatStyle(column).width).toBeUndefined();
+          }
+          expect(
+            columns.map((column) =>
+              [column.find((node) => String(node.type) === 'Text').props.children].flat().join(''),
+            ),
+          ).toEqual([...locale.t.calendar.weekdays]);
+
+          const position = (date: string) => {
+            const label = locale.formatDate(date);
+            for (const [rowIndex, row] of weekRows().entries()) {
+              const column = childViews(row).findIndex((cell) =>
+                String(cell.props.accessibilityLabel).startsWith(label),
+              );
+              if (column >= 0) return [rowIndex, column];
+            }
+            return null;
+          };
+          expect(locale.t.calendar.weekdays[0]).toBe(locale === english ? 'Mon' : 'Mo');
+          expect(locale.t.calendar.weekdays[6]).toBe(locale === english ? 'Sun' : 'So');
+          expect(position('2026-09-28')).toEqual([0, 0]);
+          expect(position('2026-10-01')).toEqual([0, 3]);
+          expect(position('2026-10-03')).toEqual([0, 5]);
+          expect(position('2026-10-04')).toEqual([0, 6]);
+          expect(position('2026-10-05')).toEqual([1, 0]);
+          expect(position('2026-10-31')).toEqual([4, 5]);
+          expect(position('2026-11-08')).toEqual([5, 6]);
+        },
+      );
+
+      it.each([375, 393])(
+        'shows only arrow icons in the month controls on a %i pt phone',
+        async (width) => {
+          activeI18n = locale;
+          environment.width = width;
+          setToday('2026-10-05');
+          await mount(CalendarScreen);
+          const tl = locale.t.calendar;
+          await until(() => expect(buttons(tl.previous)).toHaveLength(1));
+          for (const [label, hint, icon] of [
+            [tl.previous, tl.previousMonth, 'chevron-back'],
+            [tl.next, tl.nextMonth, 'chevron-forward'],
+          ] as const) {
+            const control = buttons(label)[0]!;
+            expect(control.props.accessibilityRole).toBe('button');
+            expect(control.props.accessibilityHint).toBe(hint);
+            // No label text is rendered at all, not merely hidden.
+            expect(control.findAll((node) => String(node.type) === 'Text')).toHaveLength(0);
+            expect(control.find((node) => String(node.type) === 'Icon').props.name).toBe(icon);
+            expect(findText(label)).toHaveLength(0);
+          }
+        },
+      );
+
+      it.each([
+        [375, 1],
+        [393, 1],
+        [768, 2],
+      ])('keeps every legend symbol beside its own label at %i pt', async (width, perRow) => {
+        activeI18n = locale;
+        environment.width = width;
+        setToday('2026-10-05');
+        await mount(CalendarScreen);
+        const tl = locale.t.calendar;
+        await until(() => expect(findText(tl.legendSymptom)).toHaveLength(1));
+        const rows = screen.root.findAll(
+          (node) => String(node.type) === 'View' && node.props.testID === 'calendar-legend-row',
+        );
+        expect(rows).toHaveLength(4 / perRow);
+        for (const row of rows) {
+          expect(flatStyle(row).flexWrap).toBeUndefined();
+          expect(childViews(row)).toHaveLength(perRow);
+        }
+        for (const label of [
+          tl.legendPeriod,
+          tl.legendPrediction,
+          tl.legendFertile,
+          tl.legendSymptom,
+        ]) {
+          const text = findText(label)[0]!;
+          const item = hostViews(text)[0]!;
+          // Symbol and label share one row-shaped item; the label wraps beside the symbol.
+          expect(flatStyle(item)).toMatchObject({ flexDirection: 'row', flex: 1, minWidth: 0 });
+          expect(childViews(item)).toHaveLength(2);
+          expect(flatStyle(childViews(item)[0]!).flexShrink).toBe(0);
+          expect(flatStyle(text)).toMatchObject({ flex: 1, minWidth: 0 });
+        }
+      });
+    });
+
+    it('keeps the compact calendar short without dropping below 44 pt targets', async () => {
+      environment.width = 393;
+      setToday('2026-10-05');
+      await mount(CalendarScreen);
+      await until(() => expect(weekRows()).toHaveLength(6));
+      expect(flatStyle(childViews(weekRows()[0]!)[0]!).minHeight).toBe(44);
+      const control = buttons(t.calendar.previous)[0]!;
+      expect(plainStyle(control.props.style({ pressed: false }))).toMatchObject({
+        minWidth: 44,
+        minHeight: 44,
+      });
+      // The tab bar is laid out below the scroll view, so no tab-bar-sized padding is needed.
+      const scroll = screen.root.find((node) => String(node.type) === 'ScrollView');
+      const content = plainStyle(scroll.props.contentContainerStyle);
+      expect(content.paddingBottom).toBeGreaterThanOrEqual(16);
+      expect(content.paddingBottom).toBeLessThanOrEqual(32);
     });
 
     it('lets legend labels and the entry badge wrap inside their containers', async () => {

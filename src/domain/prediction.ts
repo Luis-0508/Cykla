@@ -72,6 +72,39 @@ export function isUsableCycle(cycle: Cycle): boolean {
 }
 
 /**
+ * Ambiguous intervals remain recorded statistics, but cannot establish a personal
+ * prediction by themselves. A provisional onboarding estimate can still be made,
+ * without resolving whether a period was missed.
+ */
+export function hasOnlyAmbiguousHistory(cycles: Cycle[]): boolean {
+  const usable = cycles.filter(isUsableCycle);
+  return usable.length > 0 && usable.every((cycle) => cycle.possibleMissedPeriod);
+}
+
+/** Keep observed intervals separate from the inputs supporting a date estimate. */
+export function derivePrediction(input: PredictionInput): {
+  cycles: Cycle[];
+  prediction: Prediction | null;
+  predictionState: 'personalized' | 'provisional' | 'none';
+} {
+  const starts = derivePeriodStarts(input.periodDays);
+  const cycles = deriveCycles(starts, input.excludedCycleStarts, {
+    fallbackCycleLength: input.fallbackCycleLength,
+    observedDays: input.observedDays,
+  });
+  if (!starts.length) return { cycles, prediction: null, predictionState: 'none' };
+  const provisional = hasOnlyAmbiguousHistory(cycles) || !cycles.some(isUsableCycle);
+  // Retain the latest episode (including its last bleeding day) for the existing
+  // fallback model's anchor and bleeding guard, without learning from older gaps.
+  const prediction = calculatePrediction(
+    provisional
+      ? { ...input, periodDays: input.periodDays.filter((day) => day >= starts.at(-1)!) }
+      : input,
+  );
+  return { cycles, prediction, predictionState: provisional ? 'provisional' : 'personalized' };
+}
+
+/**
  * The usual cycle length that gaps are compared with: the median of the recorded
  * cycles shorter than 1.6 times the typical length from onboarding, or that typical
  * length itself. Long gaps never feed into it, so several gaps cannot raise the

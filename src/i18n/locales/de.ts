@@ -102,6 +102,9 @@ export const de = {
     edit: 'Eintrag bearbeiten',
   },
   estimate: {
+    provisionalTitle: 'Vorläufige Schätzung',
+    provisionalBody:
+      'Noch nicht genügend eindeutige Zyklen für eine persönliche Prognose. Diese Schätzung basiert vorerst auf deiner angegebenen typischen Zykluslänge. Die dokumentierten Abstände bleiben im Zyklusverlauf erhalten.',
     explanation: (completeCycles: number) =>
       completeCycles < 3
         ? completeCycles === 1
@@ -225,7 +228,7 @@ export const de = {
     likelyMissedPeriod:
       'Etwa doppelt so lang wie üblich: Wahrscheinlich fehlt ein Periodeneintrag. Zählt nicht zur Schätzung.',
     possibleMissedPeriod:
-      'Etwa ein Vielfaches der üblichen Länge: ein langer Zyklus oder ein fehlender Eintrag. Die Schätzung berücksichtigt beides.',
+      'Etwa ein Vielfaches der üblichen Länge: ein langer Zyklus oder ein fehlender Eintrag. Für eine persönliche Prognose reicht dieser Abstand allein nicht aus.',
     include: 'Einbeziehen',
     exclude: 'Ausschließen',
     cycleLengthLabel: (days: number) => `Zykluslänge ${days} ${plural(days, 'Tag', 'Tage')}`,
@@ -234,6 +237,15 @@ export const de = {
       'Veränderungen können normal sein. Bei starken, neuen oder anhaltenden Beschwerden solltest du medizinischen Rat einholen.',
   },
   prediction: {
+    typicalBody:
+      'Für diese vorläufige Schätzung verwenden wir deine angegebene typische Zykluslänge. Dokumentierte mehrdeutige Abstände bleiben im Verlauf erhalten, bestimmen diese Länge aber nicht.',
+    typicalTitle: '2. Angegebene typische Zykluslänge',
+    typicalMetric: (days: number) =>
+      `${plural(days, 'Tag', 'Tage')} als angegebene typische Zykluslänge`,
+    provisionalSpreadBody:
+      'Ohne genügend eindeutige Zyklen verwendet die vorläufige Schätzung den breiteren Anfangszeitraum um deine typische Zykluslänge. Dieser Zeitraum ist keine persönliche Prognose.',
+    provisionalStartsMetric: 'eindeutige vollständige Zyklen als persönliche Grundlage',
+    provisionalSpreadMetric: 'Tage als vorläufiger Rand',
     loading: 'Berechnung wird geladen …',
     error: 'Die Berechnung konnte nicht geladen werden.',
     close: 'Erklärung schließen',
