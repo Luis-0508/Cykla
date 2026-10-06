@@ -1,109 +1,38 @@
 version: 2
+
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
+      interval: daily
+      time: "06:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 100
     groups:
-      expo-sdk:
+      expo-stack:
         patterns:
           - expo
           - expo-*
-          - '@expo/*'
-          - babel-preset-expo
-          - eslint-config-expo
-        update-types:
-          - patch
-      development:
-        dependency-type: development
-        update-types:
-          - minor
-          - patch
-        exclude-patterns:
-          - '@types/react'
-          - '@types/react-dom'
-          - babel-preset-expo
-          - eslint-config-expo
-      application:
-        dependency-type: production
-        update-types:
-          - minor
-          - patch
-        exclude-patterns:
-          - expo
-          - expo-*
-          - '@expo/*'
+          - "@expo/*"
           - react
           - react-dom
           - react-native
           - react-native-*
-          - '@react-native/*'
-          - '@react-native-community/*'
-
-    # Major upgrades remain manual. Expo/React Native versions are additionally
-    # constrained because Expo SDK 57 expects specific compatible versions.
-    ignore:
-      - dependency-name: '*'
-        update-types:
-          - version-update:semver-major
-
-      - dependency-name: expo
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: expo-*
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: '@expo/*'
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: babel-preset-expo
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: eslint-config-expo
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-
-      # These are pinned by Expo SDK compatibility and must be upgraded only as
-      # part of a coordinated Expo SDK upgrade, not by standalone Dependabot PRs.
-      - dependency-name: react
-      - dependency-name: react-dom
-      - dependency-name: react-native
-      - dependency-name: react-native-worklets
-
-      - dependency-name: react-native-*
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: '@react-native/*'
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: '@react-native-community/*'
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: '@types/react'
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
-      - dependency-name: '@types/react-dom'
-        update-types:
-          - version-update:semver-minor
-          - version-update:semver-major
+          - "@react-native/*"
+          - "@react-native-community/*"
+          - "@types/react"
+          - "@types/react-dom"
+          - babel-preset-expo
+          - eslint-config-expo
+    commit-message:
+      prefix: deps
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
-      day: monday
-    groups:
-      actions:
-        patterns:
-          - '*'
+      interval: daily
+      time: "06:10"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 100
+    commit-message:
+      prefix: ci
