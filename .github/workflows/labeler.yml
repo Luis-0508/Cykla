@@ -1,18 +1,47 @@
 name: Pull request labels
+
 on:
   pull_request_target:
     branches: [master]
     types: [opened, synchronize, reopened]
+
 permissions:
   contents: read
+  issues: write
   pull-requests: write
+
 jobs:
   label:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
     steps:
+      - name: Ensure repository labels exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ensure_label() {
+            gh label create "$1" --color "$2" --description "$3" --force
+          }
+
+          ensure_label "ui" "1D76DB" "App screens, components, theme, or localization changes"
+          ensure_label "database" "B60205" "Database schema, persistence, validation, or migration changes"
+          ensure_label "domain" "0E8A16" "Core cycle and application domain logic"
+          ensure_label "prediction" "5319E7" "Cycle prediction and forecast logic or UI"
+          ensure_label "privacy" "C2E0C6" "Privacy, export, app lock, or sensitive-data handling"
+          ensure_label "security" "D93F0B" "Security controls, scanning, or dependency security"
+          ensure_label "documentation" "0075CA" "Documentation-only or documentation-related changes"
+          ensure_label "dependencies" "0366D6" "Dependency manifest, lockfile, or Dependabot changes"
+          ensure_label "tests" "C5DEF5" "Automated tests or test tooling"
+          ensure_label "ci" "000000" "GitHub Actions or repository automation changes"
+
       # Reads configuration from the trusted base branch through GitHub's API.
       # Never check out or run pull request code in this privileged workflow.
-      - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
+      - name: Apply labels from changed files
+        uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
         with:
           sync-labels: false
