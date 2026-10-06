@@ -4,8 +4,8 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: daily
-      time: "06:00"
+      interval: cron
+      cronjob: "0 6 * * *"
       timezone: Europe/Berlin
     open-pull-requests-limit: 100
     groups:
@@ -30,8 +30,8 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: daily
-      time: "06:10"
+      interval: cron
+      cronjob: "10 6 * * *"
       timezone: Europe/Berlin
     open-pull-requests-limit: 100
     commit-message:
