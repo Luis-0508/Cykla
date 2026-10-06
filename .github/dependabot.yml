@@ -5,7 +5,7 @@ updates:
     directory: /
     schedule:
       interval: cron
-      cronjob: "0 6 * * *"
+      cronjob: '0 6 * * *'
       timezone: Europe/Berlin
     open-pull-requests-limit: 100
     groups:
@@ -13,15 +13,15 @@ updates:
         patterns:
           - expo
           - expo-*
-          - "@expo/*"
+          - '@expo/*'
           - react
           - react-dom
           - react-native
           - react-native-*
-          - "@react-native/*"
-          - "@react-native-community/*"
-          - "@types/react"
-          - "@types/react-dom"
+          - '@react-native/*'
+          - '@react-native-community/*'
+          - '@types/react'
+          - '@types/react-dom'
           - babel-preset-expo
           - eslint-config-expo
     commit-message:
@@ -31,7 +31,7 @@ updates:
     directory: /
     schedule:
       interval: cron
-      cronjob: "10 6 * * *"
+      cronjob: '10 6 * * *'
       timezone: Europe/Berlin
     open-pull-requests-limit: 100
     commit-message:
