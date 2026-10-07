@@ -1,5 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import {\n  Pressable,\n  ScrollView,\n  type ScrollViewInstance,\n  StyleSheet,\n  useWindowDimensions,\n  View,\n} from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  type ScrollViewInstance,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { addDays, parseDateOnly, todayDate } from '@/domain/dateOnly';
 import type { DailyEntry } from '@/domain/models';
 import { useI18n } from '@/i18n/I18nProvider';
