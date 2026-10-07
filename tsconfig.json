@@ -5,23 +5,10 @@
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts",
-    "**/*.mts"
-  ],
-  "exclude": [
-    "node_modules",
-    "video"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "**/*.mts"],
+  "exclude": ["node_modules", "video"]
 }
