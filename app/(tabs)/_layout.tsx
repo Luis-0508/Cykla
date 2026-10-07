@@ -38,7 +38,7 @@ export default function TabLayout() {
           return (
             <Ionicons
               name={routeIcons[focused ? 1 : 0]}
-              color={color}
+              color={color as string}
               size={route.name === 'log' ? size + 6 : size}
             />
           );
