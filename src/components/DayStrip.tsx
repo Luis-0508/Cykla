@@ -1,5 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  type ScrollViewInstance,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { addDays, parseDateOnly, todayDate } from '@/domain/dateOnly';
 import type { DailyEntry } from '@/domain/models';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -32,7 +39,7 @@ export function DayStrip({ selectedDate, onSelect, entries }: DayStripProps) {
     addDays(selectedDate, index - DAYS_BEFORE),
   );
   const entryMap = new Map(entries.map((entry) => [entry.date, entry]));
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   // The selected day sits in the middle of the strip, which starts off-screen on narrow
   // phones. The offset must be known before the first frame, which comes before
   // onLayout: until measured, the strip spans the window inside the screen gutter.
