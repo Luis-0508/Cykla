@@ -1,0 +1,8 @@
+# claude-kanban runtime artifacts — machine-local, never committed. (board.json, merge.sh and this file ARE committed.)
+.lock
+*.tmp
+serve.pid
+claims.json
+land-state.json
+# Deprecated local-merge helper from `init`; work lands through pull requests.
+merge.sh

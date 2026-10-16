@@ -36,6 +36,15 @@ external reviewer is required for solo development. Do not commit local exports,
 databases, secrets or `.env` files. Repository settings are described in
 [docs/GITHUB_SETUP.md](docs/GITHUB_SETUP.md).
 
+## Optional tooling
+
+The maintainer's default workflow uses Claude Code with a local Kanban board
+(`CLAUDE.md`, `.claude/`, `.kanban/`) and the project memory in `docs/`.
+None of it is required to contribute: the board is plain JSON you can read, and
+these files do not affect building or testing the app. Please do not edit
+`.kanban/` in your pull requests. See [docs/WORKFLOW.md](docs/WORKFLOW.md) for
+how the pieces fit together.
+
 ## Project conventions
 
 - **Node and Expo:** use Node 24.12 or newer within Node 24; CI reads

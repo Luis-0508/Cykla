@@ -1,0 +1,14 @@
+{
+  "worktree_root": "/tmp/claude-kanban",
+  "copy_to_worktrees": [],
+  "max_workers": 1,
+  "idle_time": 300,
+  "port": null,
+  "main_branch": "master",
+  "poll_interval": 60,
+  "minesweeper": false,
+  "minesweeper_label": "autofix",
+  "minesweeper_flag_labels": ["minesweeperFailed","possiblyDangerous"],
+  "models": [],
+  "auto_review": false
+}

@@ -5,3 +5,8 @@ coverage/
 LICENSE
 # Separate Remotion project with its own tooling
 video/
+# Workflow files copied verbatim from the shared project template
+.claude/hooks/
+.claude/skills/
+scripts/workflow/
+.kanban/
