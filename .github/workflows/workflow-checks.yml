@@ -1,0 +1,52 @@
+name: Workflow checks
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - '.claude/**'
+      - '.gitattributes'
+      - 'docs/**'
+      - 'scripts/workflow/**'
+      - '.github/workflows/workflow-checks.yml'
+  push:
+    branches:
+      - master
+    paths:
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - '.claude/**'
+      - '.gitattributes'
+      - 'docs/**'
+      - 'scripts/workflow/**'
+      - '.github/workflows/workflow-checks.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Hook, merge driver and config (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Run workflow tests
+        run: node --test "scripts/workflow/*.test.mjs"

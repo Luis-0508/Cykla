@@ -1,6 +1,6 @@
 ## Change and reason
 
-<!-- What changed, and why? See CONTRIBUTING.md. -->
+<!-- What changed, and why? Reference the issue (Closes #N) or board ticket (K-N). See CONTRIBUTING.md. -->
 
 ## Validation
 

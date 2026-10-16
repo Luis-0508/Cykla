@@ -1,0 +1,131 @@
+{
+  "schema": 2,
+  "version": 8,
+  "next_ticket_seq": 8,
+  "next_epic_seq": 2,
+  "columns": [
+    {
+      "id": "todo",
+      "title": "To do"
+    },
+    {
+      "id": "doing",
+      "title": "Doing"
+    },
+    {
+      "id": "review",
+      "title": "Review"
+    },
+    {
+      "id": "done",
+      "title": "Done"
+    }
+  ],
+  "epics": [
+    {
+      "id": "EP-1",
+      "title": "0.2 Hardening",
+      "color": "#7c9cf5",
+      "status": "stub",
+      "body": "The version in progress per `docs/ROADMAP.md`, with the open release items from the README project status and `docs/HARDENING.md`. Only invented data on devices and in tests; no backend, account, analytics or network transmission."
+    }
+  ],
+  "tickets": [
+    {
+      "id": "K-1",
+      "title": "Encrypted local database and backup strategy",
+      "epic": "EP-1",
+      "status": "stub",
+      "body": "Roadmap 0.2. The database is unencrypted; restoring a validated JSON backup landed in PR #24. HARDENING.md lists backup strategy and threat modeling as open.\n\n## Acceptance criteria (draft)\n- [ ] Threat model and encryption approach agreed with the maintainer and recorded as a decision record\n- [ ] Existing installations migrate without data loss (migration and failed-migration tests)\n- [ ] Backup strategy documented in PRIVACY.md and DATABASE.md\n- [ ] Works on iOS, Android and web or the web limitation is stated",
+      "labels": [
+        "privacy",
+        "database"
+      ],
+      "column": {
+        "id": "todo"
+      }
+    },
+    {
+      "id": "K-2",
+      "title": "Automated component and end-to-end tests",
+      "epic": "EP-1",
+      "status": "stub",
+      "body": "Roadmap 0.2. React Native UI is not covered by automated tests yet.\n\n## Acceptance criteria (draft)\n- [ ] Tool choice agreed (decision record if it adds a dependency)\n- [ ] Component tests for the day editor and calendar; one end-to-end flow (onboarding, log a day, see the estimate)\n- [ ] Runs in CI with synthetic data only",
+      "labels": [
+        "tests"
+      ],
+      "column": {
+        "id": "todo"
+      }
+    },
+    {
+      "id": "K-3",
+      "title": "Screen-reader and Dynamic Type review",
+      "epic": "EP-1",
+      "status": "stub",
+      "body": "Roadmap 0.2: comprehensive screen-reader and Dynamic Type review.\n\n## Acceptance criteria (draft)\n- [ ] Every screen checked with VoiceOver and TalkBack and at the largest font sizes\n- [ ] Findings fixed: labels, touch targets, contrast, truncation\n- [ ] Copy changes added to every locale",
+      "labels": [
+        "accessibility"
+      ],
+      "column": {
+        "id": "todo"
+      }
+    },
+    {
+      "id": "K-4",
+      "title": "Device validation of app lock, export cleanup and restore",
+      "epic": "EP-1",
+      "status": "stub",
+      "body": "README project status and HARDENING.md \"Privacy and device validation still required\" (steps 1 to 5), with invented data on real iOS and Android devices and the web build.\n\n## Acceptance criteria (draft)\n- [ ] App lock lifecycle checked in a development build (backgrounding, app switcher, cancelled and failed authentication)\n- [ ] Export sharing and cleanup checked on both platforms\n- [ ] JSON v1/v2 restore failures leave data unchanged\n- [ ] Database upgrade on Expo SQLite and web WASM\n- [ ] Results recorded in HARDENING.md",
+      "labels": [
+        "privacy",
+        "devices"
+      ],
+      "column": {
+        "id": "todo"
+      }
+    },
+    {
+      "id": "K-5",
+      "title": "Resolve the remaining dependency audit findings",
+      "epic": "EP-1",
+      "status": "stub",
+      "body": "HARDENING.md dependency audit: findings via Expo Router (`decode-uri-component`), `@expo/cli` (`node-forge`) and native tooling (`uuid`); the PostCSS override may be removable. The 2026-10-02 audit predates the Expo SDK 58 alignment (PR #64).\n\n## Acceptance criteria (draft)\n- [ ] `npm audit` re-run on the current SDK and the table in HARDENING.md updated\n- [ ] Compatible upgrades applied; no `npm audit fix --force` or SDK downgrade\n- [ ] Accepted risks documented with reasons\n- [ ] Malformed deep links tested if the router finding remains",
+      "labels": [
+        "dependencies",
+        "security"
+      ],
+      "column": {
+        "id": "todo"
+      }
+    },
+    {
+      "id": "K-6",
+      "title": "Safe migrations and recovery tests",
+      "epic": "EP-1",
+      "status": "stub",
+      "body": "Roadmap 0.2: safe migrations and recovery tests.\n\n## Acceptance criteria (draft)\n- [ ] Tests for interrupted and failed migrations resuming at the failed version\n- [ ] Recovery path for unreadable rows documented and tested\n- [ ] DATABASE.md updated",
+      "labels": [
+        "database",
+        "tests"
+      ],
+      "column": {
+        "id": "todo"
+      }
+    },
+    {
+      "id": "K-7",
+      "title": "Medical, legal and privacy review",
+      "epic": "EP-1",
+      "status": "stub",
+      "body": "Roadmap 0.2 and README project status: medical, legal and privacy reviews listed in HARDENING.md before a public release. Needs outside reviewers; scope to be agreed with the maintainer.\n\n## Acceptance criteria (draft)\n- [ ] Reviewers and scope agreed\n- [ ] Findings recorded in HARDENING.md and fixed or accepted with reasons\n- [ ] Prediction wording and PRIVACY.md confirmed",
+      "labels": [
+        "privacy",
+        "legal"
+      ],
+      "column": {
+        "id": "todo"
+      }
+    }
+  ]
+}
