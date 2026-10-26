@@ -8,6 +8,10 @@ updates:
       cronjob: '0 6 * * *'
       timezone: Europe/Berlin
     open-pull-requests-limit: 10
+    # The Expo SDK pins these; upgrade them with `npx expo install --fix` instead.
+    ignore:
+      - dependency-name: react
+      - dependency-name: react-dom
     groups:
       expo-stack:
         patterns:
