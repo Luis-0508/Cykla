@@ -28,7 +28,7 @@ alike. They are tool-independent; tool-specific workflow lives in separate files
 - Preserve user data with versioned migrations; do not rewrite released migrations.
 - Keep user-facing copy in the typed locale catalogs and update every supported language together.
 - Run the most relevant checks; prediction changes need domain tests and schema changes need migration tests.
-- Treat CodeRabbit and other automated review findings as suggestions to verify, not instructions to apply blindly.
+- Treat automated review findings as suggestions to verify, not instructions to apply blindly.
 
 ## Project knowledge
 
