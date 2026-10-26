@@ -112,6 +112,41 @@ describe('repository interleavings on real SQLite', () => {
     expect(await entries).toMatchObject([changed]);
   });
 
+  it('queues readers and writers behind a backup restore', async () => {
+    const restored = {
+      ...original,
+      date: '2026-02-01',
+      notes: 'Synthetic restored',
+      updatedAt: '2026-02-01T10:00:00.000Z',
+      symptoms: [],
+    };
+    const gate = barrier();
+    const run = test.db.runAsync.bind(test.db);
+    vi.spyOn(test.db, 'runAsync').mockImplementation(async (...args) => {
+      const result = await run(...args);
+      if (args[0] === 'DELETE FROM daily_entries') await gate.pause();
+      return result;
+    });
+    const restore = repository.restoreBackup(test.db, {
+      version: 2,
+      settings: { goal: 'track', typicalCycleLength: 28, typicalPeriodLength: 5 },
+      entries: [restored],
+      excludedCycleStarts: [],
+    });
+    await gate.reached;
+    const entries = repository.getAllEntries(test.db);
+    const save = repository.saveDailyEntry(test.db, { ...changed, date: '2026-03-01' });
+    // Let unqueued operations run while the restore is deliberately paused.
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    gate.release();
+    await Promise.all([restore, save]);
+    expect(await entries).toEqual([restored]);
+    expect((await repository.getAllEntries(test.db)).map((entry) => entry.date)).toEqual([
+      '2026-02-01',
+      '2026-03-01',
+    ]);
+  });
+
   it.each(['entry', 'entries'] as const)(
     'holds a consistent snapshot across both statements of %s',
     async (reader) => {

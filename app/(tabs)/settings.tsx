@@ -193,9 +193,11 @@ export default function SettingsScreen() {
         text: t.settings.deleteConfirm,
         style: 'destructive',
         onPress: () => {
-          void disableDailyReminder()
+          // Delete first: if deletion fails, the data must stay behind the app lock.
+          void resetData
+            .mutateAsync()
+            .then(() => disableDailyReminder())
             .then(() => setAppLockEnabled(false))
-            .then(() => resetData.mutateAsync())
             .then(() => router.replace('/onboarding'))
             .catch(() => Alert.alert(t.settings.deleteAll, t.settings.deleteError));
         },
