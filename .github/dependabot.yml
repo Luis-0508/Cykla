@@ -37,7 +37,7 @@ updates:
     groups:
       patch-updates:
         patterns:
-          - "*"
+          - '*'
         update-types:
           - patch
     commit-message:
