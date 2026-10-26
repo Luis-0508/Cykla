@@ -38,14 +38,16 @@ function createId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+async function readSettings(db: SQLiteDatabase): Promise<AppSettings> {
+  const rows = await db.getAllAsync<{ key: string; value: string }>(
+    'SELECT key, value FROM app_settings',
+  );
+  const values = Object.fromEntries(rows.map((row) => [row.key, row.value]));
+  return parseSettings(values);
+}
+
 export async function getSettings(db: SQLiteDatabase): Promise<AppSettings> {
-  return withDatabaseAccess(db, async () => {
-    const rows = await db.getAllAsync<{ key: string; value: string }>(
-      'SELECT key, value FROM app_settings',
-    );
-    const values = Object.fromEntries(rows.map((row) => [row.key, row.value]));
-    return parseSettings(values);
-  });
+  return withDatabaseAccess(db, () => readSettings(db));
 }
 
 async function writeSetting(
@@ -236,20 +238,22 @@ export type BackupData = {
  * this device and must stay in sync with the OS reminder and the UI.
  */
 export async function restoreBackup(db: SQLiteDatabase, backup: BackupData): Promise<void> {
-  await db.withTransactionAsync(async () => {
-    const device = await getSettings(db);
+  // Holds the shared connection like every other operation, so no concurrent read
+  // or write can run inside, or observe, the half-replaced data.
+  await withDatabaseTransaction(db, async () => {
+    const device = await readSettings(db);
     await db.runAsync('DELETE FROM symptom_entries');
     await db.runAsync('DELETE FROM daily_entries');
     await db.runAsync('DELETE FROM cycle_exclusions');
     await db.runAsync('DELETE FROM app_settings');
 
-    await setSetting(db, 'onboardingCompleted', true);
-    await setSetting(db, 'goal', backup.settings.goal);
-    await setSetting(db, 'typicalCycleLength', backup.settings.typicalCycleLength);
-    await setSetting(db, 'typicalPeriodLength', backup.settings.typicalPeriodLength);
-    await setSetting(db, 'theme', device.theme);
-    await setSetting(db, 'language', device.language);
-    await setSetting(db, 'dailyReminderEnabled', device.dailyReminderEnabled);
+    await writeSetting(db, 'onboardingCompleted', true);
+    await writeSetting(db, 'goal', backup.settings.goal);
+    await writeSetting(db, 'typicalCycleLength', backup.settings.typicalCycleLength);
+    await writeSetting(db, 'typicalPeriodLength', backup.settings.typicalPeriodLength);
+    await writeSetting(db, 'theme', device.theme);
+    await writeSetting(db, 'language', device.language);
+    await writeSetting(db, 'dailyReminderEnabled', device.dailyReminderEnabled);
 
     for (const entry of backup.entries) {
       await db.runAsync(
