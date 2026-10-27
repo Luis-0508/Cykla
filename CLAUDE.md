@@ -9,14 +9,13 @@ delegation) belong in the user's global `~/.claude/CLAUDE.md`, not here.
 
 ## Sources of truth
 
-| What                                  | Where                                       | Authority              |
-| ------------------------------------- | ------------------------------------------- | ---------------------- |
-| Code, history, branches, PRs          | git and GitHub                              | Highest. Always wins.  |
-| Development tasks                     | `.kanban/board.json` (claude-kanban plugin) | Live task state        |
-| Narrative state, blockers, priorities | `docs/PROJECT_STATE.md`                     | Snapshot; may be stale |
-| Structure and data flow               | `docs/ARCHITECTURE.md`                      | Explanation            |
-| Reasons behind choices                | `docs/DECISIONS/`                           | Decision records       |
-| Dependabot, outside issues and PRs    | GitHub issues and PRs                       | Maintenance only       |
+| What                                  | Where                        | Authority              |
+| ------------------------------------- | ---------------------------- | ---------------------- |
+| Code, history, branches, PRs          | git and GitHub               | Highest. Always wins.  |
+| Development tasks                     | GitHub issues and milestones | Live task state        |
+| Narrative state, blockers, priorities | `docs/PROJECT_STATE.md`      | Snapshot; may be stale |
+| Structure and data flow               | `docs/ARCHITECTURE.md`       | Explanation            |
+| Reasons behind choices                | `docs/DECISIONS/`            | Decision records       |
 
 When notes disagree with the repository, act on the facts and correct the note.
 
@@ -24,79 +23,50 @@ When notes disagree with the repository, act on the facts and correct the note.
 
 A `SessionStart` hook (`.claude/hooks/session-context.mjs`) runs on startup,
 resume, clear and after compaction. It injects branch and sync state,
-uncommitted files, recent commits, the board's Doing / Review / top To do
-tickets and the content of `docs/PROJECT_STATE.md`. Do not re-read what it
+uncommitted files, recent commits, open pull requests, issues assigned to the
+user and the content of `docs/PROJECT_STATE.md`. Do not re-read what it
 already showed. Then:
 
 1. If it reports the project memory as **not initialized**, tell the user and
-   offer the `init-project` skill. One go-ahead covers the whole setup
-   (memory, documentation, Kanban board, merge driver); do not initialize
-   without it. If it reports the **Kanban board missing** in an initialized
-   project, offer to create it the same way.
-2. Reconcile: tickets in Doing or Review must match real branches and PRs
-   (`gh pr list --state all --limit 10` only when the output raises doubts).
-   Fix a wrong board or state file and say so.
+   offer the `init-project` skill; do not initialize without a go-ahead.
+2. Reconcile: "Active work" in `PROJECT_STATE.md` must match the open pull
+   requests and assigned issues. Fix a stale state file and say so.
 3. Handle the user's request. Read `ARCHITECTURE.md` or decision records only
-   when the task touches that area. When asked "what next", propose the top
-   unblocked To do ticket.
+   when the task touches that area. When asked "what next", propose the first
+   unblocked issue from "Next priorities" in `PROJECT_STATE.md`.
 
 If the hook output is missing (for example Node.js is unavailable), read
 `docs/PROJECT_STATE.md` once and run `git status` instead.
 
-## Task tracking with the Kanban board
+## Task tracking with GitHub issues
 
-The Kanban board is a default part of this workflow, like the project memory
-and the session hook. It is optional only for external contributors and
-environments without the maintainer's plugins; building, testing and
-contributing never depend on it.
-
-When the `kanban_*` tools are unavailable, say once per session that the
-claude-kanban plugin is missing and point to "Installing the Kanban plugin" in
-`docs/WORKFLOW.md`. Then work normally: read `.kanban/board.json` directly if
-needed and never hand-edit it.
+Planned work lives in GitHub issues, grouped by milestone (one milestone per
+larger feature). Each issue fits roughly one pull request and holds the goal,
+acceptance criteria and a "Depends on" list. Issues migrated from the former
+Kanban board say so in their first line ("Migrated from Kanban ticket K-n");
+older commits and documents still use those K-n IDs.
 
 Trivial work (questions, typos, one-line fixes, read-only investigation) gets
-no ticket. For everything else:
+no issue. For everything else:
 
-1. **Check first.** `kanban_board`, or `kanban_ticket` / `kanban_epic` for one
-   slice. Reuse a matching ticket instead of creating a duplicate.
-2. **Ticket.** `kanban_create_ticket` with a clear title and a body holding
-   the goal and a checklist of acceptance criteria. Attach it to an epic when
-   it belongs to a larger feature. Keep the default `review` status so the
-   maintainer vets it; use `ready` only for a spec the user already agreed to
-   in the conversation, `stub` when it still needs refining.
-3. **Break down** large features into an epic with tickets that each fit
-   roughly one pull request, linked with `depends_on`. Create only what is
-   planned now; no speculative tickets.
-4. **Prioritize** by position in To do (top = next). Propose an order; do not
-   silently reshuffle the maintainer's.
-5. **Start.** `kanban_claim` moves the ticket to Doing. Work on one branch per
-   ticket (`<type>/K-<n>-<slug>`) or the session's existing worktree. Use the
-   plugin's own worktrees (`kanban_worktree_start`) only inside a
-   `/kanban:work` loop the user started.
-6. **Progress and blockers.** `kanban_note` at milestones (approach chosen,
-   partial result, scope change), not per commit. When blocked, note what
-   blocks it, what was tried and what is needed, `kanban_release` the ticket,
-   and record the blocker in `PROJECT_STATE.md`.
-7. **Review.** After opening the PR, `kanban_move` the ticket to `review`
-   with its branch and note the PR URL. The PR body names the ticket (`K-N`)
-   and any issue (`Closes #N`).
-8. **Done** is never set by hand: the board moves a ticket once its merge
-   reaches local `master` (pull after merging). Never set `auto_merge` or
-   enable `auto_review`; merging stays the maintainer's decision.
+1. **Check first.** `gh issue view N` for the issue at hand, or
+   `gh issue list --milestone "<name>"` for one slice. Avoid unfiltered lists
+   and `--json body` dumps of many issues. Reuse a matching issue instead of
+   creating a duplicate.
+2. **New work.** Ask before creating issues; they are public. Use a clear
+   title, a body with goal, acceptance criteria and "Depends on #N", a
+   milestone and labels. Create only what is planned now.
+3. **Start.** Assign the issue to the maintainer (`gh issue edit N --add-assignee @me`)
+   and work on one branch per issue (`<type>/<n>-<slug>`).
+4. **Progress and blockers.** Comment on the issue at milestones (approach
+   chosen, scope change), not per commit. Record blockers in
+   `PROJECT_STATE.md` as well.
+5. **Review.** The PR body says `Closes #N`; GitHub closes the issue when the
+   maintainer merges.
 
-Maintenance (Dependabot updates, outside issues and PRs) stays on GitHub and
-gets no board ticket. An outside issue accepted as development work gets a
-ticket that mentions `GH #N`.
-
-The board lives in the main working tree's `.kanban/board.json`, also during
-worktree sessions. Commit board changes from there, never a worktree's stale
-copy. Merges and rebases go through the ID-based merge driver in
-`scripts/workflow/`; if the hook says it is not configured, tell the user. When
-the driver flags a merge, check the listed tickets and report them. Never
-resolve the file by keeping one whole side (`--ours`, `--theirs`, "newer
-board"): that drops the other side's tickets and notes. Details:
-`docs/WORKFLOW.md`.
+Priorities are the order in "Next priorities" in `PROJECT_STATE.md`; propose
+changes to it, do not silently reshuffle it. Dependabot and outside
+contributions follow the same GitHub flow.
 
 ## Project memory upkeep
 
@@ -125,8 +95,8 @@ available-skills list instead of assuming a skill exists. Typical matches:
 
 Invoke a skill once per task phase, not repeatedly, and never only to show it
 exists. Skills that deploy, publish, send messages, schedule jobs, delegate to
-external workers or run autonomous loops (for example `/kanban:work`) run only
-when the user asks for them explicitly.
+external workers or run autonomous loops run only when the user asks for them
+explicitly.
 
 ## Explaining substantial changes
 

@@ -45,7 +45,7 @@ The repository is the source of truth. Short documents in `docs/` record what th
 - When a document disagrees with git or the code, trust the repository and correct the document.
 - Update `ARCHITECTURE.md` when modules, boundaries or data flow change. Add a decision record when choosing between real alternatives a future maintainer might question (new dependency, architecture boundary, data format, workflow). Do not rewrite accepted records; supersede them with a new one.
 - Keep these documents short and factual. Do not document unimplemented features.
-- `docs/WORKFLOW.md` explains how these documents, the maintainer's task board (not required for contributors) and the workflow checks fit together.
+- `docs/WORKFLOW.md` explains how these documents, GitHub issues and the workflow checks fit together.
 
 ## Git and pull requests
 

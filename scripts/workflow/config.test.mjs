@@ -54,16 +54,6 @@ test('every project skill has valid frontmatter', () => {
   }
 })
 
-test('the board merge driver is wired up consistently', () => {
-  assert.match(read('.gitattributes'), /^\.kanban\/board\.json merge=kanban-board$/m)
-  const command = 'node scripts/workflow/kanban-merge-driver.mjs %O %A %B'
-  for (const doc of ['docs/WORKFLOW.md', '.claude/skills/init-project/SKILL.md']) {
-    assert.ok(read(doc).includes(command), `${doc} must document the driver command`)
-  }
-  assert.ok(existsSync(join(ROOT, 'scripts', 'workflow', 'kanban-merge-driver.mjs')))
-  assert.doesNotMatch(read('CLAUDE.md'), /keep the newer board/i)
-})
-
 test('the project state stays small enough to inject into every session', () => {
   const lines = read('docs/PROJECT_STATE.md').split(/\r?\n/).length
   assert.ok(lines <= 100, `docs/PROJECT_STATE.md has ${lines} lines; condense it`)
@@ -76,37 +66,11 @@ test('workflow files contain no personal paths', () => {
   }
 })
 
-test('the template ships no project state; an initialized project has its own board', () => {
-  const initialized = !read('docs/PROJECT_STATE.md').includes('TEMPLATE: NOT INITIALIZED')
-  const hasBoard = existsSync(join(ROOT, '.kanban', 'board.json'))
-  if (initialized) {
-    assert.ok(hasBoard, 'an initialized project must have its own .kanban/board.json (see init-project)')
-  } else {
-    assert.ok(!existsSync(join(ROOT, '.kanban')), 'the template must not contain a board or board configuration')
+test('no Kanban board or merge driver remains; tasks live in GitHub issues', () => {
+  assert.ok(!existsSync(join(ROOT, '.kanban')), 'tasks are tracked in GitHub issues, not a local board')
+  if (existsSync(join(ROOT, '.gitattributes'))) assert.doesNotMatch(read('.gitattributes'), /kanban/i)
+  for (const file of ['CLAUDE.md', 'docs/WORKFLOW.md', '.claude/hooks/session-context.mjs', '.claude/skills/init-project/SKILL.md']) {
+    assert.doesNotMatch(read(file), /kanban_\w+|\/kanban:|board\.json/, `${file} still refers to the Kanban board`)
   }
-})
-
-test('Kanban is part of the default initialization, not a separate opt-in', () => {
-  const skill = read('.claude/skills/init-project/SKILL.md')
-  assert.match(skill, /Run the `kanban:init` skill/)
-  assert.match(skill, /Do not ask separately\s+whether they want a board/)
-  assert.match(skill, /To do, Doing, Review and Done/)
-  assert.match(skill, /only from work the user actually planned/)
-  assert.match(skill, /plugin is missing, stop/)
-  assert.match(skill, /Never report it\s+as complete with a step skipped/)
-  assert.doesNotMatch(skill, /optionally create|\(optional\)|wants a board:/i)
-  assert.match(skill, /^description: .*Kanban board/m)
-
-  const claude = read('CLAUDE.md')
-  assert.match(claude, /The Kanban board is a default part of this workflow/)
-  assert.match(claude, /optional only for external contributors/)
-  assert.doesNotMatch(claude, /do not create it unasked/)
-})
-
-test('the plugin installation procedure is documented, not forced on contributors', () => {
-  const workflow = read('docs/WORKFLOW.md')
-  assert.match(workflow, /## Installing the Kanban plugin/)
-  assert.ok(workflow.includes('claude plugin marketplace add CjS77/claude-kanban'))
-  assert.ok(workflow.includes('claude plugin install kanban@claude-kanban'))
-  assert.match(read('CONTRIBUTING.md'), /None of it is required to contribute/)
+  assert.match(read('CONTRIBUTING.md'), /None\s+of\s+the\s+tooling\s+is\s+required\s+to\s+contribute/)
 })
