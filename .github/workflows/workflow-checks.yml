@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   test:
-    name: Hook, merge driver and config (${{ matrix.os }})
+    name: Hook and config (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5
     strategy:

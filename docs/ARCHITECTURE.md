@@ -74,13 +74,13 @@ export files, applies the app lock on foregrounding and refreshes the reminder t
 
 ## Testing
 
-| Layer                    | Where                                    | Covers                                                                         |
-| ------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| Unit (Vitest)            | `src/**/*.test.ts(x)`                    | Dates, prediction edge cases, statistics, i18n, roadmap config                 |
-| SQLite integration       | `src/database/*.test.ts` (`node:sqlite`) | Migrations, repository operations, read validation, interleaving               |
-| Services                 | `src/services/*.test.ts`                 | Export serialization and cleanup, backup parsing, app lock, reminders          |
-| Bundle smoke             | `npm run build:smoke`                    | `expo export` for all platforms                                                |
-| Workflow (`node --test`) | `scripts/workflow/*.test.mjs`            | Development tooling only: session hook, board merge driver, Claude Code config |
+| Layer                    | Where                                    | Covers                                                                |
+| ------------------------ | ---------------------------------------- | --------------------------------------------------------------------- |
+| Unit (Vitest)            | `src/**/*.test.ts(x)`                    | Dates, prediction edge cases, statistics, i18n, roadmap config        |
+| SQLite integration       | `src/database/*.test.ts` (`node:sqlite`) | Migrations, repository operations, read validation, interleaving      |
+| Services                 | `src/services/*.test.ts`                 | Export serialization and cleanup, backup parsing, app lock, reminders |
+| Bundle smoke             | `npm run build:smoke`                    | `expo export` for all platforms                                       |
+| Workflow (`node --test`) | `scripts/workflow/*.test.mjs`            | Development tooling only: session hook and Claude Code config         |
 
 React Native UI has no automated tests yet. CI (`.github/workflows/ci.yml`) runs typecheck,
 lint, format, tests, coverage, Expo Doctor and the bundle export on pull requests to
