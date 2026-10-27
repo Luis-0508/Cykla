@@ -1,10 +1,11 @@
-// SessionStart hook: prints live git, board and project-state context so a new,
-// resumed or compacted Claude Code session can continue without re-reading
-// files. Local reads only, no network, no dependencies; it never fails the
-// session and stays silent about anything it cannot read.
+// SessionStart hook: prints live git, GitHub and project-state context so a
+// new, resumed or compacted Claude Code session can continue without
+// re-reading files. No dependencies; the only network access is two short gh
+// calls. It never fails the session and stays silent about anything it cannot
+// read.
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { join } from 'node:path'
 
 const STATE_FILE = 'docs/PROJECT_STATE.md'
 const NOT_INITIALIZED = 'TEMPLATE: NOT INITIALIZED'
@@ -49,41 +50,30 @@ if (git('rev-parse', '--is-inside-work-tree') !== 'true') {
   if (recent) lines.push('', 'Recent commits:', ...recent.split('\n').map((l) => `  ${l}`))
 }
 
-// The board lives in the main working tree, even when this session runs in a worktree.
-const commonDir = git('rev-parse', '--path-format=absolute', '--git-common-dir')
-const boardPath = join(commonDir ? dirname(resolve(commonDir)) : root, '.kanban', 'board.json')
-if (existsSync(boardPath)) {
+// Open pull requests and issues assigned to the user, from GitHub. Skipped
+// silently when gh is missing, signed out, offline or slow.
+const gh = (...args) => {
+  if (process.env.SESSION_CONTEXT_OFFLINE) return null
   try {
-    const board = JSON.parse(readFileSync(boardPath, 'utf8'))
-    const tickets = board.tickets ?? []
-    const done = new Set(tickets.filter((t) => t.column?.id === 'done').map((t) => t.id))
-    const show = (t) => {
-      const blocked = (t.depends_on ?? []).some((d) => !done.has(d)) ? ' [blocked]' : ''
-      const owner = t.column?.owner ? ` @${t.column.owner}` : ''
-      return `  ${t.id} (${t.status})${owner}${blocked}: ${t.title}`
-    }
-    lines.push('', 'Kanban board:')
-    for (const column of ['doing', 'review', 'todo']) {
-      const inColumn = tickets.filter((t) => t.column?.id === column)
-      const shown = column === 'todo' ? inColumn.slice(0, 3) : inColumn
-      lines.push(`${column}: ${inColumn.length ? '' : 'none'}`, ...shown.map(show))
-      if (shown.length < inColumn.length) lines.push(`  … ${inColumn.length - shown.length} more`)
-    }
+    const out = execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 4000 })
+    return JSON.parse(out)
   } catch {
-    lines.push('', `Kanban board at ${boardPath} could not be read.`)
+    return null
   }
-  if (!git('config', '--get', 'merge.kanban-board.driver')) {
-    lines.push('Board merge driver is not configured in this clone; see "Kanban board merges" in docs/WORKFLOW.md.')
-  }
+}
+const prs = gh('pr', 'list', '--limit', '5', '--json', 'number,title,headRefName,isDraft')
+const issues = gh('issue', 'list', '--assignee', '@me', '--limit', '5', '--json', 'number,title')
+if (prs) {
+  lines.push('', `Open pull requests: ${prs.length ? '' : 'none'}`,
+    ...prs.map((p) => `  #${p.number}${p.isDraft ? ' (draft)' : ''} ${p.headRefName}: ${p.title}`))
+}
+if (issues) {
+  lines.push('', `Issues assigned to you: ${issues.length ? '' : 'none'}`,
+    ...issues.map((i) => `  #${i.number}: ${i.title}`))
 }
 
 const statePath = join(root, STATE_FILE)
 const state = existsSync(statePath) ? readFileSync(statePath, 'utf8') : null
-if (!existsSync(boardPath)) {
-  lines.push('', state !== null && !state.includes(NOT_INITIALIZED)
-    ? 'Kanban board missing (.kanban/board.json): it is part of the default workflow; see the init-project skill.'
-    : 'No Kanban board yet; the init-project skill creates it.')
-}
 if (state !== null) {
   if (state.includes(NOT_INITIALIZED)) {
     lines.push('', `Project memory is NOT INITIALIZED: ${STATE_FILE} is still the template.`)
