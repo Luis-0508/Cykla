@@ -214,9 +214,9 @@ npm ci
 npm run tunnel
 ```
 
-This starts Expo with an ngrok tunnel through the project-local `@expo/ngrok`
-dev dependency, so no global install or interactive prompt is needed. Scan the
-printed QR code or open the `exp://…` URL in Expo Go. The tunnel only serves the
+This starts Expo's own tunnel (`@expo/ws-tunnel`). Its `ws@^8` peer is a direct
+dev dependency because `legacy-peer-deps` would otherwise leave it on the hoisted
+`ws@7` used by Metro. Scan the printed QR code or open the `exp://…` URL in Expo Go. The tunnel only serves the
 JavaScript bundle; app data stays in local SQLite on the phone.
 
 ### Web preview
@@ -238,7 +238,7 @@ On Windows, [`scripts/windows/start-web.bat`](scripts/windows/start-web.bat) lau
 | Command                 | Purpose                                                 |
 | ----------------------- | ------------------------------------------------------- |
 | `npm start`             | Start the Expo dev server                               |
-| `npm run tunnel`        | Start the Expo dev server with an ngrok tunnel          |
+| `npm run tunnel`        | Start the Expo dev server with an Expo tunnel           |
 | `npm run android`       | Start and open on Android                               |
 | `npm run ios`           | Start and open on iOS                                   |
 | `npm run web`           | Web preview with the required headers on port 8082      |
