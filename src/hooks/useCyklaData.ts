@@ -10,11 +10,13 @@ import {
   getSettings,
   restoreBackup,
   saveDailyEntry,
+  saveFlowRange,
   setSetting,
   toggleCycleExclusion,
   type BackupData,
   type OnboardingInput,
   type SaveDailyEntryInput,
+  type SaveFlowRangeInput,
 } from '@/database/repository';
 
 export function useSettings() {
@@ -69,6 +71,20 @@ export function useSaveEntry() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['entries'] }),
         queryClient.invalidateQueries({ queryKey: ['entry', input.date] }),
+      ]);
+    },
+  });
+}
+
+export function useSaveFlowRange() {
+  const db = useSQLiteContext();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SaveFlowRangeInput) => saveFlowRange(db, input),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['entries'] }),
+        queryClient.invalidateQueries({ queryKey: ['entry'] }),
       ]);
     },
   });

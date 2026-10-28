@@ -52,7 +52,9 @@ Rules the boundaries enforce:
 Saving a day: the day editor (`app/day/[date].tsx`) validates its form with React Hook Form
 and Zod and calls `useSaveEntry` (`src/hooks/useCyklaData.ts`). The mutation runs
 `saveDailyEntry` in `repository.ts` inside a transaction, then invalidates the entry
-queries. `useEntries` re-reads the rows, which `validation.ts` parses (invalid rows are
+queries. The quick entry (`app/quick-period.tsx`) works the same way through
+`useSaveFlowRange` and `saveFlowRange`, which upserts only the flow for each day of a range
+of at most 31 days in one transaction. `useEntries` re-reads the rows, which `validation.ts` parses (invalid rows are
 omitted from reads rather than crashing the app), and `usePrediction`
 (`src/hooks/usePrediction.ts`) derives bleeding days and period starts and passes them with
 the user's exclusions and typical lengths to `derivePrediction` in

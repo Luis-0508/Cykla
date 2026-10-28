@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { withDatabaseAccess, withDatabaseTransaction } from './access';
-import type { AppSettings, DailyEntry, Goal, SymptomEntry } from '@/domain/models';
+import { differenceInDays, eachDay } from '@/domain/dateOnly';
+import type { AppSettings, DailyEntry, FlowIntensity, Goal, SymptomEntry } from '@/domain/models';
 
 import {
   dailyRowSchema,
@@ -176,6 +177,37 @@ export async function saveDailyEntry(
         input.date,
         symptom.code,
         symptom.intensity,
+      );
+    }
+  });
+}
+
+/** Longest range a single quick entry may cover. */
+export const MAX_FLOW_RANGE_DAYS = 31;
+
+export type SaveFlowRangeInput = {
+  startDate: string;
+  endDate: string;
+  flow: Exclude<FlowIntensity, 'none'>;
+};
+
+/** Records the same bleeding for every day in a range; other fields of existing days stay. */
+export async function saveFlowRange(db: SQLiteDatabase, input: SaveFlowRangeInput): Promise<void> {
+  const startDate = dateSchema.parse(input.startDate);
+  const endDate = dateSchema.parse(input.endDate);
+  const length = differenceInDays(endDate, startDate) + 1;
+  if (length < 1 || length > MAX_FLOW_RANGE_DAYS) {
+    throw new Error(`Invalid flow range: ${startDate} to ${endDate}`);
+  }
+  await withDatabaseTransaction(db, async () => {
+    const updatedAt = new Date().toISOString();
+    for (const date of eachDay(startDate, endDate)) {
+      await db.runAsync(
+        `INSERT INTO daily_entries (date, flow, updated_at) VALUES (?, ?, ?)
+         ON CONFLICT(date) DO UPDATE SET flow = excluded.flow, updated_at = excluded.updated_at`,
+        date,
+        input.flow,
+        updatedAt,
       );
     }
   });

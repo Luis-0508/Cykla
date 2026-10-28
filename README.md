@@ -50,6 +50,7 @@ Cykla treats them as different kinds of information:
 - Short onboarding: goal, most recent period, typical cycle and bleeding length
 - Daily editor for bleeding, pain (0–10), mood, energy, sleep duration and quality,
   eight body symptoms and a free-text note
+- Quick entry that logs the same flow for a range of up to 31 days
 - “Today” overview with a scrollable day strip and the current estimate
 
 **Calendar and estimates**
@@ -165,6 +166,7 @@ review. Details are in [PRIVACY.md](PRIVACY.md) and
 app/                    Expo Router routes
   (tabs)/               Today, Calendar, Log, Trends, Settings
   day/[date].tsx        daily editor (modal)
+  quick-period.tsx      quick entry of bleeding for a date range (modal)
   prediction.tsx        prediction explanation (modal)
   onboarding.tsx        first-run flow
 src/
