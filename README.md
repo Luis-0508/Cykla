@@ -150,7 +150,7 @@ review. Details are in [PRIVACY.md](PRIVACY.md) and
 
 | Area          | Choice                                                            |
 | ------------- | ----------------------------------------------------------------- |
-| App framework | Expo SDK 57, React Native 0.86, React 19, Expo Router             |
+| App framework | Expo SDK 58, React Native 0.88, React 19, Expo Router             |
 | Language      | TypeScript                                                        |
 | Storage       | `expo-sqlite` with versioned migrations (WASM on web)             |
 | Data access   | TanStack Query over the local repository; Zustand for UI state    |
@@ -194,7 +194,7 @@ Requirements:
 - Node.js 24.12 or newer within Node 24 (see [`.node-version`](.node-version);
   the SQLite tests use the built-in `node:sqlite` module)
 - npm
-- Expo Go for SDK 57, a compatible development build, or an Android/iOS simulator
+- Expo Go for SDK 58, a compatible development build, or an Android/iOS simulator
 
 ```bash
 npm ci
@@ -203,6 +203,21 @@ npm start
 
 Scan the QR code with Expo Go, or press `a` (Android) or `i` (iOS) in the terminal.
 When testing upgrades on a phone, keep the existing Expo Go app and its local data.
+
+### Tunnel (remote dev server)
+
+When the dev server runs on another machine, such as a headless Linux VM, and the
+phone is not on the same network:
+
+```bash
+npm ci
+npm run tunnel
+```
+
+This starts Expo with an ngrok tunnel through the project-local `@expo/ngrok`
+dev dependency, so no global install or interactive prompt is needed. Scan the
+printed QR code or open the `exp://…` URL in Expo Go. The tunnel only serves the
+JavaScript bundle; app data stays in local SQLite on the phone.
 
 ### Web preview
 
@@ -223,6 +238,7 @@ On Windows, [`scripts/windows/start-web.bat`](scripts/windows/start-web.bat) lau
 | Command                 | Purpose                                                 |
 | ----------------------- | ------------------------------------------------------- |
 | `npm start`             | Start the Expo dev server                               |
+| `npm run tunnel`        | Start the Expo dev server with an ngrok tunnel          |
 | `npm run android`       | Start and open on Android                               |
 | `npm run ios`           | Start and open on iOS                                   |
 | `npm run web`           | Web preview with the required headers on port 8082      |
