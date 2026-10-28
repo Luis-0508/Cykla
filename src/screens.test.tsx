@@ -25,6 +25,7 @@ const environment = vi.hoisted(() => ({
   canGoBack: true,
   alerts: [] as { text?: string; onPress?: () => void }[][],
   appState: new Set<(state: string) => void>(),
+  scrollTo: vi.fn(),
 }));
 vi.mock('expo-sqlite', () => ({ useSQLiteContext: () => environment.db }));
 vi.mock('react-native', () => ({
@@ -132,7 +133,10 @@ describe('screens with real SQLite data', () => {
   }
   async function mount(component: () => React.ReactNode) {
     await act(async () => {
-      screen = create(createElement(QueryClientProvider, { client }, createElement(component)));
+      screen = create(createElement(QueryClientProvider, { client }, createElement(component)), {
+        createNodeMock: (element) =>
+          String(element.type) === 'ScrollView' ? { scrollTo: environment.scrollTo } : null,
+      });
     });
   }
   async function until(assertion: () => void) {
@@ -388,6 +392,11 @@ describe('screens with real SQLite data', () => {
   });
 
   describe('Day strip', () => {
+    const daysBefore = 60;
+    const strip = () =>
+      screen.root.find((node) => String(node.type) === 'ScrollView' && node.props.horizontal);
+    const lastScrollX = () => environment.scrollTo.mock.lastCall?.[0].x;
+
     it.each([320, 375, 390, 430])(
       'starts with the selected day centred on a %i pt phone, before any layout event',
       async (width) => {
@@ -395,19 +404,50 @@ describe('screens with real SQLite data', () => {
         setToday('2026-08-30');
         await mount(TodayScreen);
         await until(() => expect(buttons(i18n.formatDate('2026-08-30'))).toHaveLength(1));
-        const strip = screen.root.find(
-          (node) => String(node.type) === 'ScrollView' && node.props.horizontal,
-        );
         const viewport = width - 2 * SCREEN_GUTTER;
-        const offset = selectedDayOffset(viewport);
+        const offset = selectedDayOffset(viewport, daysBefore);
         // Present on the very first render: no onLayout has been delivered here.
-        expect(strip.props.contentOffset).toEqual({ x: offset, y: 0 });
-        const left = 5 * (58 + 8) - offset;
+        expect(strip().props.contentOffset).toEqual({ x: offset, y: 0 });
+        expect(lastScrollX()).toBe(offset);
+        const left = daysBefore * (58 + 8) - offset;
         expect(left).toBeGreaterThanOrEqual(0);
         expect(left + 58).toBeLessThanOrEqual(viewport);
         expect(Math.abs(left + 29 - viewport / 2)).toBeLessThanOrEqual(1);
       },
     );
+
+    it('adds earlier days near its start without moving the visible days', async () => {
+      setToday('2026-08-30');
+      await mount(TodayScreen);
+      await until(() => expect(buttons(i18n.formatDate('2026-07-01'))).toHaveLength(1));
+      expect(buttons(i18n.formatDate('2026-06-30'))).toHaveLength(0);
+      const { onScroll } = strip().props;
+      // Two events before the new page renders add it only once.
+      await act(async () => {
+        onScroll({ nativeEvent: { contentOffset: { x: 400 } } });
+        onScroll({ nativeEvent: { contentOffset: { x: 380 } } });
+      });
+      expect(buttons(i18n.formatDate('2026-05-02'))).toHaveLength(1);
+      expect(buttons(i18n.formatDate('2026-05-01'))).toHaveLength(0);
+      expect(lastScrollX()).toBe(380 + daysBefore * (58 + 8));
+      // The label follows the scrolled-to month, not the selected day.
+      expect(
+        findText(i18n.formatDate('2026-07-01', { month: 'long', year: 'numeric' })),
+      ).toHaveLength(1);
+      expect(buttons(i18n.formatDate('2026-09-04'))).toHaveLength(1);
+    });
+
+    it('centres a much earlier day selected elsewhere', async () => {
+      environment.width = 390;
+      setToday('2026-08-30');
+      await mount(TodayScreen);
+      await until(() => expect(buttons(i18n.formatDate('2026-08-30'))).toHaveLength(1));
+      await act(async () => useUiStore.setState({ selectedDate: '2025-01-10' }));
+      expect(buttons(i18n.formatDate('2025-01-10'))).toHaveLength(1);
+      // Today stays reachable by scrolling forward.
+      expect(buttons(i18n.formatDate('2026-08-30'))).toHaveLength(1);
+      expect(lastScrollX()).toBe(selectedDayOffset(390 - 2 * SCREEN_GUTTER, daysBefore));
+    });
   });
 
   describe('Calendar layout', () => {
