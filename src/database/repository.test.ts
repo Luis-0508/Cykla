@@ -35,6 +35,36 @@ describe('repository with SQLite', () => {
     await repository.saveDailyEntry(test.db, { ...input, flow: 'none', symptoms: [] });
     expect(await repository.getAllEntries(test.db)).toMatchObject([{ flow: 'none', symptoms: [] }]);
   });
+  it('records flow for a range, keeping the other fields of existing days', async () => {
+    await repository.saveDailyEntry(test.db, { ...input, date: '2026-01-02', flow: 'none' });
+    await repository.saveFlowRange(test.db, {
+      startDate: '2026-01-01',
+      endDate: '2026-01-03',
+      flow: 'heavy',
+    });
+    const entries = await repository.getAllEntries(test.db);
+    expect(entries.map((entry) => [entry.date, entry.flow])).toEqual([
+      ['2026-01-01', 'heavy'],
+      ['2026-01-02', 'heavy'],
+      ['2026-01-03', 'heavy'],
+    ]);
+    expect(entries[0]).toMatchObject({ mood: null, pain: null, notes: '', symptoms: [] });
+    expect(entries[1]).toMatchObject({
+      mood: 'calm',
+      notes: input.notes.trim(),
+      symptoms: [{ code: 'cramps' }, { code: 'headache' }],
+    });
+  });
+  it.each([
+    ['2026-01-03', '2026-01-01'],
+    ['2026-01-01', '2026-02-01'],
+    ['2026-02-30', '2026-03-01'],
+  ])('rejects the range %s to %s without saving', async (startDate, endDate) => {
+    await expect(
+      repository.saveFlowRange(test.db, { startDate, endDate, flow: 'light' }),
+    ).rejects.toThrow();
+    expect(await repository.getAllEntries(test.db)).toEqual([]);
+  });
   it('loads chronological entries and associates symptoms with the right date', async () => {
     await repository.saveDailyEntry(test.db, { ...input, date: '2026-02-01', symptoms: [] });
     await repository.saveDailyEntry(test.db, input);

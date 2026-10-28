@@ -17,6 +17,7 @@ import TodayScreen from '../app/(tabs)/index';
 import CalendarScreen from '../app/(tabs)/calendar';
 import InsightsScreen from '../app/(tabs)/insights';
 import DayEditorScreen from '../app/day/[date]';
+import QuickPeriodScreen from '../app/quick-period';
 
 const environment = vi.hoisted(() => ({
   db: null as import('expo-sqlite').SQLiteDatabase | null,
@@ -685,6 +686,38 @@ describe('screens with real SQLite data', () => {
       });
       expect(router.back).not.toHaveBeenCalled();
       expect(router.replace).toHaveBeenCalledWith('/(tabs)');
+    });
+  });
+
+  describe('Quick period entry', () => {
+    it('saves the chosen flow for every day in the range', async () => {
+      setToday('2026-08-26');
+      useUiStore.setState({ selectedDate: '2026-08-20' });
+      await mount(QuickPeriodScreen);
+      await until(() => expect(buttons(t.quickEntry.save(5))).toHaveLength(1));
+      const press = (label: string) => act(async () => buttons(label)[0]!.props.onPress());
+      await press(t.quickEntry.earlier(t.quickEntry.from));
+      await press(t.flowOption.light);
+      await press(t.quickEntry.save(6));
+      await until(() => expect(router.back).toHaveBeenCalled());
+      expect(
+        await test.db.getAllAsync('SELECT date, flow FROM daily_entries ORDER BY date'),
+      ).toEqual(
+        ['19', '20', '21', '22', '23', '24'].map((day) => ({
+          date: `2026-08-${day}`,
+          flow: 'light',
+        })),
+      );
+    });
+
+    it('never moves the range past today', async () => {
+      setToday('2026-08-26');
+      await mount(QuickPeriodScreen);
+      await until(() => expect(buttons(t.quickEntry.save(1))).toHaveLength(1));
+      const later = buttons(t.quickEntry.later(t.quickEntry.to))[0]!;
+      expect(later.props.disabled).toBe(true);
+      await act(async () => buttons(t.quickEntry.earlier(t.quickEntry.from))[0]!.props.onPress());
+      expect(buttons(t.quickEntry.save(2))).toHaveLength(1);
     });
   });
 });

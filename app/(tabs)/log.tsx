@@ -99,6 +99,12 @@ export default function LogScreen() {
           icon="create-outline"
           onPress={openEditor}
         />
+        <Button
+          label={t.quickEntry.open}
+          icon="calendar-outline"
+          variant="secondary"
+          onPress={() => router.push('/quick-period')}
+        />
       </Card>
 
       <SectionHeader title={t.log.categories} subtitle={t.log.categoriesSubtitle} />

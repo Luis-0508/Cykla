@@ -201,6 +201,23 @@ export const de = {
     sleepBody: 'Dauer und Qualität',
     symptomsBody: 'Körperliche Beobachtungen',
   },
+  quickEntry: {
+    open: 'Periode für mehrere Tage eintragen',
+    close: 'Schnelleintrag schließen',
+    eyebrow: 'SCHNELLEINTRAG',
+    title: 'Periode nachtragen',
+    body: 'Speichert dieselbe Blutungsstärke für jeden Tag im Zeitraum. Bereits eingetragene Stimmung, Schmerzen oder Notizen bleiben erhalten.',
+    from: 'Von',
+    to: 'Bis',
+    earlier: (label: string) => `${label}: einen Tag früher`,
+    later: (label: string) => `${label}: einen Tag später`,
+    flow: 'Blutungsstärke',
+    rangeSummary: (count: number) => `${count} ${plural(count, 'Tag', 'Tage')} im Zeitraum`,
+    limit: (max: number) => `Bis zu ${max} Tage auf einmal, nicht in der Zukunft.`,
+    save: (count: number) => `${plural(count, 'Einen Tag', `${count} Tage`)} speichern`,
+    saveError:
+      'Der Zeitraum konnte nicht gespeichert werden. Deine bisherigen Daten wurden nicht verändert.',
+  },
   insights: {
     loading: 'Trends werden berechnet …',
     error: 'Die lokalen Einträge konnten nicht ausgewertet werden.',
